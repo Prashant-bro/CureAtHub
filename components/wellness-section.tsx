@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState, useEffect, useRef } from "react"
-import { motion, AnimatePresence, useInView, useScroll, useSpring } from "framer-motion"
+import { motion, AnimatePresence } from "framer-motion"
 import Image from "next/image"
 import {
   Flower2,
@@ -47,16 +47,34 @@ const playTone = (freq = 440, type: OscillatorType = "sine", duration = 0.1) => 
   }
 }
 
+// Bounce-in variants (Beato-style) — lightweight, GPU-friendly
+const bounceInLeft = {
+  hidden: { opacity: 0, x: -60 },
+  visible: {
+    opacity: 1,
+    x: 0,
+    transition: { type: "spring" as const, stiffness: 100, damping: 14, mass: 0.6 },
+  },
+}
+
+const bounceInRight = {
+  hidden: { opacity: 0, x: 60 },
+  visible: {
+    opacity: 1,
+    x: 0,
+    transition: { type: "spring" as const, stiffness: 100, damping: 14, mass: 0.6 },
+  },
+}
+
+const staggerContainer = {
+  hidden: {},
+  visible: {
+    transition: { staggerChildren: 0.12, delayChildren: 0.04 },
+  },
+}
+
 export function WellnessSection() {
   const sectionRef = useRef(null)
-  const isSectionInView = useInView(sectionRef, { once: true, margin: "-100px" })
-
-  const { scrollYProgress } = useScroll({
-    target: sectionRef,
-    offset: ["start center", "end center"],
-  })
-
-  const scaleY = useSpring(scrollYProgress, { stiffness: 180, damping: 12, restDelta: 0.001 })
 
   // ==========================================
   // STATE WIDGET 1: YOGA & DIET SELECTOR
@@ -179,44 +197,20 @@ export function WellnessSection() {
             Certified yoga modules, smart reminders, gamified tracking, and premium features to keep you engaged and healthy.
           </p>
         </div>
-      </div>
 
-        {/* Timeline-style connector line (desktop only) */}
-        <div className="relative mt-12">
-          <div className="hidden lg:block absolute left-1/2 top-10 bottom-10 w-[3px] -translate-x-1/2 bg-slate-100 rounded-full">
-            <motion.div
-              className="w-full h-full bg-gradient-to-b from-emerald-500 via-sky-500 via-amber-500 to-violet-600 origin-top rounded-full shadow-[0_0_8px_rgba(20,184,166,0.3)]"
-              style={{ scaleY }}
-            />
-          </div>
-
-          <div className="space-y-8">
+        {/* Feature cards — Beato-style bounce transitions */}
+        <div className="space-y-16 lg:space-y-24">
             {/* ========================================================================= */}
             {/* WELLNESS MODULE 1: YOGA & NATURAL DIET */}
             {/* ========================================================================= */}
-            <div className="grid lg:grid-cols-12 gap-12 items-center py-16 border-b border-orange-100/50 relative">
-              {/* Timeline dot */}
-              <motion.div
-                initial={{ scale: 0 }}
-                whileInView={{ scale: 1 }}
-                viewport={{ once: false, margin: "-120px" }}
-                transition={{ type: "spring", stiffness: 400, damping: 8 }}
-                className="hidden lg:flex absolute left-1/2 -translate-x-1/2 w-8 h-8 rounded-full bg-white border-2 border-slate-200 shadow-md items-center justify-center z-20"
-              >
-                <motion.div
-                  className="w-3.5 h-3.5 rounded-full bg-emerald-500"
-                  animate={{
-                    scale: [1, 1.2, 1],
-                    boxShadow: ["0 0 0 0 rgba(16,185,129,0.4)", "0 0 0 8px rgba(16,185,129,0)", "0 0 0 0 rgba(16,185,129,0)"],
-                  }}
-                  transition={{
-                    duration: 2,
-                    repeat: Infinity,
-                    ease: "easeInOut",
-                  }}
-                />
-              </motion.div>
-          <div className="lg:col-span-6">
+            <motion.div
+              variants={staggerContainer}
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true, margin: "-80px" }}
+              className="grid lg:grid-cols-12 gap-12 items-center py-8 relative"
+            >
+          <motion.div variants={bounceInLeft} className="lg:col-span-6">
             <div className="bg-white border border-[#F0E6D9] rounded-3xl p-6 shadow-xl relative overflow-hidden min-h-[380px] flex flex-col justify-between">
               {/* Illustrative Background */}
               <div className="absolute left-0 bottom-0 opacity-20 pointer-events-none">
@@ -348,9 +342,9 @@ export function WellnessSection() {
                 </div>
               </div>
             </div>
-          </div>
+          </motion.div>
 
-          <div className="lg:col-span-6 space-y-6 lg:pl-6">
+          <motion.div variants={bounceInRight} className="lg:col-span-6 space-y-6">
             <div className="inline-flex items-center gap-2 bg-emerald-50 border border-emerald-100 text-emerald-700 px-3 py-1 rounded-full text-xs font-bold">
               <Flower2 className="w-3.5 h-3.5" />
               <span>Certified Natural Modules</span>
@@ -384,35 +378,20 @@ export function WellnessSection() {
                 </div>
               </div>
             </div>
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
 
         {/* ========================================================================= */}
         {/* WELLNESS MODULE 2: SMART REMINDERS */}
         {/* ========================================================================= */}
-        <div className="grid lg:grid-cols-12 gap-12 items-center py-16 border-b border-orange-100/50 relative">
-          {/* Timeline dot */}
-          <motion.div
-            initial={{ scale: 0 }}
-            whileInView={{ scale: 1 }}
-            viewport={{ once: false, margin: "-120px" }}
-            transition={{ type: "spring", stiffness: 400, damping: 8, delay: 0.1 }}
-            className="hidden lg:flex absolute left-1/2 -translate-x-1/2 w-8 h-8 rounded-full bg-white border-2 border-slate-200 shadow-md items-center justify-center z-20"
-          >
-            <motion.div
-              className="w-3.5 h-3.5 rounded-full bg-orange-500"
-              animate={{
-                scale: [1, 1.2, 1],
-                boxShadow: ["0 0 0 0 rgba(249,115,22,0.4)", "0 0 0 8px rgba(249,115,22,0)", "0 0 0 0 rgba(249,115,22,0)"],
-              }}
-              transition={{
-                duration: 2,
-                repeat: Infinity,
-                ease: "easeInOut",
-              }}
-            />
-          </motion.div>
-          <div className="lg:col-span-6 space-y-6 order-last lg:order-first">
+        <motion.div
+          variants={staggerContainer}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-80px" }}
+          className="grid lg:grid-cols-12 gap-12 items-center py-8 relative"
+        >
+          <motion.div variants={bounceInLeft} className="lg:col-span-6 space-y-6 order-last lg:order-first">
             <div className="inline-flex items-center gap-2 bg-orange-50 border border-orange-100 text-orange-700 px-3 py-1 rounded-full text-xs font-bold">
               <Bell className="w-3.5 h-3.5" />
               <span>Automated Schedule Monitor</span>
@@ -446,9 +425,9 @@ export function WellnessSection() {
                 </div>
               </div>
             </div>
-          </div>
+          </motion.div>
 
-          <div className="lg:col-span-6">
+          <motion.div variants={bounceInRight} className="lg:col-span-6">
             <div className="bg-slate-50 border border-[#F0E6D9] rounded-3xl p-6 shadow-xl relative overflow-hidden min-h-[380px] flex flex-col justify-between">
               {/* Illustrative Background */}
               <div className="absolute right-0 top-0 opacity-20 pointer-events-none">
@@ -535,35 +514,20 @@ export function WellnessSection() {
                 </div>
               </div>
             </div>
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
 
         {/* ========================================================================= */}
         {/* WELLNESS MODULE 3: GAMIFICATION & COMMUNITY */}
         {/* ========================================================================= */}
-        <div className="grid lg:grid-cols-12 gap-12 items-center py-16 border-b border-orange-100/50 relative">
-          {/* Timeline dot */}
-          <motion.div
-            initial={{ scale: 0 }}
-            whileInView={{ scale: 1 }}
-            viewport={{ once: false, margin: "-120px" }}
-            transition={{ type: "spring", stiffness: 400, damping: 8, delay: 0.1 }}
-            className="hidden lg:flex absolute left-1/2 -translate-x-1/2 w-8 h-8 rounded-full bg-white border-2 border-slate-200 shadow-md items-center justify-center z-20"
-          >
-            <motion.div
-              className="w-3.5 h-3.5 rounded-full bg-amber-500"
-              animate={{
-                scale: [1, 1.2, 1],
-                boxShadow: ["0 0 0 0 rgba(245,158,11,0.4)", "0 0 0 8px rgba(245,158,11,0)", "0 0 0 0 rgba(245,158,11,0)"],
-              }}
-              transition={{
-                duration: 2,
-                repeat: Infinity,
-                ease: "easeInOut",
-              }}
-            />
-          </motion.div>
-          <div className="lg:col-span-6">
+        <motion.div
+          variants={staggerContainer}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-80px" }}
+          className="grid lg:grid-cols-12 gap-12 items-center py-8 relative"
+        >
+          <motion.div variants={bounceInLeft} className="lg:col-span-6">
             <div className="bg-white border border-[#F0E6D9] rounded-3xl p-6 shadow-xl relative overflow-hidden min-h-[380px] flex flex-col justify-between">
               {/* Illustrative Background */}
               <div className="absolute left-0 bottom-0 opacity-20 pointer-events-none">
@@ -635,9 +599,9 @@ export function WellnessSection() {
                 </div>
               </div>
             </div>
-          </div>
+          </motion.div>
 
-          <div className="lg:col-span-6 space-y-6 lg:pl-6">
+          <motion.div variants={bounceInRight} className="lg:col-span-6 space-y-6">
             <div className="inline-flex items-center gap-2 bg-amber-50 border border-amber-100 text-amber-700 px-3 py-1 rounded-full text-xs font-bold">
               <Trophy className="w-3.5 h-3.5" />
               <span>Peer Accountability Network</span>
@@ -671,35 +635,20 @@ export function WellnessSection() {
                 </div>
               </div>
             </div>
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
 
         {/* ========================================================================= */}
         {/* WELLNESS MODULE 4: PREMIUM PLAN */}
         {/* ========================================================================= */}
-        <div className="grid lg:grid-cols-12 gap-12 items-center py-16 relative">
-          {/* Timeline dot */}
-          <motion.div
-            initial={{ scale: 0 }}
-            whileInView={{ scale: 1 }}
-            viewport={{ once: false, margin: "-120px" }}
-            transition={{ type: "spring", stiffness: 400, damping: 8, delay: 0.1 }}
-            className="hidden lg:flex absolute left-1/2 -translate-x-1/2 w-8 h-8 rounded-full bg-white border-2 border-slate-200 shadow-md items-center justify-center z-20"
-          >
-            <motion.div
-              className="w-3.5 h-3.5 rounded-full bg-violet-500"
-              animate={{
-                scale: [1, 1.2, 1],
-                boxShadow: ["0 0 0 0 rgba(139,92,246,0.4)", "0 0 0 8px rgba(139,92,246,0)", "0 0 0 0 rgba(139,92,246,0)"],
-              }}
-              transition={{
-                duration: 2,
-                repeat: Infinity,
-                ease: "easeInOut",
-              }}
-            />
-          </motion.div>
-          <div className="lg:col-span-6 space-y-6 order-last lg:order-first">
+        <motion.div
+          variants={staggerContainer}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-80px" }}
+          className="grid lg:grid-cols-12 gap-12 items-center py-8 relative"
+        >
+          <motion.div variants={bounceInLeft} className="lg:col-span-6 space-y-6 order-last lg:order-first">
             <div className="inline-flex items-center gap-2 bg-violet-50 border border-violet-100 text-violet-700 px-3 py-1 rounded-full text-xs font-bold">
               <Crown className="w-3.5 h-3.5" />
               <span>Full Analytics License</span>
@@ -733,9 +682,9 @@ export function WellnessSection() {
                 </div>
               </div>
             </div>
-          </div>
+          </motion.div>
 
-          <div className="lg:col-span-6">
+          <motion.div variants={bounceInRight} className="lg:col-span-6">
             <div className="bg-slate-50 border border-[#F0E6D9] rounded-3xl p-6 shadow-xl relative overflow-hidden min-h-[380px] flex flex-col justify-between">
               {/* Illustrative Background */}
               <div className="absolute right-0 top-0 opacity-20 pointer-events-none">
@@ -855,8 +804,8 @@ export function WellnessSection() {
                 </div>
               </div>
             </div>
-          </div>
-          </div>
+          </motion.div>
+        </motion.div>
         </div>
       </div>
     </section>

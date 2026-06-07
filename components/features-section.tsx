@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState, useEffect, useRef } from "react"
-import { motion, AnimatePresence, useInView, useScroll, useSpring } from "framer-motion"
+import { motion, AnimatePresence } from "framer-motion"
 import Image from "next/image"
 import {
   FileText,
@@ -45,15 +45,47 @@ const playChime = (freq = 440, type: OscillatorType = "sine", duration = 0.1) =>
   }
 }
 
+// Bounce-in animation variants (Beato-style) — lightweight, GPU-friendly
+const bounceInLeft = {
+  hidden: { opacity: 0, x: -60 },
+  visible: {
+    opacity: 1,
+    x: 0,
+    transition: {
+      type: "spring" as const,
+      stiffness: 100,
+      damping: 14,
+      mass: 0.6,
+    },
+  },
+}
+
+const bounceInRight = {
+  hidden: { opacity: 0, x: 60 },
+  visible: {
+    opacity: 1,
+    x: 0,
+    transition: {
+      type: "spring" as const,
+      stiffness: 100,
+      damping: 14,
+      mass: 0.6,
+    },
+  },
+}
+
+const staggerContainer = {
+  hidden: {},
+  visible: {
+    transition: {
+      staggerChildren: 0.12,
+      delayChildren: 0.04,
+    },
+  },
+}
+
 export function FeaturesSection() {
   const sectionContainerRef = useRef(null)
-
-  const { scrollYProgress } = useScroll({
-    target: sectionContainerRef,
-    offset: ["start center", "end center"],
-  })
-
-  const scaleY = useSpring(scrollYProgress, { stiffness: 180, damping: 12, restDelta: 0.001 })
   // ==========================================
   // STATE WIDGET 1: AI REPORT SCANNER
   // ==========================================
@@ -216,44 +248,21 @@ export function FeaturesSection() {
             From lab report AI analysis to meal scanning and personalized coaching — all built with cutting-edge AI and designed for every Indian.
           </p>
         </div>
-      </div>
 
-        {/* Timeline-style connector line (desktop only) */}
-        <div className="relative mt-12">
-          <div className="hidden lg:block absolute left-1/2 top-10 bottom-10 w-[3px] -translate-x-1/2 bg-slate-100 rounded-full">
-            <motion.div
-              className="w-full h-full bg-gradient-to-b from-teal-500 via-orange-500 via-violet-500 via-emerald-500 to-sky-600 origin-top rounded-full shadow-[0_0_8px_rgba(20,184,166,0.3)]"
-              style={{ scaleY }}
-            />
-          </div>
-
-          <div className="space-y-8">
+        {/* Feature cards — Beato-style bounce transitions */}
+        <div className="space-y-16 lg:space-y-24">
             {/* ========================================================================= */}
             {/* FEATURE 1: AI REPORT ANALYSIS */}
             {/* ========================================================================= */}
-            <div className="grid lg:grid-cols-12 gap-12 items-center py-16 border-b border-orange-100/50 relative">
-              {/* Timeline dot */}
-              <motion.div
-                initial={{ scale: 0 }}
-                whileInView={{ scale: 1 }}
-                viewport={{ once: false, margin: "-120px" }}
-                transition={{ type: "spring", stiffness: 400, damping: 8 }}
-                className="hidden lg:flex absolute left-1/2 -translate-x-1/2 w-8 h-8 rounded-full bg-white border-2 border-slate-200 shadow-md items-center justify-center z-20"
-              >
-                <motion.div
-                  className="w-3.5 h-3.5 rounded-full bg-teal-500"
-                  animate={{
-                    scale: [1, 1.2, 1],
-                    boxShadow: ["0 0 0 0 rgba(20,184,166,0.4)", "0 0 0 8px rgba(20,184,166,0)", "0 0 0 0 rgba(20,184,166,0)"],
-                  }}
-                  transition={{
-                    duration: 2,
-                    repeat: Infinity,
-                    ease: "easeInOut",
-                  }}
-                />
-              </motion.div>
-          <div className="lg:col-span-6 space-y-6 order-last lg:order-first">
+            <motion.div
+              variants={staggerContainer}
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true, margin: "-80px" }}
+              className="grid lg:grid-cols-12 gap-12 items-center py-8 relative"
+            >
+        
+          <motion.div variants={bounceInLeft} className="lg:col-span-6 space-y-6 order-last lg:order-first">
             <div className="inline-flex items-center gap-2 bg-teal-50 border border-teal-100 text-teal-700 px-3 py-1 rounded-full text-xs font-bold">
               <FileText className="w-3.5 h-3.5" />
               <span>Smart Diagnostic Reader</span>
@@ -287,9 +296,9 @@ export function FeaturesSection() {
                 </div>
               </div>
             </div>
-          </div>
+          </motion.div>
 
-          <div className="lg:col-span-6">
+          <motion.div variants={bounceInRight} className="lg:col-span-6">
             <div className="bg-slate-50 border border-[#F0E6D9] rounded-3xl p-6 shadow-xl relative overflow-hidden min-h-[380px] flex flex-col justify-between">
               {/* Background Art */}
               <div className="absolute right-0 top-0 opacity-20 pointer-events-none">
@@ -422,35 +431,20 @@ export function FeaturesSection() {
                 </div>
               </div>
             </div>
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
 
         {/* ========================================================================= */}
         {/* FEATURE 2: AI MEAL SCANNER */}
         {/* ========================================================================= */}
-        <div className="grid lg:grid-cols-12 gap-12 items-center py-16 border-b border-orange-100/50 relative">
-          {/* Timeline dot */}
-          <motion.div
-            initial={{ scale: 0 }}
-            whileInView={{ scale: 1 }}
-            viewport={{ once: false, margin: "-120px" }}
-            transition={{ type: "spring", stiffness: 400, damping: 8, delay: 0.1 }}
-            className="hidden lg:flex absolute left-1/2 -translate-x-1/2 w-8 h-8 rounded-full bg-white border-2 border-slate-200 shadow-md items-center justify-center z-20"
-          >
-            <motion.div
-              className="w-3.5 h-3.5 rounded-full bg-orange-500"
-              animate={{
-                scale: [1, 1.2, 1],
-                boxShadow: ["0 0 0 0 rgba(249,115,22,0.4)", "0 0 0 8px rgba(249,115,22,0)", "0 0 0 0 rgba(249,115,22,0)"],
-              }}
-              transition={{
-                duration: 2,
-                repeat: Infinity,
-                ease: "easeInOut",
-              }}
-            />
-          </motion.div>
-          <div className="lg:col-span-6">
+        <motion.div
+          variants={staggerContainer}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-80px" }}
+          className="grid lg:grid-cols-12 gap-12 items-center py-8 relative"
+        >
+          <motion.div variants={bounceInLeft} className="lg:col-span-6">
             <div className="bg-slate-50 border border-[#F0E6D9] rounded-3xl p-6 shadow-xl relative overflow-hidden min-h-[380px] flex flex-col justify-between">
               <div className="relative z-10 flex-1 flex flex-col justify-between">
                 <div className="flex items-center justify-between">
@@ -561,9 +555,9 @@ export function FeaturesSection() {
                 </div>
               </div>
             </div>
-          </div>
+          </motion.div>
 
-          <div className="lg:col-span-6 space-y-6">
+          <motion.div variants={bounceInRight} className="lg:col-span-6 space-y-6">
             <div className="inline-flex items-center gap-2 bg-orange-50 border border-orange-100 text-orange-700 px-3 py-1 rounded-full text-xs font-bold">
               <Camera className="w-3.5 h-3.5" />
               <span>Camera Meal Scanner</span>
@@ -597,35 +591,20 @@ export function FeaturesSection() {
                 </div>
               </div>
             </div>
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
 
         {/* ========================================================================= */}
         {/* FEATURE 3: AI HEALTH CHAT */}
         {/* ========================================================================= */}
-        <div className="grid lg:grid-cols-12 gap-12 items-center py-16 border-b border-orange-100/50 relative">
-          {/* Timeline dot */}
-          <motion.div
-            initial={{ scale: 0 }}
-            whileInView={{ scale: 1 }}
-            viewport={{ once: false, margin: "-120px" }}
-            transition={{ type: "spring", stiffness: 400, damping: 8, delay: 0.1 }}
-            className="hidden lg:flex absolute left-1/2 -translate-x-1/2 w-8 h-8 rounded-full bg-white border-2 border-slate-200 shadow-md items-center justify-center z-20"
-          >
-            <motion.div
-              className="w-3.5 h-3.5 rounded-full bg-violet-500"
-              animate={{
-                scale: [1, 1.2, 1],
-                boxShadow: ["0 0 0 0 rgba(139,92,246,0.4)", "0 0 0 8px rgba(139,92,246,0)", "0 0 0 0 rgba(139,92,246,0)"],
-              }}
-              transition={{
-                duration: 2,
-                repeat: Infinity,
-                ease: "easeInOut",
-              }}
-            />
-          </motion.div>
-          <div className="lg:col-span-6 space-y-6 order-last lg:order-first">
+        <motion.div
+          variants={staggerContainer}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-80px" }}
+          className="grid lg:grid-cols-12 gap-12 items-center py-8 relative"
+        >
+          <motion.div variants={bounceInLeft} className="lg:col-span-6 space-y-6 order-last lg:order-first">
             <div className="inline-flex items-center gap-2 bg-violet-50 border border-violet-100 text-violet-700 px-3 py-1 rounded-full text-xs font-bold">
               <Bot className="w-3.5 h-3.5" />
               <span>Contextual Health Companion</span>
@@ -659,9 +638,9 @@ export function FeaturesSection() {
                 </div>
               </div>
             </div>
-          </div>
+          </motion.div>
 
-          <div className="lg:col-span-6">
+          <motion.div variants={bounceInRight} className="lg:col-span-6">
             <div className="bg-slate-50 border border-[#F0E6D9] rounded-3xl p-6 shadow-xl relative overflow-hidden min-h-[380px] flex flex-col justify-between">
               {/* Image background block */}
               <div className="absolute left-0 bottom-0 opacity-20 pointer-events-none">
@@ -759,35 +738,20 @@ export function FeaturesSection() {
                 </div>
               </div>
             </div>
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
 
         {/* ========================================================================= */}
         {/* FEATURE 4: DIET & LIFESTYLE COACH */}
         {/* ========================================================================= */}
-        <div className="grid lg:grid-cols-12 gap-12 items-center py-16 border-b border-orange-100/50 relative">
-          {/* Timeline dot */}
-          <motion.div
-            initial={{ scale: 0 }}
-            whileInView={{ scale: 1 }}
-            viewport={{ once: false, margin: "-120px" }}
-            transition={{ type: "spring", stiffness: 400, damping: 8, delay: 0.1 }}
-            className="hidden lg:flex absolute left-1/2 -translate-x-1/2 w-8 h-8 rounded-full bg-white border-2 border-slate-200 shadow-md items-center justify-center z-20"
-          >
-            <motion.div
-              className="w-3.5 h-3.5 rounded-full bg-emerald-500"
-              animate={{
-                scale: [1, 1.2, 1],
-                boxShadow: ["0 0 0 0 rgba(16,185,129,0.4)", "0 0 0 8px rgba(16,185,129,0)", "0 0 0 0 rgba(16,185,129,0)"],
-              }}
-              transition={{
-                duration: 2,
-                repeat: Infinity,
-                ease: "easeInOut",
-              }}
-            />
-          </motion.div>
-          <div className="lg:col-span-6">
+        <motion.div
+          variants={staggerContainer}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-80px" }}
+          className="grid lg:grid-cols-12 gap-12 items-center py-8 relative"
+        >
+          <motion.div variants={bounceInLeft} className="lg:col-span-6">
             <div className="bg-slate-50 border border-[#F0E6D9] rounded-3xl p-6 shadow-xl relative overflow-hidden min-h-[380px] flex flex-col justify-between">
               {/* Image illustration box */}
               <div className="absolute right-0 bottom-0 opacity-20 pointer-events-none">
@@ -862,9 +826,9 @@ export function FeaturesSection() {
                 </div>
               </div>
             </div>
-          </div>
+          </motion.div>
 
-          <div className="lg:col-span-6 space-y-6">
+          <motion.div variants={bounceInRight} className="lg:col-span-6 space-y-6">
             <div className="inline-flex items-center gap-2 bg-emerald-50 border border-emerald-100 text-emerald-700 px-3 py-1 rounded-full text-xs font-bold">
               <Utensils className="w-3.5 h-3.5" />
               <span>Tailored Lifestyle Blueprint</span>
@@ -898,35 +862,20 @@ export function FeaturesSection() {
                 </div>
               </div>
             </div>
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
 
         {/* ========================================================================= */}
         {/* FEATURE 5: 8+ INDIAN LANGUAGES */}
         {/* ========================================================================= */}
-        <div className="grid lg:grid-cols-12 gap-12 items-center py-16 relative">
-          {/* Timeline dot */}
-          <motion.div
-            initial={{ scale: 0 }}
-            whileInView={{ scale: 1 }}
-            viewport={{ once: false, margin: "-120px" }}
-            transition={{ type: "spring", stiffness: 400, damping: 8, delay: 0.1 }}
-            className="hidden lg:flex absolute left-1/2 -translate-x-1/2 w-8 h-8 rounded-full bg-white border-2 border-slate-200 shadow-md items-center justify-center z-20"
-          >
-            <motion.div
-              className="w-3.5 h-3.5 rounded-full bg-sky-500"
-              animate={{
-                scale: [1, 1.2, 1],
-                boxShadow: ["0 0 0 0 rgba(14,165,233,0.4)", "0 0 0 8px rgba(14,165,233,0)", "0 0 0 0 rgba(14,165,233,0)"],
-              }}
-              transition={{
-                duration: 2,
-                repeat: Infinity,
-                ease: "easeInOut",
-              }}
-            />
-          </motion.div>
-          <div className="lg:col-span-6 space-y-6 order-last lg:order-first">
+        <motion.div
+          variants={staggerContainer}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-80px" }}
+          className="grid lg:grid-cols-12 gap-12 items-center py-8 relative"
+        >
+          <motion.div variants={bounceInLeft} className="lg:col-span-6 space-y-6 order-last lg:order-first">
             <div className="inline-flex items-center gap-2 bg-sky-50 border border-sky-100 text-sky-700 px-3 py-1 rounded-full text-xs font-bold">
               <Globe className="w-3.5 h-3.5" />
               <span>Multilingual Healthcare Access</span>
@@ -960,9 +909,9 @@ export function FeaturesSection() {
                 </div>
               </div>
             </div>
-          </div>
+          </motion.div>
 
-          <div className="lg:col-span-6">
+          <motion.div variants={bounceInRight} className="lg:col-span-6">
             <div className="bg-slate-50 border border-[#F0E6D9] rounded-3xl p-6 shadow-xl relative overflow-hidden min-h-[380px] flex flex-col justify-between">
               {/* Image illustration background */}
               <div className="absolute right-0 top-0 opacity-20 pointer-events-none">
@@ -1031,8 +980,8 @@ export function FeaturesSection() {
                 </div>
               </div>
             </div>
-          </div>
-          </div>
+          </motion.div>
+        </motion.div>
         </div>
       </div>
     </section>
