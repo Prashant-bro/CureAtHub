@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { useLenis } from "lenis/react"
 import { Menu, X, Activity } from "lucide-react"
 
@@ -10,6 +11,7 @@ export function Navigation() {
   const [scrolled, setScrolled] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const lenis = useLenis()
+  const router = useRouter()
 
   useEffect(() => {
     const handleScroll = () => {
@@ -91,6 +93,7 @@ export function Navigation() {
 
         {/* CTA Button */}
         <motion.button
+          onClick={() => router.push('/auth')}
           className="hidden md:block bg-gradient-to-r from-orange-600 to-orange-500 text-white px-6 py-2.5 rounded-full font-semibold text-sm tracking-wide relative overflow-hidden shadow-lg shadow-orange-500/20"
           whileHover={{ scale: 1.03, boxShadow: "0 8px 30px rgba(255,87,34,0.3)" }}
           whileTap={{ scale: 0.97 }}
@@ -160,6 +163,10 @@ export function Navigation() {
                 </motion.button>
               ))}
               <motion.button
+                onClick={() => {
+                  setMobileMenuOpen(false)
+                  router.push('/auth')
+                }}
                 className="w-full bg-gradient-to-r from-orange-600 to-orange-500 text-white px-6 py-3 rounded-full font-semibold text-sm tracking-wide mt-3 shadow-md"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}

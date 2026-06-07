@@ -2,6 +2,7 @@
 
 import { motion, useScroll, useTransform, useSpring, Variants, useMotionValue } from "framer-motion"
 import { useRef } from "react"
+import { useRouter } from "next/navigation"
 import Image from "next/image"
 import {
   FileText,
@@ -27,6 +28,7 @@ const fadeUpVariants: Variants = {
 
 export function HeroSection() {
   const ref = useRef(null)
+  const router = useRouter()
   const mouseX = useMotionValue(0)
   const mouseY = useMotionValue(0)
 
@@ -157,6 +159,7 @@ export function HeroSection() {
               className="flex flex-wrap gap-4 pt-2"
             >
               <motion.button
+                onClick={() => router.push('/auth')}
                 className="bg-gradient-to-r from-orange-600 to-orange-500 text-white px-7 py-3.5 rounded-full font-semibold text-sm tracking-wide flex items-center gap-2 relative overflow-hidden shadow-xl shadow-orange-500/25"
                 whileHover={{ scale: 1.03, boxShadow: "0 12px 40px rgba(255,87,34,0.35)" }}
                 whileTap={{ scale: 0.97 }}
