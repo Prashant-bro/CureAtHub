@@ -3,6 +3,7 @@
 import React, { useState, useRef, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import {
   Activity,
   ArrowLeft,
@@ -21,6 +22,7 @@ type AuthTab = "signin" | "signup"
 type AuthMethod = "mobile" | "email"
 
 export default function AuthPage() {
+  const router = useRouter()
   const [activeTab, setActiveTab] = useState<AuthTab>("signin")
   const [authMethod, setAuthMethod] = useState<AuthMethod>("mobile")
   const [showPassword, setShowPassword] = useState(false)
@@ -203,6 +205,7 @@ export default function AuthPage() {
             <motion.button
               whileHover={{ scale: 1.01, boxShadow: "0 4px 20px rgba(0,0,0,0.06)" }}
               whileTap={{ scale: 0.99 }}
+              onClick={() => router.push('/dashboard')}
               className="w-full flex items-center justify-center gap-3 bg-white border border-slate-200 hover:border-slate-300 rounded-xl py-3 px-4 text-sm font-semibold text-slate-700 transition-all shadow-sm"
             >
               <svg className="w-5 h-5" viewBox="0 0 24 24">
@@ -378,6 +381,7 @@ export default function AuthPage() {
                         whileHover={{ scale: 1.01 }}
                         whileTap={{ scale: 0.99 }}
                         disabled={otpValues.some((v) => !v)}
+                        onClick={() => router.push('/dashboard')}
                         className="w-full bg-gradient-to-r from-orange-600 to-orange-500 hover:from-orange-500 hover:to-orange-400 disabled:from-slate-300 disabled:to-slate-300 text-white py-3 rounded-xl font-bold text-sm shadow-lg shadow-orange-500/20 disabled:shadow-none transition-all flex items-center justify-center gap-2"
                       >
                         {activeTab === "signin" ? "Sign In" : "Create Account"}
@@ -458,6 +462,7 @@ export default function AuthPage() {
                     whileHover={{ scale: 1.01 }}
                     whileTap={{ scale: 0.99 }}
                     disabled={!email || !password}
+                    onClick={() => router.push('/dashboard')}
                     className="w-full bg-gradient-to-r from-orange-600 to-orange-500 hover:from-orange-500 hover:to-orange-400 disabled:from-slate-300 disabled:to-slate-300 text-white py-3 rounded-xl font-bold text-sm shadow-lg shadow-orange-500/20 disabled:shadow-none transition-all flex items-center justify-center gap-2"
                   >
                     {activeTab === "signin" ? "Sign In" : "Create Account"}
