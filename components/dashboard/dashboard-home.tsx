@@ -1,7 +1,7 @@
 "use client"
 
-import React from "react"
-import { motion } from "framer-motion"
+import React, { useState } from "react"
+import { motion, AnimatePresence } from "framer-motion"
 import {
   Heart,
   TrendingUp,
@@ -19,11 +19,18 @@ import {
   Sun,
   Moon,
   Coffee,
+  FileText,
+  X,
+  Copy,
+  Download,
+  Check,
+  Loader2,
 } from "lucide-react"
 
 interface DashboardHomeProps {
   onNavigateToChat: () => void
   onNavigateToDiet: () => void
+  onNavigateToReportAnalyzer: () => void
 }
 
 const fadeUp = {
@@ -31,11 +38,14 @@ const fadeUp = {
   visible: (i: number) => ({
     opacity: 1,
     y: 0,
-    transition: { delay: i * 0.08, duration: 0.5, ease: [0.25, 0.4, 0.25, 1] },
+    transition: { delay: i * 0.08, duration: 0.5, ease: [0.25, 0.4, 0.25, 1] as [number, number, number, number] },
   }),
 }
 
-export function DashboardHome({ onNavigateToChat, onNavigateToDiet }: DashboardHomeProps) {
+export function DashboardHome({ onNavigateToChat, onNavigateToDiet, onNavigateToReportAnalyzer }: DashboardHomeProps) {
+  const [shareDialogOpen, setShareDialogOpen] = useState(false)
+  const [sharingStatus, setSharingStatus] = useState<"idle" | "generating" | "done">("idle")
+
   const riskScore = 32
   const comparisonPercent = 70
 
@@ -43,20 +53,8 @@ export function DashboardHome({ onNavigateToChat, onNavigateToDiet }: DashboardH
   const circumference = 2 * Math.PI * radius
   const progress = (riskScore / 100) * circumference
 
-  const handleShare = async () => {
-    const shareData = {
-      title: "My Diapredix Health Score",
-      text: `My diabetes risk score is ${riskScore}/100. I'm healthier than ${comparisonPercent}% of users on Diapredix! Check yours →`,
-      url: "https://diapredix.com",
-    }
-    try {
-      if (navigator.share) {
-        await navigator.share(shareData)
-      } else {
-        await navigator.clipboard.writeText(`${shareData.text}\n${shareData.url}`)
-        alert("Link copied to clipboard!")
-      }
-    } catch { /* user cancelled */ }
+  const handleShare = () => {
+    setShareDialogOpen(true)
   }
 
   return (
@@ -233,6 +231,42 @@ export function DashboardHome({ onNavigateToChat, onNavigateToDiet }: DashboardH
         </div>
       </motion.div>
 
+      {/* AI Report Analyzer Card */}
+      <motion.div
+        variants={fadeUp} initial="hidden" animate="visible" custom={2}
+        className="relative overflow-hidden rounded-3xl bg-[#FFF6EE] border border-orange-200/50 p-6 shadow-sm hover:shadow-md transition-shadow group cursor-pointer"
+        onClick={onNavigateToReportAnalyzer}
+      >
+        <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-orange-400/5 to-transparent rounded-full blur-2xl pointer-events-none" />
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5 relative z-10">
+          <div className="flex gap-4 items-start sm:items-center">
+            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center text-white shadow-md shadow-orange-500/25 shrink-0 group-hover:scale-105 transition-transform">
+              <FileText className="w-6 h-6" />
+            </div>
+            <div>
+              <h3 className="text-base font-bold text-[#0F172A] flex items-center gap-2">
+                AI Health Report Analyzer
+                <span className="text-[9px] font-bold text-orange-600 bg-orange-100 px-2.5 py-0.5 rounded-full uppercase tracking-wider">New</span>
+              </h3>
+              <p className="text-xs text-slate-500 leading-relaxed mt-1 max-w-2xl">
+                Upload your lab test PDF reports. Our AI immediately extracts glycemic metrics (HbA1c, glucose levels) to compile an interactive diagnostic dashboard.
+              </p>
+            </div>
+          </div>
+          <motion.button
+            whileHover={{ scale: 1.03 }}
+            whileTap={{ scale: 0.97 }}
+            onClick={(e) => {
+              e.stopPropagation()
+              onNavigateToReportAnalyzer()
+            }}
+            className="whitespace-nowrap inline-flex items-center gap-1.5 bg-gradient-to-r from-orange-500 to-orange-600 text-white px-5 py-2.5 rounded-xl font-semibold text-xs shadow-md shadow-orange-500/20 hover:shadow-lg transition-all"
+          >
+            Analyze Report <ArrowRight className="w-3.5 h-3.5" />
+          </motion.button>
+        </div>
+      </motion.div>
+
       {/* Quick Stats Row */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
@@ -243,7 +277,7 @@ export function DashboardHome({ onNavigateToChat, onNavigateToDiet }: DashboardH
         ].map((stat, i) => (
           <motion.div
             key={stat.label}
-            variants={fadeUp} initial="hidden" animate="visible" custom={i + 2}
+            variants={fadeUp} initial="hidden" animate="visible" custom={i + 3}
             className="bg-white/70 backdrop-blur-xl border border-white/60 rounded-2xl p-4 shadow-sm hover:shadow-md transition-shadow"
           >
             <div className={`w-8 h-8 rounded-lg ${stat.bg} flex items-center justify-center mb-2.5`}>
@@ -259,7 +293,7 @@ export function DashboardHome({ onNavigateToChat, onNavigateToDiet }: DashboardH
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Today's Meal Plan */}
         <motion.div
-          variants={fadeUp} initial="hidden" animate="visible" custom={6}
+          variants={fadeUp} initial="hidden" animate="visible" custom={7}
           className="bg-white/70 backdrop-blur-xl border border-white/60 rounded-2xl p-5 shadow-sm"
         >
           <div className="flex items-center justify-between mb-4">
@@ -273,7 +307,7 @@ export function DashboardHome({ onNavigateToChat, onNavigateToDiet }: DashboardH
               onClick={onNavigateToDiet}
               className="text-[11px] font-semibold text-orange-500 hover:text-orange-600 flex items-center gap-1 transition-colors"
             >
-              View All <ArrowRight className="w-3 h-3" />
+              View All <ArrowRight className="w-3.5 h-3.5" />
             </button>
           </div>
 
@@ -312,7 +346,7 @@ export function DashboardHome({ onNavigateToChat, onNavigateToDiet }: DashboardH
 
         {/* Today's Schedule */}
         <motion.div
-          variants={fadeUp} initial="hidden" animate="visible" custom={7}
+          variants={fadeUp} initial="hidden" animate="visible" custom={8}
           className="bg-white/70 backdrop-blur-xl border border-white/60 rounded-2xl p-5 shadow-sm"
         >
           <div className="flex items-center justify-between mb-4">
@@ -326,7 +360,7 @@ export function DashboardHome({ onNavigateToChat, onNavigateToDiet }: DashboardH
               onClick={onNavigateToDiet}
               className="text-[11px] font-semibold text-orange-500 hover:text-orange-600 flex items-center gap-1 transition-colors"
             >
-              View All <ArrowRight className="w-3 h-3" />
+              View All <ArrowRight className="w-3.5 h-3.5" />
             </button>
           </div>
 
@@ -363,6 +397,136 @@ export function DashboardHome({ onNavigateToChat, onNavigateToDiet }: DashboardH
           </div>
         </motion.div>
       </div>
+
+      {/* Share Full Card Dialog */}
+      <AnimatePresence>
+        {shareDialogOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/45 backdrop-blur-sm z-[100] flex items-center justify-center p-4"
+            onClick={() => setShareDialogOpen(false)}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.92, y: 15 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.92, y: 15 }}
+              transition={{ type: "spring", stiffness: 300, damping: 25 }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-[#FDF6EE] border border-orange-100 rounded-3xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col"
+            >
+              {/* Header */}
+              <div className="flex items-center justify-between px-6 py-4 border-b border-orange-100/50 bg-[#FFF6EE]/50">
+                <div className="flex items-center gap-2">
+                  <Share2 className="w-4 h-4 text-orange-500" />
+                  <h3 className="text-sm font-bold text-[#0F172A]">Share Full Health Card</h3>
+                </div>
+                <button
+                  onClick={() => setShareDialogOpen(false)}
+                  className="p-1.5 rounded-lg hover:bg-orange-50 transition-colors"
+                >
+                  <X className="w-4 h-4 text-slate-500" />
+                </button>
+              </div>
+
+              {/* Share Card Preview */}
+              <div className="p-5 space-y-5">
+                <div className="text-center space-y-1">
+                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Export Preview</p>
+                </div>
+
+                {/* Simulated Health Card Miniature */}
+                <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#0F172A] via-[#1a2744] to-[#0F172A] p-5 text-white shadow-lg border border-slate-800">
+                  <div className="flex items-center justify-between border-b border-white/10 pb-3 mb-4">
+                    <div className="flex items-center gap-2">
+                      <div className="w-6 h-6 rounded-lg bg-orange-500 flex items-center justify-center">
+                        <Heart className="w-3.5 h-3.5 text-white" />
+                      </div>
+                      <span className="text-[11px] font-black tracking-wider text-orange-400">DIAPREDIX CARD</span>
+                    </div>
+                    <span className="text-[8px] font-bold text-white/50">Rahul Sharma</span>
+                  </div>
+
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <p className="text-[8px] text-white/40 uppercase tracking-widest">Diabetes Risk</p>
+                      <h4 className="text-xl font-extrabold mt-0.5">32 <span className="text-xs text-white/40">/ 100</span></h4>
+                      <div className="flex items-center gap-1.5 bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full mt-2 text-[8px] font-bold w-fit">
+                        <Sparkles className="w-2 h-2" /> Low Risk
+                      </div>
+                    </div>
+
+                    <div className="w-16 h-16 relative flex items-center justify-center">
+                      <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">
+                        <circle cx="50" cy="50" r="40" fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="8" />
+                        <circle cx="50" cy="50" r="40" fill="none" stroke="#10b981" strokeWidth="8" strokeDasharray={2 * Math.PI * 40} strokeDashoffset={2 * Math.PI * 40 * (1 - 0.32)} />
+                      </svg>
+                      <span className="absolute text-xs font-black">32%</span>
+                    </div>
+                  </div>
+
+                  <div className="border-t border-white/5 mt-4 pt-3 flex justify-between items-center text-[7px] text-white/30">
+                    <span>Better than 70% of users</span>
+                    <span>Verify at: diapredix.com</span>
+                  </div>
+                </div>
+
+                {/* Actions */}
+                <div className="space-y-2.5">
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={async () => {
+                      setSharingStatus("generating")
+                      setTimeout(() => {
+                        setSharingStatus("done")
+                        setTimeout(() => {
+                          setSharingStatus("idle")
+                          alert("Full Health Card downloaded as Image (PNG) successfully!")
+                        }, 800)
+                      }, 1200)
+                    }}
+                    className="w-full bg-gradient-to-r from-orange-500 to-orange-600 text-white py-2.5 rounded-xl font-bold text-xs shadow-md shadow-orange-500/20 flex items-center justify-center gap-2 cursor-pointer"
+                    disabled={sharingStatus !== "idle"}
+                  >
+                    {sharingStatus === "generating" ? (
+                      <>
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        Generating Card Image...
+                      </>
+                    ) : sharingStatus === "done" ? (
+                      <>
+                        <Check className="w-3.5 h-3.5" />
+                        Card Image Downloaded!
+                      </>
+                    ) : (
+                      <>
+                        <Download className="w-3.5 h-3.5" />
+                        Download Full Card Image
+                      </>
+                    )}
+                  </motion.button>
+
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={async () => {
+                      const shareText = `Check out my Diapredix Health Card!\nMy diabetes risk is 32/100 (Low Risk) and better than 70% of platform users. View card at: https://diapredix.com/share/rahul-sharma-risk-32`
+                      await navigator.clipboard.writeText(shareText)
+                      alert("Share link with full card copied to clipboard!")
+                    }}
+                    className="w-full bg-white hover:bg-orange-50/25 text-[#0F172A] border border-orange-200/50 py-2.5 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer"
+                  >
+                    <Copy className="w-3.5 h-3.5 text-slate-500" />
+                    Copy Share Link
+                  </motion.button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }

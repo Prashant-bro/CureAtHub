@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState } from "react"
+import React, { useState, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import {
   User,
@@ -9,11 +9,14 @@ import {
   Globe,
   CheckCircle,
   X,
-  Edit3,
+  Camera,
+  Lock
 } from "lucide-react"
 
 interface DashboardProfileProps {
   onNavigateToChat: () => void
+  profileImage: string | null
+  setProfileImage: (img: string | null) => void
 }
 
 const languages = [
@@ -28,9 +31,28 @@ const languages = [
   { code: "gu", name: "Gujarati", native: "ગુજરાતી" },
 ]
 
-export function DashboardProfile({ onNavigateToChat }: DashboardProfileProps) {
+export function DashboardProfile({ onNavigateToChat, profileImage, setProfileImage }: DashboardProfileProps) {
   const [selectedLanguage, setSelectedLanguage] = useState("en")
   const [langModalOpen, setLangModalOpen] = useState(false)
+
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const triggerFileInput = () => {
+    fileInputRef.current?.click()
+  }
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0]
+      const reader = new FileReader()
+      reader.onload = (event) => {
+        if (event.target?.result) {
+          setProfileImage(event.target.result as string)
+        }
+      }
+      reader.readAsDataURL(file)
+    }
+  }
 
   return (
     <>
@@ -97,15 +119,28 @@ export function DashboardProfile({ onNavigateToChat }: DashboardProfileProps) {
         {/* Avatar & Name */}
         <div className="flex flex-col items-center text-center pb-4 border-b border-orange-100/50">
           <div className="relative mb-3">
-            <div className="w-20 h-20 rounded-full bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center text-white font-bold text-2xl shadow-xl shadow-orange-500/25">
-              RS
+            <div className="w-20 h-20 rounded-full bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center text-white font-bold text-2xl shadow-xl shadow-orange-500/25 overflow-hidden">
+              {profileImage ? (
+                <img src={profileImage} className="w-full h-full object-cover" alt="Profile" />
+              ) : (
+                "RS"
+              )}
             </div>
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleFileChange}
+              accept="image/*"
+              className="hidden"
+            />
             <motion.button
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
-              className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-white border-2 border-orange-200 flex items-center justify-center shadow-sm"
+              onClick={triggerFileInput}
+              className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-white border-2 border-orange-200 flex items-center justify-center shadow-sm hover:border-orange-500 transition-colors"
+              title="Upload photo"
             >
-              <Edit3 className="w-3 h-3 text-orange-500" />
+              <Camera className="w-3.5 h-3.5 text-orange-500" />
             </motion.button>
           </div>
           <h3 className="text-lg font-bold text-[#0F172A]">Rahul Sharma</h3>
@@ -163,6 +198,42 @@ export function DashboardProfile({ onNavigateToChat }: DashboardProfileProps) {
               Change
             </span>
           </button>
+
+          {/* Family Profiles Locked Slots */}
+          <div className="bg-white/80 border border-slate-100 rounded-xl p-4 space-y-3 shadow-sm">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Active Profiles</span>
+              <span className="text-[8px] font-black text-orange-600 bg-orange-100 px-2 py-0.5 rounded-full uppercase tracking-wider">Premium Option</span>
+            </div>
+
+            <div className="space-y-2">
+              <div className="flex items-center gap-2.5 text-xs text-slate-700 font-semibold px-1 py-1 bg-orange-50/20 border border-orange-100/30 rounded-xl">
+                <CheckCircle className="w-4 h-4 text-emerald-500 shrink-0" />
+                <span className="truncate">Profile 1: Rahul Sharma (Primary)</span>
+              </div>
+              
+              <div className="w-full flex items-center justify-between p-2.5 rounded-xl border border-dashed border-slate-200 text-slate-400 text-xs">
+                <div className="flex items-center gap-2 text-slate-400/80">
+                  <Lock className="w-3.5 h-3.5 text-slate-300" />
+                  <span>Profile 2: Locked (Premium Only)</span>
+                </div>
+              </div>
+
+              <div className="w-full flex items-center justify-between p-2.5 rounded-xl border border-dashed border-slate-200 text-slate-400 text-xs">
+                <div className="flex items-center gap-2 text-slate-400/80">
+                  <Lock className="w-3.5 h-3.5 text-slate-300" />
+                  <span>Profile 3: Locked (Premium Only)</span>
+                </div>
+              </div>
+
+              <div className="w-full flex items-center justify-between p-2.5 rounded-xl border border-dashed border-slate-200 text-slate-400 text-xs">
+                <div className="flex items-center gap-2 text-slate-400/80">
+                  <Lock className="w-3.5 h-3.5 text-slate-300" />
+                  <span>Profile 4: Locked (Premium Only)</span>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Quick Actions */}

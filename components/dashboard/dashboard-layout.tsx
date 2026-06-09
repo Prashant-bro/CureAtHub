@@ -8,6 +8,7 @@ import {
   Activity,
   Home,
   MessageCircle,
+  FileText,
   Camera,
   Dumbbell,
   Settings,
@@ -17,18 +18,22 @@ import {
   Bell,
   ChevronRight,
   UserCircle,
+  Sparkles,
 } from "lucide-react"
 import { DashboardHome } from "./dashboard-home"
 import { DashboardProfile } from "./dashboard-profile"
 import { DashboardChat } from "./dashboard-chat"
 import { DashboardMealScan } from "./dashboard-meal-scan"
 import { DashboardDiet } from "./dashboard-diet"
+import { DashboardReportAnalyzer } from "./dashboard-report-analyzer"
+import { DashboardPricing } from "./dashboard-pricing"
 
-type ActiveSection = "home" | "chat" | "meal-scan" | "diet"
+type ActiveSection = "home" | "chat" | "report-analyzer" | "meal-scan" | "diet" | "pricing"
 
 const navItems = [
   { id: "home" as const, label: "Home", icon: Home },
   { id: "chat" as const, label: "AI Chat", icon: MessageCircle },
+  { id: "report-analyzer" as const, label: "Report Analyzer", icon: FileText },
   { id: "meal-scan" as const, label: "Meal Scanner", icon: Camera },
   { id: "diet" as const, label: "Diet & Exercise", icon: Dumbbell },
 ]
@@ -36,26 +41,39 @@ const navItems = [
 const sectionSubtitles: Record<ActiveSection, string> = {
   home: "Your health overview at a glance",
   chat: "Chat with your AI health assistant",
+  "report-analyzer": "Analyze health reports & medical PDFs",
   "meal-scan": "Scan & analyze your meals",
   diet: "Track diet & exercise plans",
+  pricing: "Premium upgrade plans and pricing offers",
 }
 
 export function DashboardLayout() {
   const [activeSection, setActiveSection] = useState<ActiveSection>("home")
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [profileOpen, setProfileOpen] = useState(false)
+  const [profileImage, setProfileImage] = useState<string | null>(null)
   const router = useRouter()
 
   const renderSection = () => {
     switch (activeSection) {
       case "home":
-        return <DashboardHome onNavigateToChat={() => setActiveSection("chat")} onNavigateToDiet={() => setActiveSection("diet")} />
+        return (
+          <DashboardHome
+            onNavigateToChat={() => setActiveSection("chat")}
+            onNavigateToDiet={() => setActiveSection("diet")}
+            onNavigateToReportAnalyzer={() => setActiveSection("report-analyzer")}
+          />
+        )
       case "chat":
         return <DashboardChat onOpenSidebar={() => setSidebarOpen(true)} />
+      case "report-analyzer":
+        return <DashboardReportAnalyzer />
       case "meal-scan":
         return <DashboardMealScan />
       case "diet":
         return <DashboardDiet />
+      case "pricing":
+        return <DashboardPricing />
     }
   }
 
@@ -114,7 +132,11 @@ export function DashboardLayout() {
             </div>
             {/* Panel Content */}
             <div className="flex-1 overflow-y-auto px-5 py-5">
-              <DashboardProfile onNavigateToChat={() => { setProfileOpen(false); setActiveSection("chat") }} />
+              <DashboardProfile
+                onNavigateToChat={() => { setProfileOpen(false); setActiveSection("chat") }}
+                profileImage={profileImage}
+                setProfileImage={setProfileImage}
+              />
             </div>
           </motion.div>
         )}
@@ -150,8 +172,12 @@ export function DashboardLayout() {
           onClick={() => { setProfileOpen(true); setSidebarOpen(false) }}
           className="px-5 py-4 border-b border-orange-50 flex items-center gap-3 hover:bg-orange-50/40 transition-colors w-full text-left group"
         >
-          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center text-white font-bold text-sm shadow-md group-hover:shadow-lg transition-shadow">
-            RS
+          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center text-white font-bold text-sm shadow-md group-hover:shadow-lg transition-shadow overflow-hidden shrink-0">
+            {profileImage ? (
+              <img src={profileImage} className="w-full h-full object-cover" alt="Avatar" />
+            ) : (
+              "RS"
+            )}
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-bold text-[#0F172A] truncate">Rahul Sharma</p>
@@ -196,6 +222,27 @@ export function DashboardLayout() {
 
         {/* Bottom Actions */}
         <div className="px-3 py-4 border-t border-orange-50 space-y-1">
+          <button
+            onClick={() => {
+              setActiveSection("pricing")
+              setSidebarOpen(false)
+            }}
+            className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all relative ${
+              activeSection === "pricing"
+                ? "text-orange-600 bg-orange-50/80"
+                : "text-slate-500 hover:text-slate-700 hover:bg-slate-50/60"
+            }`}
+          >
+            {activeSection === "pricing" && (
+              <motion.div
+                layoutId="sidebar-indicator-bottom"
+                className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 bg-gradient-to-b from-orange-500 to-orange-600 rounded-full"
+                transition={{ type: "spring", stiffness: 300, damping: 25 }}
+              />
+            )}
+            <Sparkles className="w-[18px] h-[18px]" strokeWidth={activeSection === "pricing" ? 2.5 : 2} />
+            <span>Prices</span>
+          </button>
           <button className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium text-slate-500 hover:text-slate-700 hover:bg-slate-50/60 transition-all">
             <Settings className="w-[18px] h-[18px]" />
             <span>Settings</span>
@@ -241,14 +288,17 @@ export function DashboardLayout() {
                   <Bell className="w-[18px] h-[18px] text-slate-500" />
                   <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-orange-500 rounded-full" />
                 </motion.button>
-                {/* Profile Avatar Button */}
                 <motion.button
                   onClick={() => setProfileOpen(true)}
                   whileHover={{ scale: 1.08 }}
                   whileTap={{ scale: 0.95 }}
-                  className="w-9 h-9 rounded-full bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center text-white font-bold text-xs shadow-md hover:shadow-lg transition-shadow cursor-pointer"
+                  className="w-9 h-9 rounded-full bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center text-white font-bold text-xs shadow-md hover:shadow-lg transition-shadow cursor-pointer overflow-hidden"
                 >
-                  RS
+                  {profileImage ? (
+                    <img src={profileImage} className="w-full h-full object-cover" alt="Avatar" />
+                  ) : (
+                    "RS"
+                  )}
                 </motion.button>
               </div>
             </div>
