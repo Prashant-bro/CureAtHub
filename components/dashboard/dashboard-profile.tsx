@@ -145,6 +145,17 @@ export function DashboardProfile({ onNavigateToChat, profileImage, setProfileIma
           </div>
           <h3 className="text-lg font-bold text-[#0F172A]">Rahul Sharma</h3>
           <p className="text-sm text-slate-400">@rahul_sharma</p>
+          
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={triggerFileInput}
+            className="mt-2.5 inline-flex items-center gap-1.5 px-3 py-1.5 bg-orange-50 hover:bg-orange-100 text-orange-600 rounded-xl text-xs font-bold transition-all border border-orange-100/50 cursor-pointer"
+          >
+            <Camera className="w-3.5 h-3.5" />
+            Upload Profile Photo
+          </motion.button>
+
           <div className="flex items-center gap-1.5 mt-2">
             <CheckCircle className="w-3.5 h-3.5 text-emerald-500" />
             <span className="text-[11px] font-semibold text-emerald-600">Verified Account</span>

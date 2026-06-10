@@ -19,6 +19,7 @@ import {
   ChevronRight,
   UserCircle,
   Sparkles,
+  Trophy,
 } from "lucide-react"
 import { DashboardHome } from "./dashboard-home"
 import { DashboardProfile } from "./dashboard-profile"
@@ -27,8 +28,9 @@ import { DashboardMealScan } from "./dashboard-meal-scan"
 import { DashboardDiet } from "./dashboard-diet"
 import { DashboardReportAnalyzer } from "./dashboard-report-analyzer"
 import { DashboardPricing } from "./dashboard-pricing"
+import { DashboardCommunity } from "./dashboard-community"
 
-type ActiveSection = "home" | "chat" | "report-analyzer" | "meal-scan" | "diet" | "pricing"
+type ActiveSection = "home" | "chat" | "report-analyzer" | "meal-scan" | "diet" | "pricing" | "community"
 
 const navItems = [
   { id: "home" as const, label: "Home", icon: Home },
@@ -36,6 +38,7 @@ const navItems = [
   { id: "report-analyzer" as const, label: "Report Analyzer", icon: FileText },
   { id: "meal-scan" as const, label: "Meal Scanner", icon: Camera },
   { id: "diet" as const, label: "Diet & Exercise", icon: Dumbbell },
+  { id: "community" as const, label: "Community & Rewards", icon: Trophy },
 ]
 
 const sectionSubtitles: Record<ActiveSection, string> = {
@@ -45,6 +48,7 @@ const sectionSubtitles: Record<ActiveSection, string> = {
   "meal-scan": "Scan & analyze your meals",
   diet: "Track diet & exercise plans",
   pricing: "Premium upgrade plans and pricing offers",
+  community: "See success stories, leaderboards, and rewards",
 }
 
 export function DashboardLayout() {
@@ -74,6 +78,8 @@ export function DashboardLayout() {
         return <DashboardDiet />
       case "pricing":
         return <DashboardPricing />
+      case "community":
+        return <DashboardCommunity />
     }
   }
 
