@@ -1,7 +1,8 @@
 "use client"
 
-import React, { useState } from "react"
+import React, { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
+import { DashboardSkeleton } from "./dashboard-skeleton"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import {
@@ -20,6 +21,7 @@ import {
   UserCircle,
   Sparkles,
   Trophy,
+  RefreshCw,
 } from "lucide-react"
 import { DashboardHome } from "./dashboard-home"
 import { DashboardProfile } from "./dashboard-profile"
@@ -58,14 +60,106 @@ export function DashboardLayout() {
   const [profileImage, setProfileImage] = useState<string | null>(null)
   const router = useRouter()
 
+  const [isOnline, setIsOnline] = useState<boolean>(true)
+  const [loadingSection, setLoadingSection] = useState<boolean>(true)
+  const [hasConnectionError, setHasConnectionError] = useState<boolean>(false)
+
+  const checkIsSlowConnection = (): boolean => {
+    if (typeof window !== "undefined" && typeof navigator !== "undefined") {
+      const conn = (navigator as any).connection || (navigator as any).mozConnection || (navigator as any).webkitConnection
+      if (conn) {
+        if (conn.saveData || ["slow-2g", "2g", "3g"].includes(conn.effectiveType)) {
+          return true
+        }
+      }
+    }
+    return false
+  }
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setIsOnline(window.navigator.onLine)
+      const handleOnline = () => {
+        setIsOnline(true)
+        setHasConnectionError(false)
+      }
+      const handleOffline = () => {
+        setIsOnline(false)
+      }
+      window.addEventListener("online", handleOnline)
+      window.addEventListener("offline", handleOffline)
+
+      const isPoorConnection = checkIsSlowConnection()
+      if (!isPoorConnection && window.navigator.onLine) {
+        // Proper, healthy connection loads UI instantly, no fake delays!
+        setLoadingSection(false)
+      } else {
+        // Slow or offline connection takes time to resolve/display data
+        const loadTimer = setTimeout(() => {
+          setLoadingSection(false)
+          if (!window.navigator.onLine) {
+            setHasConnectionError(true)
+          }
+        }, 1200)
+
+        return () => {
+          window.removeEventListener("online", handleOnline)
+          window.removeEventListener("offline", handleOffline)
+          clearTimeout(loadTimer)
+        }
+      }
+
+      return () => {
+        window.removeEventListener("online", handleOnline)
+        window.removeEventListener("offline", handleOffline)
+      }
+    }
+  }, [])
+
+  const handleSectionChange = (section: ActiveSection) => {
+    const isPoorConnection = checkIsSlowConnection()
+
+    // If internet connection is proper and healthy, load instantly (0ms delay)
+    if (!isPoorConnection && window.navigator.onLine) {
+      setActiveSection(section)
+      setHasConnectionError(false)
+      setLoadingSection(false)
+      return
+    }
+
+    // Only introduce loading delay and show skeleton if internet quality is low
+    setLoadingSection(true)
+    setHasConnectionError(false)
+
+    setTimeout(() => {
+      setActiveSection(section)
+      if (!window.navigator.onLine) {
+        setHasConnectionError(true)
+      }
+      setLoadingSection(false)
+    }, 1200)
+  }
+
+  const handleRetryConnection = () => {
+    setLoadingSection(true)
+    setTimeout(() => {
+      setLoadingSection(false)
+      if (!window.navigator.onLine) {
+        setHasConnectionError(true)
+      } else {
+        setHasConnectionError(false)
+      }
+    }, 1000)
+  }
+
   const renderSection = () => {
     switch (activeSection) {
       case "home":
         return (
           <DashboardHome
-            onNavigateToChat={() => setActiveSection("chat")}
-            onNavigateToDiet={() => setActiveSection("diet")}
-            onNavigateToReportAnalyzer={() => setActiveSection("report-analyzer")}
+            onNavigateToChat={() => handleSectionChange("chat")}
+            onNavigateToDiet={() => handleSectionChange("diet")}
+            onNavigateToReportAnalyzer={() => handleSectionChange("report-analyzer")}
           />
         )
       case "chat":
@@ -139,7 +233,7 @@ export function DashboardLayout() {
             {/* Panel Content */}
             <div className="flex-1 overflow-y-auto px-5 py-5">
               <DashboardProfile
-                onNavigateToChat={() => { setProfileOpen(false); setActiveSection("chat") }}
+                onNavigateToChat={() => { setProfileOpen(false); handleSectionChange("chat") }}
                 profileImage={profileImage}
                 setProfileImage={setProfileImage}
               />
@@ -200,7 +294,7 @@ export function DashboardLayout() {
               <motion.button
                 key={item.id}
                 onClick={() => {
-                  setActiveSection(item.id)
+                  handleSectionChange(item.id)
                   setSidebarOpen(false)
                 }}
                 className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all relative ${
@@ -230,7 +324,7 @@ export function DashboardLayout() {
         <div className="px-3 py-4 border-t border-orange-50 space-y-1">
           <button
             onClick={() => {
-              setActiveSection("pricing")
+              handleSectionChange("pricing")
               setSidebarOpen(false)
             }}
             className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all relative ${
@@ -311,18 +405,34 @@ export function DashboardLayout() {
           </header>
         )}
 
+        {/* Global Connection offline banner */}
+        {!isOnline && (
+          <div className="bg-red-500 text-white text-[11px] font-bold px-4 py-2.5 flex items-center justify-between shadow-sm z-50">
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-white animate-ping" />
+              <span>Offline Mode: The application is currently running offline. Checking network quality...</span>
+            </div>
+          </div>
+        )}
+
         {/* Section Content */}
-        <main className={`flex-1 ${activeSection === "chat" ? "p-0" : "px-4 sm:px-6 lg:px-8 py-6"}`}>
+        <main className={`flex-1 ${activeSection === "chat" && !loadingSection && isOnline && !hasConnectionError ? "p-0" : "px-4 sm:px-6 lg:px-8 py-6"}`}>
           <AnimatePresence mode="wait">
             <motion.div
-              key={activeSection}
+              key={loadingSection ? "loading" : (!isOnline || hasConnectionError) ? "offline" : activeSection}
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -12 }}
               transition={{ duration: 0.3, ease: [0.25, 0.4, 0.25, 1] }}
-              className={activeSection === "chat" ? "h-screen flex flex-col" : ""}
+              className={activeSection === "chat" && !loadingSection && isOnline && !hasConnectionError ? "h-screen flex flex-col" : ""}
             >
-              {renderSection()}
+              {loadingSection ? (
+                <DashboardSkeleton type="loading" />
+              ) : (!isOnline || hasConnectionError) ? (
+                <DashboardSkeleton type="offline" onRetry={handleRetryConnection} />
+              ) : (
+                renderSection()
+              )}
             </motion.div>
           </AnimatePresence>
         </main>
