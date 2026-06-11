@@ -230,7 +230,7 @@ export function DashboardChat({ onOpenSidebar }: DashboardChatProps) {
                   <div
                     className={`max-w-[80%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${
                       msg.role === "user"
-                        ? "bg-gradient-to-r from-orange-50 to-orange-600 text-white rounded-br-md shadow-md shadow-orange-500/15"
+                        ? "bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-br-md shadow-md shadow-orange-500/15"
                         : "bg-white border border-slate-100 text-slate-700 rounded-bl-md shadow-sm"
                     }`}
                   >
