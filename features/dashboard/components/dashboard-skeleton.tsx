@@ -3,7 +3,7 @@
 import React from "react"
 import { motion } from "framer-motion"
 import { Skeleton } from "@/components/ui/skeleton"
-import { WifiOff, Loader2, RefreshCw, AlertCircle } from "lucide-react"
+import { WifiOff, Loader2, RefreshCw } from "lucide-react"
 
 interface DashboardSkeletonProps {
   type?: "loading" | "offline"
@@ -15,7 +15,6 @@ export function DashboardSkeleton({ type = "loading", onRetry }: DashboardSkelet
 
   return (
     <div className="max-w-5xl mx-auto space-y-6 relative">
-      {/* Offline Status Alert Overlay */}
       {isOffline && (
         <motion.div
           initial={{ opacity: 0, y: -20 }}
@@ -50,7 +49,6 @@ export function DashboardSkeleton({ type = "loading", onRetry }: DashboardSkelet
         </motion.div>
       )}
 
-      {/* Screen Loading Status Bar */}
       {!isOffline && (
         <div className="bg-orange-50/50 border border-orange-100/50 rounded-2xl p-4 flex items-center gap-3">
           <Loader2 className="w-4 h-4 text-orange-500 animate-spin" />
@@ -60,19 +58,14 @@ export function DashboardSkeleton({ type = "loading", onRetry }: DashboardSkelet
         </div>
       )}
 
-      {/* Header Skeleton Block */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="space-y-2">
-          {/* Welcome title skeleton */}
           <Skeleton className="h-7 w-48 rounded-lg bg-orange-100/30" />
-          {/* Subtitle skeleton */}
           <Skeleton className="h-4 w-64 rounded-md bg-orange-100/20" />
         </div>
-        {/* Date / Action badge skeleton */}
         <Skeleton className="h-10 w-36 rounded-xl hidden sm:block bg-orange-100/30" />
       </div>
 
-      {/* Hero Card Skeleton */}
       <div className="relative overflow-hidden rounded-3xl bg-slate-900 p-6 sm:p-8 shadow-xl min-h-[220px] flex flex-col justify-between">
         <div className="absolute top-0 right-0 w-64 h-64 opacity-5">
           <svg viewBox="0 0 200 200" className="w-full h-full">
@@ -102,7 +95,6 @@ export function DashboardSkeleton({ type = "loading", onRetry }: DashboardSkelet
         </div>
       </div>
 
-      {/* Secondary Feature Card Skeleton */}
       <div className="rounded-3xl bg-white border border-orange-100/50 p-6 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div className="flex gap-4 items-start sm:items-center">
           <Skeleton className="w-12 h-12 rounded-2xl bg-orange-100/30" />
@@ -114,7 +106,6 @@ export function DashboardSkeleton({ type = "loading", onRetry }: DashboardSkelet
         <Skeleton className="h-9 w-32 rounded-xl bg-orange-100/30" />
       </div>
 
-      {/* Grid: Stats & Lists Skeletons */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {Array.from({ length: 4 }).map((_, i) => (
           <div key={i} className="bg-white border border-slate-100 rounded-2xl p-4 space-y-3">
@@ -125,7 +116,6 @@ export function DashboardSkeleton({ type = "loading", onRetry }: DashboardSkelet
         ))}
       </div>
 
-      {/* Layout Split: Two major columns */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {Array.from({ length: 2 }).map((_, colIdx) => (
           <div key={colIdx} className="bg-white border border-slate-100 rounded-2xl p-5 space-y-4">

@@ -54,7 +54,6 @@ export function HowItWorksSection() {
       className="py-24 relative overflow-hidden bg-[#FFFBF7]"
     >
       <div className="max-w-7xl mx-auto px-6 relative z-10">
-        {/* Section Header */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -79,9 +78,7 @@ export function HowItWorksSection() {
           </p>
         </motion.div>
 
-        {/* Steps */}
         <div className="grid lg:grid-cols-3 gap-8 relative">
-          {/* Connecting line (desktop) */}
           <div className="hidden lg:block absolute top-24 left-[17%] right-[17%] h-[3px]">
             <motion.div
               className="h-full bg-gradient-to-r from-orange-400 via-teal-400 to-violet-500 rounded-full"
@@ -104,7 +101,6 @@ export function HowItWorksSection() {
               }}
               className="relative text-center group"
             >
-              {/* Step number circle */}
               <motion.div
                 className="relative mx-auto mb-8"
                 whileHover={{ scale: 1.08 }}
@@ -120,7 +116,6 @@ export function HowItWorksSection() {
                   animate={isInView ? { scale: [1, 1.25, 1], opacity: [0.25, 0.45, 0.25] } : {}}
                   transition={{ duration: 3, repeat: Infinity, ease: "easeInOut", delay: index * 0.5 }}
                 />
-                {/* Step number badge */}
                 <div
                   className={`absolute -top-2 -right-2 w-8 h-8 rounded-full ${step.dotColor} text-white text-xs font-extrabold flex items-center justify-center shadow-md z-20`}
                 >
@@ -128,7 +123,6 @@ export function HowItWorksSection() {
                 </div>
               </motion.div>
  
-              {/* Content */}
               <h3 className="text-xl font-bold text-[#0F172A] mb-3 group-hover:text-primary transition-colors duration-300">{step.title}</h3>
               <p className="text-slate-600 text-sm leading-relaxed max-w-xs mx-auto">
                 {step.description}

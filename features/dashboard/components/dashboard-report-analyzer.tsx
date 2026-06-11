@@ -9,14 +9,10 @@ import {
   CheckCircle2,
   AlertTriangle,
   TrendingDown,
-  Info,
-  RefreshCw,
   ArrowLeft,
   Sparkles,
   Heart,
   Activity,
-  ArrowRight,
-  TrendingUp,
   X,
   FileCheck
 } from "lucide-react"
@@ -33,7 +29,6 @@ import {
   Tooltip
 } from "recharts"
 
-// Define clinical profile schemas
 interface Biomarker {
   name: string
   value: number
@@ -172,7 +167,6 @@ export function DashboardReportAnalyzer() {
   const [dragActive, setDragActive] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  // Handlers for mock drag and drop
   const handleDrag = (e: React.DragEvent) => {
     e.preventDefault()
     e.stopPropagation()
@@ -214,7 +208,6 @@ export function DashboardReportAnalyzer() {
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
       const file = e.dataTransfer.files[0]
       const name = file.name
-      // Generate a profile for realistic display (Pre-diabetic if normal name, otherwise diabetic if matches keywords)
       const keyword = name.toLowerCase()
       let matchedProfile = CLINICAL_PROFILES.prediabetic
       if (keyword.includes("diab") || keyword.includes("high") || keyword.includes("report_high")) {
@@ -254,7 +247,6 @@ export function DashboardReportAnalyzer() {
   return (
     <div className="max-w-5xl mx-auto space-y-6">
       <AnimatePresence mode="wait">
-        {/* State 1: IDLE / UPLOAD */}
         {analyzingState === "idle" && (
           <motion.div
             key="idle"
@@ -263,7 +255,6 @@ export function DashboardReportAnalyzer() {
             exit={{ opacity: 0, y: -15 }}
             className="grid grid-cols-1 lg:grid-cols-3 gap-6"
           >
-            {/* Left Col: Upload Zone */}
             <div className="lg:col-span-2 space-y-5">
               <div
                 onDragEnter={handleDrag}
@@ -285,7 +276,6 @@ export function DashboardReportAnalyzer() {
                   className="hidden"
                 />
 
-                {/* Visual scan frame */}
                 <div className="relative w-20 h-20 mb-6 flex items-center justify-center bg-orange-50 rounded-2xl">
                   <Upload className="w-8 h-8 text-orange-500" />
                   <motion.div
@@ -311,7 +301,6 @@ export function DashboardReportAnalyzer() {
                 </p>
               </div>
 
-              {/* Informative reference range chart */}
               <div className="bg-white/70 border border-orange-100/40 rounded-3xl p-5 shadow-sm space-y-3">
                 <div>
                   <h4 className="text-xs font-bold text-[#0F172A]">Clinical Reference Thresholds</h4>
@@ -338,7 +327,6 @@ export function DashboardReportAnalyzer() {
               </div>
             </div>
 
-            {/* Right Col: Sample profiles for instant testing */}
             <div className="space-y-4">
               <div className="bg-white/70 backdrop-blur-xl border border-white/60 rounded-3xl p-5 shadow-sm space-y-4">
                 <div>
@@ -347,7 +335,6 @@ export function DashboardReportAnalyzer() {
                 </div>
 
                 <div className="space-y-2.5">
-                  {/* Option 1: Healthy */}
                   <button
                     onClick={() => startScanningSequence(CLINICAL_PROFILES.healthy, "Report_Healthy_Rahul.pdf")}
                     className="w-full flex items-center justify-between text-left p-3.5 rounded-xl bg-slate-50 border border-slate-100 hover:border-emerald-300 hover:bg-emerald-50/20 transition-all group"
@@ -366,7 +353,6 @@ export function DashboardReportAnalyzer() {
                     </span>
                   </button>
 
-                  {/* Option 2: Pre-diabetic */}
                   <button
                     onClick={() => startScanningSequence(CLINICAL_PROFILES.prediabetic, "Lab_Summary_Borderline.pdf")}
                     className="w-full flex items-center justify-between text-left p-3.5 rounded-xl bg-slate-50 border border-slate-100 hover:border-amber-300 hover:bg-amber-50/20 transition-all group"
@@ -385,7 +371,6 @@ export function DashboardReportAnalyzer() {
                     </span>
                   </button>
 
-                  {/* Option 3: Diabetic */}
                   <button
                     onClick={() => startScanningSequence(CLINICAL_PROFILES.diabetic, "Diagnostic_Diabetic_Severe.pdf")}
                     className="w-full flex items-center justify-between text-left p-3.5 rounded-xl bg-slate-50 border border-slate-100 hover:border-red-300 hover:bg-red-50/20 transition-all group"
@@ -409,7 +394,6 @@ export function DashboardReportAnalyzer() {
           </motion.div>
         )}
 
-        {/* State 2: SCANNING / LOADING */}
         {analyzingState === "scanning" && (
           <motion.div
             key="scanning"
@@ -419,7 +403,6 @@ export function DashboardReportAnalyzer() {
             className="max-w-xl mx-auto bg-white/70 backdrop-blur-xl border border-white/60 rounded-3xl p-8 text-center shadow-sm"
           >
             <div className="relative w-28 h-28 mx-auto mb-8 flex items-center justify-center">
-              {/* Spinning background */}
               <div className="absolute inset-0 rounded-full border-4 border-orange-100 border-t-orange-500 animate-spin" />
               <div className="w-20 h-20 rounded-full bg-orange-50 flex items-center justify-center">
                 <FileText className="w-9 h-9 text-orange-500 animate-pulse" />
@@ -431,7 +414,6 @@ export function DashboardReportAnalyzer() {
               Document: {uploadedFileName}
             </p>
 
-            {/* Checklist */}
             <div className="text-left bg-slate-50/60 rounded-2xl p-5 border border-slate-100/80 space-y-3.5">
               {SCAN_PHASES.map((phase, idx) => {
                 const isCompleted = idx < currentPhase
@@ -463,7 +445,6 @@ export function DashboardReportAnalyzer() {
           </motion.div>
         )}
 
-        {/* State 3: REPORT OVERVIEW RESULTS */}
         {analyzingState === "result" && selectedProfile && (
           <motion.div
             key="results"
@@ -472,7 +453,6 @@ export function DashboardReportAnalyzer() {
             exit={{ opacity: 0 }}
             className="space-y-6"
           >
-            {/* Top Bar Navigation */}
             <div className="flex items-center justify-between">
               <button
                 onClick={handleReset}
@@ -486,9 +466,7 @@ export function DashboardReportAnalyzer() {
               </div>
             </div>
 
-            {/* Risk Assessment Card & Score */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {/* Score Gauge */}
               <div className="bg-[#0F172A] rounded-3xl p-6 text-white flex flex-col justify-between relative overflow-hidden shadow-xl shadow-slate-900/10">
                 <div className="absolute top-0 right-0 w-32 h-32 bg-orange-500/5 rounded-full blur-2xl" />
                 <div className="relative z-10 flex items-center justify-between">
@@ -518,7 +496,6 @@ export function DashboardReportAnalyzer() {
                 </div>
               </div>
 
-              {/* Brief Analysis Summary */}
               <div className="md:col-span-2 bg-white/70 backdrop-blur-xl border border-white/60 rounded-3xl p-6 flex flex-col justify-between shadow-sm">
                 <div>
                   <div className="flex items-center gap-2.5 text-orange-500 mb-2.5">
@@ -538,9 +515,7 @@ export function DashboardReportAnalyzer() {
               </div>
             </div>
 
-            {/* Detailed Biomarker Scorecard */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Biomarkers List */}
               <div className="space-y-4">
                 <h4 className="text-sm font-bold text-[#0F172A] flex items-center gap-2">
                   <span>Detected Biomarkers</span>
@@ -552,31 +527,30 @@ export function DashboardReportAnalyzer() {
                     const isHigh = bm.status === "high"
                     const isBorderline = bm.status === "borderline"
 
-                    // Calculate horizontal segmented ranges
                     let greenWidth = 50
                     let yellowWidth = 0
                     let redWidth = 50
                     let pointerPos = 50
 
                     if (bm.name.includes("HbA1c")) {
-                      greenWidth = 57 // normal: <5.7
-                      yellowWidth = 7 // borderline: 5.7 - 6.4 (64% - 57%)
-                      redWidth = 36 // high: >=6.5 (100% - 64%)
+                      greenWidth = 57
+                      yellowWidth = 7
+                      redWidth = 36
                       pointerPos = Math.min((bm.value / 10) * 100, 100)
                     } else if (bm.name.includes("Fasting Blood Sugar")) {
-                      greenWidth = 50 // normal: <100
-                      yellowWidth = 12.5 // borderline: 100 - 125
-                      redWidth = 37.5 // high: >=126
+                      greenWidth = 50
+                      yellowWidth = 12.5
+                      redWidth = 37.5
                       pointerPos = Math.min((bm.value / 200) * 100, 100)
                     } else if (bm.name.includes("Post-Prandial Glucose")) {
-                      greenWidth = 46.6 // normal: <140
-                      yellowWidth = 19.7 // borderline: 140 - 199
-                      redWidth = 33.7 // high: >=200
+                      greenWidth = 46.6
+                      yellowWidth = 19.7
+                      redWidth = 33.7
                       pointerPos = Math.min((bm.value / 300) * 100, 100)
-                    } else { // Total Cholesterol
-                      greenWidth = 66.6 // normal: <200
+                    } else {
+                      greenWidth = 66.6
                       yellowWidth = 0
-                      redWidth = 33.4 // high: >=200
+                      redWidth = 33.4
                       pointerPos = Math.min((bm.value / 300) * 100, 100)
                     }
 
@@ -604,16 +578,13 @@ export function DashboardReportAnalyzer() {
                           </div>
                         </div>
 
-                        {/* Visual Segmented Range Chart with Pointer */}
                         <div className="relative mt-7 mb-5">
-                          {/* Segmented Track */}
                           <div className="h-1.5 w-full rounded-full bg-slate-100 flex overflow-hidden">
                             <div style={{ width: `${greenWidth}%` }} className="h-full bg-emerald-400/80" />
                             {yellowWidth > 0 && <div style={{ width: `${yellowWidth}%` }} className="h-full bg-amber-400/85" />}
                             <div style={{ width: `${redWidth}%` }} className="h-full bg-rose-400/80" />
                           </div>
 
-                          {/* Pointer Pin representing "Yours" */}
                           <div
                             className="absolute top-0 -translate-y-1/2 -translate-x-1/2 flex flex-col items-center z-10"
                             style={{ left: `${pointerPos}%` }}
@@ -624,7 +595,6 @@ export function DashboardReportAnalyzer() {
                             </div>
                           </div>
 
-                          {/* Range Labels Row */}
                           <div className="flex justify-between text-[8px] font-bold text-slate-400 mt-1.5 px-0.5">
                             <span>Normal</span>
                             {yellowWidth > 0 ? (
@@ -647,7 +617,6 @@ export function DashboardReportAnalyzer() {
                 </div>
               </div>
 
-              {/* Chart & Trend Visualization */}
               <div className="space-y-4">
                 <h4 className="text-sm font-bold text-[#0F172A]">Historical Trend Analysis</h4>
                 
@@ -663,7 +632,6 @@ export function DashboardReportAnalyzer() {
                     </div>
                   </div>
 
-                  {/* Recharts Area Chart */}
                   <div className="h-48 w-full">
                     <ResponsiveContainer width="100%" height="100%">
                       <AreaChart
@@ -702,14 +670,12 @@ export function DashboardReportAnalyzer() {
                   </p>
                 </div>
 
-                {/* Direct Action Plan suggestions */}
                 <div className="bg-white/70 backdrop-blur-xl border border-white/60 rounded-3xl p-5 shadow-sm space-y-4">
                   <h4 className="text-xs font-bold text-[#0F172A] tracking-wider uppercase flex items-center gap-1.5">
                     <Activity className="w-4 h-4 text-orange-500" /> AI Lifestyle Recommendations
                   </h4>
 
                   <div className="space-y-4">
-                    {/* Nutrition suggestions */}
                     <div>
                       <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Dietary Target</span>
                       <ul className="list-disc pl-4 space-y-1.5 mt-1.5 text-xs text-slate-600">
@@ -719,7 +685,6 @@ export function DashboardReportAnalyzer() {
                       </ul>
                     </div>
 
-                    {/* Exercise suggestions */}
                     <div>
                       <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Physical Target</span>
                       <ul className="list-disc pl-4 space-y-1.5 mt-1.5 text-xs text-slate-600">

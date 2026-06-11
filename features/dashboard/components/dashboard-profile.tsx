@@ -56,7 +56,6 @@ export function DashboardProfile({ onNavigateToChat, profileImage, setProfileIma
 
   return (
     <>
-      {/* Language Selection Modal */}
       <AnimatePresence>
         {langModalOpen && (
           <motion.div
@@ -116,7 +115,6 @@ export function DashboardProfile({ onNavigateToChat, profileImage, setProfileIma
       </AnimatePresence>
 
       <div className="space-y-5">
-        {/* Avatar & Name */}
         <div className="flex flex-col items-center text-center pb-4 border-b border-orange-100/50">
           <div className="relative mb-3">
             <div className="w-20 h-20 rounded-full bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center text-white font-bold text-2xl shadow-xl shadow-orange-500/25 overflow-hidden">
@@ -162,9 +160,7 @@ export function DashboardProfile({ onNavigateToChat, profileImage, setProfileIma
           </div>
         </div>
 
-        {/* Info Cards */}
         <div className="space-y-3">
-          {/* Email */}
           <div className="bg-white/80 border border-slate-100 rounded-xl p-4 flex items-center gap-3">
             <div className="w-9 h-9 rounded-lg bg-blue-50 flex items-center justify-center shrink-0">
               <Mail className="w-4 h-4 text-blue-500" />
@@ -175,7 +171,6 @@ export function DashboardProfile({ onNavigateToChat, profileImage, setProfileIma
             </div>
           </div>
 
-          {/* Phone */}
           <div className="bg-white/80 border border-slate-100 rounded-xl p-4 flex items-center gap-3">
             <div className="w-9 h-9 rounded-lg bg-emerald-50 flex items-center justify-center shrink-0">
               <Phone className="w-4 h-4 text-emerald-500" />
@@ -186,7 +181,6 @@ export function DashboardProfile({ onNavigateToChat, profileImage, setProfileIma
             </div>
           </div>
 
-          {/* Language — opens modal */}
           <button
             onClick={() => setLangModalOpen(true)}
             className="w-full bg-white/80 border border-slate-100 rounded-xl p-4 flex items-center gap-3 hover:border-orange-200 hover:bg-orange-50/30 transition-all text-left group"
@@ -210,7 +204,6 @@ export function DashboardProfile({ onNavigateToChat, profileImage, setProfileIma
             </span>
           </button>
 
-          {/* Family Profiles Locked Slots */}
           <div className="bg-white/80 border border-slate-100 rounded-xl p-4 space-y-3 shadow-sm">
             <div className="flex items-center justify-between">
               <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Active Profiles</span>
@@ -247,7 +240,6 @@ export function DashboardProfile({ onNavigateToChat, profileImage, setProfileIma
           </div>
         </div>
 
-        {/* Quick Actions */}
         <div className="pt-2 space-y-2">
           <motion.button
             onClick={onNavigateToChat}

@@ -59,7 +59,6 @@ export function DashboardHome({ onNavigateToChat, onNavigateToDiet, onNavigateTo
 
   return (
     <div className="max-w-5xl mx-auto space-y-6">
-      {/* Welcome Banner */}
       <motion.div
         variants={fadeUp} initial="hidden" animate="visible" custom={0}
         className="flex items-center justify-between"
@@ -83,12 +82,10 @@ export function DashboardHome({ onNavigateToChat, onNavigateToDiet, onNavigateTo
         </motion.div>
       </motion.div>
 
-      {/* Health Risk Card */}
       <motion.div
         variants={fadeUp} initial="hidden" animate="visible" custom={1}
         className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#0F172A] via-[#1a2744] to-[#0F172A] p-6 sm:p-8 shadow-2xl shadow-slate-900/20"
       >
-        {/* Decorative */}
         <div className="absolute top-0 right-0 w-64 h-64 opacity-10">
           <svg viewBox="0 0 200 200" className="w-full h-full">
             <circle cx="100" cy="100" r="80" fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth="1" />
@@ -103,7 +100,6 @@ export function DashboardHome({ onNavigateToChat, onNavigateToDiet, onNavigateTo
         />
 
         <div className="relative z-10">
-          {/* Card Header */}
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center shadow-lg shadow-orange-500/30">
@@ -115,7 +111,6 @@ export function DashboardHome({ onNavigateToChat, onNavigateToDiet, onNavigateTo
               </div>
             </div>
             <div className="flex items-center gap-2">
-              {/* Share Button */}
               <motion.button
                 onClick={handleShare}
                 whileHover={{ scale: 1.1 }}
@@ -133,14 +128,12 @@ export function DashboardHome({ onNavigateToChat, onNavigateToDiet, onNavigateTo
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-6 items-center">
-            {/* Left: Info */}
             <div className="space-y-5">
               <div>
                 <p className="text-white/40 text-xs uppercase tracking-wider mb-1">Patient Name</p>
                 <p className="text-white font-bold text-xl">Rahul Sharma</p>
               </div>
 
-              {/* Risk Badge */}
               <div className="flex items-center gap-3">
                 <div className="flex items-center gap-2 bg-emerald-50 rounded-full px-4 py-1.5">
                   <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
@@ -150,7 +143,6 @@ export function DashboardHome({ onNavigateToChat, onNavigateToDiet, onNavigateTo
                 <span className="text-white/50 text-xs">Last updated today</span>
               </div>
 
-              {/* Comparison Stat */}
               <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-4">
                 <div className="flex items-center gap-2 mb-2">
                   <TrendingUp className="w-4 h-4 text-emerald-400" />
@@ -169,7 +161,6 @@ export function DashboardHome({ onNavigateToChat, onNavigateToDiet, onNavigateTo
                 </div>
               </div>
 
-              {/* Actions Row */}
               <div className="flex items-center gap-3 flex-wrap">
                 <motion.button
                   onClick={onNavigateToChat}
@@ -193,7 +184,6 @@ export function DashboardHome({ onNavigateToChat, onNavigateToDiet, onNavigateTo
               </div>
             </div>
 
-            {/* Right: Risk Score Gauge */}
             <div className="flex justify-center">
               <div className="relative w-36 h-36 sm:w-44 sm:h-44">
                 <svg className="w-full h-full -rotate-90" viewBox="0 0 120 120">
@@ -231,7 +221,6 @@ export function DashboardHome({ onNavigateToChat, onNavigateToDiet, onNavigateTo
         </div>
       </motion.div>
 
-      {/* AI Report Analyzer Card */}
       <motion.div
         variants={fadeUp} initial="hidden" animate="visible" custom={2}
         className="relative overflow-hidden rounded-3xl bg-[#FFF6EE] border border-orange-200/50 p-6 shadow-sm hover:shadow-md transition-shadow group cursor-pointer"
@@ -267,7 +256,6 @@ export function DashboardHome({ onNavigateToChat, onNavigateToDiet, onNavigateTo
         </div>
       </motion.div>
 
-      {/* Quick Stats Row */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
           { icon: Droplets, label: "Water Intake", value: "6 / 8 glasses", color: "text-blue-500", bg: "bg-blue-50" },
@@ -289,9 +277,7 @@ export function DashboardHome({ onNavigateToChat, onNavigateToDiet, onNavigateTo
         ))}
       </div>
 
-      {/* Today's Schedule & Diet Info */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {/* Today's Meal Plan */}
         <motion.div
           variants={fadeUp} initial="hidden" animate="visible" custom={7}
           className="bg-white/70 backdrop-blur-xl border border-white/60 rounded-2xl p-5 shadow-sm"
@@ -344,7 +330,6 @@ export function DashboardHome({ onNavigateToChat, onNavigateToDiet, onNavigateTo
           </div>
         </motion.div>
 
-        {/* Today's Schedule */}
         <motion.div
           variants={fadeUp} initial="hidden" animate="visible" custom={8}
           className="bg-white/70 backdrop-blur-xl border border-white/60 rounded-2xl p-5 shadow-sm"
@@ -398,7 +383,6 @@ export function DashboardHome({ onNavigateToChat, onNavigateToDiet, onNavigateTo
         </motion.div>
       </div>
 
-      {/* Share Full Card Dialog */}
       <AnimatePresence>
         {shareDialogOpen && (
           <motion.div
@@ -416,7 +400,6 @@ export function DashboardHome({ onNavigateToChat, onNavigateToDiet, onNavigateTo
               onClick={(e) => e.stopPropagation()}
               className="bg-[#FDF6EE] border border-orange-100 rounded-3xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col"
             >
-              {/* Header */}
               <div className="flex items-center justify-between px-6 py-4 border-b border-orange-100/50 bg-[#FFF6EE]/50">
                 <div className="flex items-center gap-2">
                   <Share2 className="w-4 h-4 text-orange-500" />
@@ -430,13 +413,11 @@ export function DashboardHome({ onNavigateToChat, onNavigateToDiet, onNavigateTo
                 </button>
               </div>
 
-              {/* Share Card Preview */}
               <div className="p-5 space-y-5">
                 <div className="text-center space-y-1">
                   <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Export Preview</p>
                 </div>
 
-                {/* Simulated Health Card Miniature */}
                 <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#0F172A] via-[#1a2744] to-[#0F172A] p-5 text-white shadow-lg border border-slate-800">
                   <div className="flex items-center justify-between border-b border-white/10 pb-3 mb-4">
                     <div className="flex items-center gap-2">
@@ -472,7 +453,6 @@ export function DashboardHome({ onNavigateToChat, onNavigateToDiet, onNavigateTo
                   </div>
                 </div>
 
-                {/* Actions */}
                 <div className="space-y-2.5">
                   <motion.button
                     whileHover={{ scale: 1.02 }}

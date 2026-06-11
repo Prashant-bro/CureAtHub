@@ -5,11 +5,9 @@ import { motion } from "framer-motion"
 import {
   CheckCircle,
   Sparkles,
-  Shield,
   Activity,
   ArrowRight,
   TrendingUp,
-  X
 } from "lucide-react"
 
 const fadeUp = {
@@ -20,13 +18,6 @@ const fadeUp = {
     transition: { delay: i * 0.08, duration: 0.5, ease: [0.25, 0.4, 0.25, 1] as [number, number, number, number] },
   }),
 }
-
-const PREMIUM_FEATURES = [
-  "Add and manage up to 4 active family member profiles",
-  "Tailored diet and exercise planning with schedule timelines",
-  "Built-in exercise alarms, progress timers, and animated exercise guides",
-  "Advanced metabolic risk assessments and long-term trends charts"
-]
 
 const PRICING_PLANS = [
   {
@@ -107,7 +98,6 @@ export function DashboardPricing() {
 
   return (
     <div className="max-w-5xl mx-auto space-y-8">
-      {/* Title */}
       <motion.div
         variants={fadeUp} initial="hidden" animate="visible" custom={0}
         className="text-center space-y-2"
@@ -124,7 +114,6 @@ export function DashboardPricing() {
         </p>
       </motion.div>
 
-      {/* Pricing Cards Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-stretch">
         {PRICING_PLANS.map((plan, i) => (
           <motion.div
@@ -148,7 +137,6 @@ export function DashboardPricing() {
                 )}
               </div>
 
-              {/* Price Details */}
               <div className="mt-4">
                 <h3 className="text-3xl font-black text-[#0F172A]">
                   ₹{plan.price}
@@ -163,7 +151,6 @@ export function DashboardPricing() {
                 )}
               </div>
 
-              {/* Monthly Rate Comparison */}
               <div className="bg-slate-50/60 border border-slate-100 rounded-xl p-2.5 mt-3 text-center">
                 <span className="text-[8px] font-bold text-slate-400 uppercase tracking-wide">Monthly Breakdown</span>
                 <p className="text-sm font-extrabold text-[#0F172A] mt-0.5">₹{plan.monthlyEquivalent} <span className="text-[9px] font-normal text-slate-400">/ mo</span></p>
@@ -204,7 +191,6 @@ export function DashboardPricing() {
         ))}
       </div>
 
-      {/* Comparative Feature Matrix */}
       <motion.div
         variants={fadeUp} initial="hidden" animate="visible" custom={5}
         className="bg-white/70 border border-white/60 rounded-3xl p-5 shadow-sm space-y-5"
@@ -215,7 +201,6 @@ export function DashboardPricing() {
         </div>
 
         <div className="space-y-2">
-          {/* Comparison Header (hidden on mobile) */}
           <div className="hidden md:grid grid-cols-3 gap-4 pb-2 text-[9px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100/50">
             <span>Feature Name</span>
             <span>Free Tier</span>
@@ -258,16 +243,13 @@ export function DashboardPricing() {
               key={idx}
               className="grid grid-cols-1 md:grid-cols-3 gap-1 md:gap-4 py-2.5 border-b border-slate-100/50 text-[11px] hover:bg-orange-50/10 transition-colors rounded-xl px-1.5"
             >
-              {/* Row Title */}
               <span className="font-bold text-[#0F172A]">{row.name}</span>
               
-              {/* Free Value */}
               <div className="flex md:block gap-1.5">
                 <span className="md:hidden font-semibold text-slate-400 uppercase text-[8px] tracking-wide w-10 shrink-0">Free:</span>
                 <span className="text-slate-500">{row.free}</span>
               </div>
               
-              {/* Paid Value */}
               <div className="flex md:block gap-1.5">
                 <span className="md:hidden font-semibold text-orange-500 uppercase text-[8px] tracking-wide w-10 shrink-0">Paid:</span>
                 <span className="text-orange-600 font-bold">{row.paid}</span>

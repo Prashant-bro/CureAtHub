@@ -63,7 +63,6 @@ export function Footer() {
   return (
     <footer ref={footerRef} className="relative bg-[#0F172A] pt-20 pb-8 overflow-hidden">
       <div className="max-w-7xl mx-auto px-6">
-        {/* Newsletter CTA */}
         <motion.div
           initial={{ opacity: 0, y: 40 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -72,7 +71,6 @@ export function Footer() {
           className="relative mb-16"
         >
           <div className="bg-gradient-to-br from-teal-600 to-teal-700 rounded-3xl p-10 md:p-14 text-center relative overflow-hidden">
-            {/* Decorative elements */}
             <div className="absolute top-0 right-0 w-64 h-64 rounded-full bg-white/5 -translate-y-1/2 translate-x-1/3" />
             <div className="absolute bottom-0 left-0 w-48 h-48 rounded-full bg-white/5 translate-y-1/2 -translate-x-1/3" />
 
@@ -115,7 +113,6 @@ export function Footer() {
           </div>
         </motion.div>
 
-        {/* Footer Links */}
         <motion.div
           className="grid grid-cols-2 md:grid-cols-4 gap-8 py-10 border-t border-white/10"
           variants={containerVariants}
@@ -146,7 +143,6 @@ export function Footer() {
           ))}
         </motion.div>
 
-        {/* Bottom Bar */}
         <motion.div
           className="flex flex-col md:flex-row justify-between items-center pt-8 border-t border-white/10 gap-4"
           initial={{ opacity: 0 }}
@@ -154,7 +150,6 @@ export function Footer() {
           viewport={{ once: true }}
           transition={{ delay: 0.5 }}
         >
-          {/* Logo */}
           <Link href="/" className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-teal-500 to-teal-700 flex items-center justify-center">
               <Activity className="w-4 h-4 text-white" strokeWidth={2.5} />
@@ -175,7 +170,6 @@ export function Footer() {
         </motion.div>
       </div>
 
-      {/* Background watermark */}
       <motion.div
         className="absolute bottom-0 left-1/2 -translate-x-1/2 text-[12rem] md:text-[22rem] font-black text-white/[0.015] pointer-events-none select-none leading-none whitespace-nowrap"
         initial={{ y: 80, opacity: 0 }}

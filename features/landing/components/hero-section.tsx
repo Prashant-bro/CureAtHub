@@ -5,9 +5,7 @@ import { useRef } from "react"
 import { useRouter } from "next/navigation"
 import Image from "next/image"
 import {
-  FileText,
   Languages,
-  MessageCircle,
   Shield,
 } from "lucide-react"
 
@@ -75,7 +73,6 @@ export function HeroSection() {
       ref={ref}
       className="relative min-h-[92vh] flex items-center justify-center overflow-hidden bg-[#FDF6EE]"
     >
-      {/* Decorative blobs */}
       <motion.div
         className="absolute top-20 -left-20 w-72 h-72 rounded-full opacity-15"
         style={{ background: "radial-gradient(circle, rgba(255,87,34,0.08) 0%, transparent 70%)" }}
@@ -108,9 +105,7 @@ export function HeroSection() {
 
       <div className="relative z-10 max-w-7xl mx-auto px-6 pt-28 pb-16">
         <div className="grid lg:grid-cols-2 gap-12 items-center">
-          {/* Text Content */}
           <motion.div style={{ opacity }} className="space-y-6">
-            {/* Badge */}
             <motion.div
               variants={fadeUpVariants}
               initial="hidden"
@@ -126,7 +121,6 @@ export function HeroSection() {
               AI-Powered Diabetes Prevention
             </motion.div>
 
-            {/* Heading */}
             <div className="space-y-2">
               <motion.h1
                 variants={fadeUpVariants}
@@ -150,7 +144,6 @@ export function HeroSection() {
               </motion.p>
             </div>
 
-            {/* CTAs */}
             <motion.div
               variants={fadeUpVariants}
               initial="hidden"
@@ -185,7 +178,6 @@ export function HeroSection() {
               </motion.button>
             </motion.div>
 
-            {/* Trust Badges */}
             <motion.div
               variants={fadeUpVariants}
               initial="hidden"
@@ -209,7 +201,6 @@ export function HeroSection() {
             </motion.div>
           </motion.div>
 
-          {/* Hero Illustration */}
           <motion.div style={{ y, scale }} className="relative flex justify-center lg:justify-end">
             <motion.div
               initial={{ opacity: 0, scale: 0.85, y: 30 }}
@@ -225,7 +216,6 @@ export function HeroSection() {
                 perspective: 1000,
               }}
             >
-              {/* Glow behind image */}
               <motion.div
                 className="absolute inset-0 rounded-3xl opacity-40"
                 style={{ background: "radial-gradient(circle at center, rgba(255,87,34,0.15) 0%, transparent 70%)" }}
@@ -249,13 +239,11 @@ export function HeroSection() {
                   priority
                 />
               </motion.div>
-
             </motion.div>
           </motion.div>
         </div>
       </div>
 
-      {/* Scroll indicator */}
       <motion.div
         className="absolute bottom-8 left-1/2 -translate-x-1/2"
         initial={{ opacity: 0, y: 20 }}

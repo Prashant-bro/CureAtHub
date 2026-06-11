@@ -4,24 +4,14 @@ import React, { useState, useEffect, useRef } from "react"
 import { motion, AnimatePresence, useInView, useScroll, useSpring } from "framer-motion"
 import Image from "next/image"
 import {
-  Watch,
-  TrendingUp,
-  Stethoscope,
-  Truck,
   RefreshCw,
-  Heart,
-  Activity,
   AlertOctagon,
   CheckCircle,
-  Calendar,
-  Clock,
   MapPin,
   UtensilsCrossed,
-  DollarSign,
   TrendingDown,
 } from "lucide-react"
 
-// Sound synthesis helper for micro-interactions
 const playChime = (freq = 440, type: OscillatorType = "sine", duration = 0.1) => {
   try {
     const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext
@@ -38,9 +28,7 @@ const playChime = (freq = 440, type: OscillatorType = "sine", duration = 0.1) =>
     gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + duration)
     osc.start(ctx.currentTime)
     osc.stop(ctx.currentTime + duration)
-  } catch (e) {
-    // Fail silently if audio blocked
-  }
+  } catch (e) {}
 }
 
 export function RoadmapSection() {
@@ -54,9 +42,6 @@ export function RoadmapSection() {
 
   const scaleY = useSpring(scrollYProgress, { stiffness: 180, damping: 12, restDelta: 0.001 })
 
-  // ==========================================
-  // STATE WIDGET 1: WEARABLE SYNC
-  // ==========================================
   const [syncState, setSyncState] = useState<"idle" | "syncing" | "synced">("idle")
   const [cgmVal, setCgmVal] = useState(118)
   const [bpmVal, setBpmVal] = useState(72)
@@ -76,9 +61,6 @@ export function RoadmapSection() {
     }, 2500)
   }
 
-  // ==========================================
-  // STATE WIDGET 2: PREDICTIVE ALERTS
-  // ==========================================
   const [crashSimulated, setCrashSimulated] = useState(false)
   const [chartData, setChartData] = useState([125, 120, 118, 122, 115, 110])
 
@@ -96,9 +78,6 @@ export function RoadmapSection() {
     }
   }, [crashSimulated])
 
-  // ==========================================
-  // STATE WIDGET 3: LAB INTEGRATIONS
-  // ==========================================
   const [bookingStep, setBookingStep] = useState<"step1" | "step2" | "step3" | "success">("step1")
   const [selectedLab, setSelectedLab] = useState("")
 
@@ -108,9 +87,6 @@ export function RoadmapSection() {
     setBookingStep("step2")
   }
 
-  // ==========================================
-  // STATE WIDGET 4: FOOD DELIVERY
-  // ==========================================
   const [mealPlan, setMealPlan] = useState<"daily" | "weekly">("weekly")
   const [deliveryUnlocked, setDeliveryUnlocked] = useState(false)
 
@@ -122,7 +98,6 @@ export function RoadmapSection() {
       ref={containerRef}
       className="py-24 relative overflow-hidden bg-[#FFFDFB]"
     >
-      {/* Decorative Background grid */}
       <div
         className="absolute inset-0 opacity-[0.015]"
         style={{
@@ -132,7 +107,6 @@ export function RoadmapSection() {
       />
 
       <div className="max-w-7xl mx-auto px-6 relative z-10">
-        {/* Section Header */}
         <div className="text-center max-w-3xl mx-auto mb-24">
           <span className="inline-block text-sm font-bold text-orange-600 bg-orange-50 border border-orange-100 px-4 py-1.5 rounded-full mb-4">
             Roadmap Upgrades
@@ -145,9 +119,7 @@ export function RoadmapSection() {
           </p>
         </div>
 
-        {/* Timeline Grid layout */}
         <div className="relative">
-          {/* Vertical central axis line (desktop only) */}
           <div className="hidden lg:block absolute left-1/2 top-10 bottom-10 w-[3px] -translate-x-1/2 bg-slate-100 rounded-full">
             <motion.div
               className="w-full h-full bg-gradient-to-b from-teal-500 via-rose-500 via-blue-500 to-amber-500 origin-top rounded-full shadow-[0_0_8px_rgba(20,184,166,0.3)]"
@@ -156,11 +128,7 @@ export function RoadmapSection() {
           </div>
 
           <div className="space-y-24 lg:space-y-36">
-            {/* ========================================================================= */}
-            {/* PHASE 1: WEARABLES & IOT */}
-            {/* ========================================================================= */}
             <div className="grid lg:grid-cols-12 gap-12 items-center relative">
-              {/* Timeline dot */}
               <motion.div
                 initial={{ scale: 0 }}
                 whileInView={{ scale: 1 }}
@@ -182,7 +150,6 @@ export function RoadmapSection() {
                 />
               </motion.div>
 
-              {/* Text Card Left */}
               <motion.div
                 initial={{ opacity: 0, x: -50 }}
                 whileInView={{ opacity: 1, x: 0 }}
@@ -199,10 +166,8 @@ export function RoadmapSection() {
                 </p>
               </motion.div>
 
-              {/* Empty Column for grid layout spacing */}
               <div className="hidden lg:block lg:col-span-2" />
 
-              {/* Illustration Column Right */}
               <motion.div
                 initial={{ opacity: 0, x: 50 }}
                 whileInView={{ opacity: 1, x: 0 }}
@@ -211,7 +176,6 @@ export function RoadmapSection() {
                 className="lg:col-span-5"
               >
                 <div className="bg-white border border-[#F0E6D9] rounded-3xl p-6 shadow-xl relative overflow-hidden min-h-[300px] flex flex-col justify-between text-left">
-                  {/* Graphic Overlay */}
                   <div className="absolute right-0 bottom-0 opacity-15 pointer-events-none">
                     <Image
                       src="/images/wearable_integration.png"
@@ -260,11 +224,7 @@ export function RoadmapSection() {
               </motion.div>
             </div>
 
-            {/* ========================================================================= */}
-            {/* PHASE 2: PREDICTIVE ALERTS */}
-            {/* ========================================================================= */}
             <div className="grid lg:grid-cols-12 gap-12 items-center relative">
-              {/* Timeline dot */}
               <motion.div
                 initial={{ scale: 0 }}
                 whileInView={{ scale: 1 }}
@@ -287,7 +247,6 @@ export function RoadmapSection() {
                 />
               </motion.div>
 
-              {/* Illustration Column Left (Alternating layout) */}
               <motion.div
                 initial={{ opacity: 0, x: -50 }}
                 whileInView={{ opacity: 1, x: 0 }}
@@ -296,7 +255,6 @@ export function RoadmapSection() {
                 className="lg:col-span-5 order-last lg:order-first"
               >
                 <div className="bg-white border border-[#F0E6D9] rounded-3xl p-6 shadow-xl relative overflow-hidden min-h-[300px] flex flex-col justify-between text-left">
-                  {/* Graphic Background */}
                   <div className="absolute left-0 bottom-0 opacity-15 pointer-events-none">
                     <Image
                       src="/images/predictive_alerts.png"
@@ -325,11 +283,9 @@ export function RoadmapSection() {
                     </div>
 
                     <div className="my-4 space-y-3">
-                      {/* Interactive Glycemic forecast curve preview */}
                       <div className="h-16 border border-slate-100 bg-slate-50/50 rounded-xl p-2 flex flex-col justify-between relative">
                         <span className="text-[8px] text-slate-400 font-bold">120-MIN MEAL METALLIC FORECAST</span>
                         
-                        {/* Interactive dynamic chart path */}
                         <svg className="w-full h-8 text-rose-500" viewBox="0 0 120 30" preserveAspectRatio="none">
                           <motion.path
                             key={crashSimulated ? "crash-curve" : "normal-curve"}
@@ -350,7 +306,6 @@ export function RoadmapSection() {
                         </div>
                       </div>
 
-                      {/* Danger crash warning notification */}
                       <AnimatePresence>
                         {crashSimulated && (
                           <motion.div
@@ -372,10 +327,8 @@ export function RoadmapSection() {
                 </div>
               </motion.div>
 
-              {/* Spacing Column */}
               <div className="hidden lg:block lg:col-span-2" />
 
-              {/* Text Card Right */}
               <motion.div
                 initial={{ opacity: 0, x: 50 }}
                 whileInView={{ opacity: 1, x: 0 }}
@@ -393,11 +346,7 @@ export function RoadmapSection() {
               </motion.div>
             </div>
 
-            {/* ========================================================================= */}
-            {/* PHASE 3: DIAGNOSTIC LABS */}
-            {/* ========================================================================= */}
             <div className="grid lg:grid-cols-12 gap-12 items-center relative">
-              {/* Timeline dot */}
               <motion.div
                 initial={{ scale: 0 }}
                 whileInView={{ scale: 1 }}
@@ -420,7 +369,6 @@ export function RoadmapSection() {
                 />
               </motion.div>
 
-              {/* Text Card Left */}
               <motion.div
                 initial={{ opacity: 0, x: -50 }}
                 whileInView={{ opacity: 1, x: 0 }}
@@ -437,10 +385,8 @@ export function RoadmapSection() {
                 </p>
               </motion.div>
 
-              {/* Spacing Column */}
               <div className="hidden lg:block lg:col-span-2" />
 
-              {/* Illustration Column Right */}
               <motion.div
                 initial={{ opacity: 0, x: 50 }}
                 whileInView={{ opacity: 1, x: 0 }}
@@ -449,7 +395,6 @@ export function RoadmapSection() {
                 className="lg:col-span-5"
               >
                 <div className="bg-white border border-[#F0E6D9] rounded-3xl p-6 shadow-xl relative overflow-hidden min-h-[300px] flex flex-col justify-between text-left">
-                  {/* Graphic Background */}
                   <div className="absolute right-0 bottom-0 opacity-15 pointer-events-none">
                     <Image
                       src="/images/diagnostic_labs.png"
@@ -555,11 +500,7 @@ export function RoadmapSection() {
               </motion.div>
             </div>
 
-            {/* ========================================================================= */}
-            {/* PHASE 4: FOOD DELIVERY */}
-            {/* ========================================================================= */}
             <div className="grid lg:grid-cols-12 gap-12 items-center relative">
-              {/* Timeline dot */}
               <motion.div
                 initial={{ scale: 0 }}
                 whileInView={{ scale: 1 }}
@@ -582,7 +523,6 @@ export function RoadmapSection() {
                 />
               </motion.div>
 
-              {/* Illustration Column Left */}
               <motion.div
                 initial={{ opacity: 0, x: -50 }}
                 whileInView={{ opacity: 1, x: 0 }}
@@ -591,7 +531,6 @@ export function RoadmapSection() {
                 className="lg:col-span-5 order-last lg:order-first"
               >
                 <div className="bg-white border border-[#F0E6D9] rounded-3xl p-6 shadow-xl relative overflow-hidden min-h-[300px] flex flex-col justify-between text-left">
-                  {/* Graphic Background */}
                   <div className="absolute left-0 bottom-0 opacity-15 pointer-events-none">
                     <Image
                       src="/images/diabetic_delivery.png"
@@ -609,7 +548,6 @@ export function RoadmapSection() {
                           DIET FOOD DELIVERY
                         </span>
 
-                        {/* Frequency Switcher */}
                         <div className="flex bg-slate-100 rounded-lg p-0.5 border border-slate-200">
                           <button
                             onClick={() => {
@@ -677,10 +615,8 @@ export function RoadmapSection() {
                 </div>
               </motion.div>
 
-              {/* Spacing Column */}
               <div className="hidden lg:block lg:col-span-2" />
 
-              {/* Text Card Right */}
               <motion.div
                 initial={{ opacity: 0, x: 50 }}
                 whileInView={{ opacity: 1, x: 0 }}

@@ -22,7 +22,6 @@ import {
   Info
 } from "lucide-react"
 
-// Types for community feed and gamification
 interface CommunityStory {
   id: string
   name: string
@@ -158,7 +157,7 @@ const leaderboardUsers = [
   { rank: 1, name: "Meera Nair", avatar: "MN", drop: 45, points: 2840, isCurrentUser: false },
   { rank: 2, name: "Aravind Swami", avatar: "AS", drop: 38, points: 2420, isCurrentUser: false },
   { rank: 3, name: "Sneha Iyer", avatar: "SI", drop: 34, points: 2180, isCurrentUser: false },
-  { rank: 4, name: "Rahul Sharma", avatar: "RS", drop: 28, points: 1450, isCurrentUser: true }, // Current User
+  { rank: 4, name: "Rahul Sharma", avatar: "RS", drop: 28, points: 1450, isCurrentUser: true },
   { rank: 5, name: "Vikram Patel", avatar: "VP", drop: 33, points: 1390, isCurrentUser: false },
   { rank: 6, name: "Amit Kumar", avatar: "AK", drop: 45, points: 1320, isCurrentUser: false },
   { rank: 7, name: "Priya Das", avatar: "PD", drop: 20, points: 1100, isCurrentUser: false }
@@ -170,12 +169,10 @@ export function DashboardCommunity() {
   const [badges, setBadges] = useState<Badge[]>(initialBadges)
   const [leaderboard, setLeaderboard] = useState(leaderboardUsers)
   
-  // XP state ( राहुल शर्मा starts with 1450 XP, Level 4. Max for level is 2000)
   const [xp, setXp] = useState(1450)
   const [level, setLevel] = useState(4)
   const maxXp = 2000
 
-  // Post Story Form State
   const [isFormOpen, setIsFormOpen] = useState(false)
   const [newTitle, setNewTitle] = useState("")
   const [newContent, setNewContent] = useState("")
@@ -232,14 +229,11 @@ export function DashboardCommunity() {
       date: "Just now"
     }
 
-    // Add to stories
     setStories(prev => [newStory, ...prev])
 
-    // Update XP and trigger XP toast
     const xpReward = 150
     const newXp = xp + xpReward
     
-    // Check if leveling up
     if (newXp >= maxXp) {
       setLevel(prev => prev + 1)
       setXp(newXp - maxXp)
@@ -249,7 +243,6 @@ export function DashboardCommunity() {
       setToastMessage(`Story published! Eearned +${xpReward} XP for helping the community! 🌟`)
     }
 
-    // Unlock "Storyteller" badge
     setBadges(prev =>
       prev.map(badge => {
         if (badge.id === "badge-storyteller") {
@@ -259,7 +252,6 @@ export function DashboardCommunity() {
       })
     )
 
-    // Update leaderboard points
     setLeaderboard(prev =>
       prev.map(user => {
         if (user.isCurrentUser) {
@@ -273,7 +265,6 @@ export function DashboardCommunity() {
       })
     )
 
-    // Reset Form
     setNewTitle("")
     setNewContent("")
     setNewTags("")
@@ -281,26 +272,23 @@ export function DashboardCommunity() {
     setIsFormOpen(false)
     setShowXpToast(true)
 
-    // Clear Toast
     setTimeout(() => {
       setShowXpToast(false)
     }, 4500)
   }
 
-  // Calculate stats
   const unlockedBadgesCount = badges.filter(b => b.unlocked).length
 
   return (
     <div className="max-w-5xl mx-auto space-y-6">
       
-      {/* Toast Notification */}
       <AnimatePresence>
         {showXpToast && (
           <motion.div
             initial={{ opacity: 0, y: 50, scale: 0.9 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.9 }}
-            className="fixed bottom-6 right-6 z-[100] bg-[#0F172A] border border-orange-500/30 text-white px-5 py-4 rounded-2xl shadow-2xl flex items-center gap-3.5 max-w-sm"
+            className="fixed bottom-6 right-6 z-[100] bg-[#0F172A] border border-orange-50/30 text-white px-5 py-4 rounded-2xl shadow-2xl flex items-center gap-3.5 max-w-sm"
           >
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center shrink-0">
               <Sparkles className="w-5 h-5 text-white" />
@@ -313,7 +301,6 @@ export function DashboardCommunity() {
         )}
       </AnimatePresence>
 
-      {/* Profile/Gamification Status Header */}
       <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#0F172A] via-[#16213a] to-[#0F172A] p-6 shadow-xl border border-slate-800">
         <motion.div
           className="absolute -bottom-10 -right-10 w-48 h-48 rounded-full bg-orange-500/10 blur-3xl"
@@ -341,7 +328,6 @@ export function DashboardCommunity() {
               </div>
               <p className="text-white/40 text-xs mt-0.5">Let's keep your risk score down and support the community!</p>
 
-              {/* XP Progress Bar */}
               <div className="mt-3 flex items-center gap-3 w-64 md:w-80">
                 <div className="flex-1 h-2 bg-white/10 rounded-full overflow-hidden">
                   <motion.div
@@ -358,7 +344,6 @@ export function DashboardCommunity() {
             </div>
           </div>
 
-          {/* Core Stats Overview */}
           <div className="grid grid-cols-3 gap-2 sm:gap-4 border-t md:border-t-0 border-white/5 pt-4 md:pt-0">
             <div className="text-center px-2">
               <p className="text-[9px] text-white/40 font-bold uppercase tracking-wider">XP Earned</p>
@@ -387,7 +372,6 @@ export function DashboardCommunity() {
         </div>
       </div>
 
-      {/* Tabs Menu & Share Button */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-orange-100/50 pb-2">
         <div className="flex gap-1 bg-white/60 p-1 border border-orange-100/40 rounded-xl">
           {[
@@ -427,7 +411,6 @@ export function DashboardCommunity() {
         )}
       </div>
 
-      {/* Stories Submission Expandable Card */}
       <AnimatePresence>
         {isFormOpen && activeTab === "stories" && (
           <motion.div
@@ -540,10 +523,8 @@ export function DashboardCommunity() {
         )}
       </AnimatePresence>
 
-      {/* Main Tab Content */}
       <div className="space-y-4">
         
-        {/* STORIES TAB */}
         {activeTab === "stories" && (
           <div className="space-y-4">
             {stories.map(story => {
@@ -554,10 +535,8 @@ export function DashboardCommunity() {
                   layout
                   className="bg-white/80 border border-slate-100 rounded-2xl p-5 sm:p-6 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden flex flex-col gap-4"
                 >
-                  {/* Decorative backdrop glow for positive change */}
                   <div className="absolute right-0 top-0 w-24 h-24 bg-gradient-to-bl from-emerald-500/5 to-transparent rounded-full pointer-events-none" />
 
-                  {/* Header Row */}
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3.5 border-b border-slate-100">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-full bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center text-white font-bold text-sm shadow-sm overflow-hidden">
@@ -579,7 +558,6 @@ export function DashboardCommunity() {
                       </div>
                     </div>
 
-                    {/* Risk Score Reduction Graphic */}
                     <div className="flex items-center gap-3 bg-emerald-50/50 border border-emerald-100/50 p-2 rounded-xl">
                       <div className="text-right">
                         <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wide">Risk Reduction</p>
@@ -597,13 +575,11 @@ export function DashboardCommunity() {
                     </div>
                   </div>
 
-                  {/* Body Text */}
                   <div className="space-y-3">
                     <h5 className="text-sm font-bold text-[#0F172A]">{story.title}</h5>
                     <p className="text-xs text-slate-600 leading-relaxed font-normal">{story.content}</p>
                   </div>
 
-                  {/* Footer Row */}
                   <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
                     <div className="flex flex-wrap gap-1.5">
                       {story.tags.map(tag => (
@@ -633,7 +609,6 @@ export function DashboardCommunity() {
           </div>
         )}
 
-        {/* LEADERBOARD TAB */}
         {activeTab === "leaderboard" && (
           <div className="bg-white/80 border border-slate-100 rounded-2xl shadow-sm overflow-hidden">
             <div className="px-5 py-4 border-b border-orange-50 bg-[#FFF6EE]/50 flex items-center justify-between">
@@ -703,7 +678,6 @@ export function DashboardCommunity() {
           </div>
         )}
 
-        {/* ACHIEVEMENTS TAB */}
         {activeTab === "badges" && (
           <div className="space-y-5">
             <div className="bg-white/80 border border-slate-100 rounded-2xl p-5 shadow-sm flex items-center justify-between">

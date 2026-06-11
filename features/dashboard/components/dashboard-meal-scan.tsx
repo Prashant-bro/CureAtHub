@@ -29,7 +29,6 @@ export function DashboardMealScan() {
         custom={0}
         className="relative overflow-hidden bg-white/70 backdrop-blur-xl border border-white/60 rounded-3xl shadow-sm"
       >
-        {/* Decorative gradient */}
         <div className="absolute top-0 left-0 right-0 h-48 bg-gradient-to-b from-orange-50/80 to-transparent" />
         <motion.div
           className="absolute top-10 right-10 w-32 h-32 rounded-full bg-orange-500/5 blur-2xl"
@@ -38,36 +37,30 @@ export function DashboardMealScan() {
         />
 
         <div className="relative z-10 p-8 sm:p-10 text-center">
-          {/* Scan Animation */}
           <motion.div
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ type: "spring", stiffness: 100, damping: 15, delay: 0.1 }}
             className="relative w-32 h-32 mx-auto mb-8"
           >
-            {/* Outer ring */}
             <motion.div
               className="absolute inset-0 rounded-3xl border-2 border-dashed border-orange-200"
               animate={{ rotate: 360 }}
               transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
             />
-            {/* Inner container */}
             <div className="absolute inset-2 rounded-2xl bg-gradient-to-br from-orange-50 to-orange-100 flex items-center justify-center">
               <Camera className="w-12 h-12 text-orange-400" />
             </div>
-            {/* Scan line */}
             <motion.div
               className="absolute left-3 right-3 h-0.5 bg-gradient-to-r from-transparent via-orange-400 to-transparent rounded-full"
               animate={{ top: ["15%", "85%", "15%"] }}
               transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
             />
-            {/* Corner brackets */}
             <div className="absolute top-0 left-0 w-5 h-5 border-t-2 border-l-2 border-orange-400 rounded-tl-lg" />
             <div className="absolute top-0 right-0 w-5 h-5 border-t-2 border-r-2 border-orange-400 rounded-tr-lg" />
             <div className="absolute bottom-0 left-0 w-5 h-5 border-b-2 border-l-2 border-orange-400 rounded-bl-lg" />
             <div className="absolute bottom-0 right-0 w-5 h-5 border-b-2 border-r-2 border-orange-400 rounded-br-lg" />
 
-            {/* Sparkle badges */}
             <motion.div
               className="absolute -top-2 -right-2 w-7 h-7 rounded-full bg-orange-500 flex items-center justify-center shadow-lg shadow-orange-500/30"
               animate={{ scale: [1, 1.15, 1] }}
@@ -77,7 +70,6 @@ export function DashboardMealScan() {
             </motion.div>
           </motion.div>
 
-          {/* Text Content */}
           <motion.div
             variants={fadeUp}
             initial="hidden"
@@ -92,7 +84,6 @@ export function DashboardMealScan() {
             </p>
           </motion.div>
 
-          {/* Feature Pills */}
           <motion.div
             variants={fadeUp}
             initial="hidden"
@@ -115,7 +106,6 @@ export function DashboardMealScan() {
             ))}
           </motion.div>
 
-          {/* Download CTA Section */}
           <motion.div
             variants={fadeUp}
             initial="hidden"
@@ -131,7 +121,6 @@ export function DashboardMealScan() {
               The AI Meal Scanner feature is available exclusively on our mobile app. Download now to get started!
             </p>
 
-            {/* App Store Buttons */}
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
               <motion.button
                 whileHover={{ scale: 1.03, y: -2 }}

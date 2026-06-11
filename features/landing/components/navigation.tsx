@@ -48,7 +48,6 @@ export function Navigation() {
       }`}
     >
       <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-        {/* Logo */}
         <Link href="/" className="flex items-center gap-2.5">
           <motion.div
             className="w-9 h-9 rounded-xl bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center shadow-md"
@@ -67,7 +66,6 @@ export function Navigation() {
           </motion.span>
         </Link>
 
-        {/* Desktop Nav Links */}
         <div className="hidden md:flex items-center gap-8">
           {navLinks.map((item, i) => (
             <motion.button
@@ -91,7 +89,6 @@ export function Navigation() {
           ))}
         </div>
 
-        {/* CTA Button */}
         <motion.button
           onClick={() => router.push('/auth')}
           className="hidden md:block bg-gradient-to-r from-orange-600 to-orange-500 text-white px-6 py-2.5 rounded-full font-semibold text-sm tracking-wide relative overflow-hidden shadow-lg shadow-orange-500/20"
@@ -107,7 +104,6 @@ export function Navigation() {
           <span className="relative z-10">Get Started Free</span>
         </motion.button>
 
-        {/* Mobile Menu Toggle */}
         <motion.button
           className="md:hidden p-2 rounded-lg hover:bg-orange-50 transition-colors"
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -139,7 +135,6 @@ export function Navigation() {
         </motion.button>
       </div>
 
-      {/* Mobile Menu */}
       <AnimatePresence>
         {mobileMenuOpen && (
           <motion.div

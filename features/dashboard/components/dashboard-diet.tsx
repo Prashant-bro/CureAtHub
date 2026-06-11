@@ -22,7 +22,6 @@ const fadeUp = {
 export function DashboardDiet() {
   return (
     <div className="max-w-3xl mx-auto space-y-6">
-      {/* Header with Add Button */}
       <motion.div
         variants={fadeUp}
         initial="hidden"
@@ -44,9 +43,7 @@ export function DashboardDiet() {
         </motion.button>
       </motion.div>
 
-      {/* Placeholder Cards Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {/* Diet Card */}
         <motion.div
           variants={fadeUp}
           initial="hidden"
@@ -70,7 +67,6 @@ export function DashboardDiet() {
           </div>
         </motion.div>
 
-        {/* Exercise Card */}
         <motion.div
           variants={fadeUp}
           initial="hidden"
@@ -94,7 +90,6 @@ export function DashboardDiet() {
           </div>
         </motion.div>
 
-        {/* Schedule Card */}
         <motion.div
           variants={fadeUp}
           initial="hidden"
@@ -118,7 +113,6 @@ export function DashboardDiet() {
           </div>
         </motion.div>
 
-        {/* Progress Card */}
         <motion.div
           variants={fadeUp}
           initial="hidden"

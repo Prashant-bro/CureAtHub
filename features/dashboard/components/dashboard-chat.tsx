@@ -25,7 +25,6 @@ const SUGGESTION_CHIPS = [
   "What is a healthy BMI range?",
 ]
 
-// The automated questions the AI asks to collect health data
 const AI_HEALTH_QUESTIONS: { question: string; field: string }[] = [
   { question: "Welcome to Diapredix AI! 👋 I'm here to help assess your diabetes risk. Let me ask you a few quick questions. First, could you tell me your age?", field: "age" },
   { question: "Thank you! And what is your gender? (Male/Female/Other)", field: "gender" },
@@ -78,7 +77,6 @@ export function DashboardChat({ onOpenSidebar }: DashboardChatProps) {
     scrollToBottom()
   }, [messages, isTyping])
 
-  // Start conversation with first AI question
   const startConversation = () => {
     setConversationStarted(true)
     setIsTyping(true)
@@ -111,21 +109,15 @@ export function DashboardChat({ onOpenSidebar }: DashboardChatProps) {
     setInput("")
     setIsTyping(true)
 
-    // Determine AI response
     setTimeout(() => {
       let aiResponse = ""
 
-      // Check if it's a suggestion chip response
       if (AI_RESPONSES[text]) {
         aiResponse = AI_RESPONSES[text]
-      }
-      // Check if we still have health questions to ask
-      else if (questionIndex < AI_HEALTH_QUESTIONS.length) {
+      } else if (questionIndex < AI_HEALTH_QUESTIONS.length) {
         aiResponse = AI_HEALTH_QUESTIONS[questionIndex].question
         setQuestionIndex((prev) => prev + 1)
-      }
-      // If all questions asked, give a summary response
-      else {
+      } else {
         aiResponse =
           "Thank you for sharing all that information! 🎉 Based on your responses, I'm analyzing your risk profile. Your personalized health plan is being generated. Check your Profile section for your updated risk score! 💪"
       }
@@ -148,7 +140,6 @@ export function DashboardChat({ onOpenSidebar }: DashboardChatProps) {
 
   return (
     <div className="flex flex-col h-screen w-full relative">
-      {/* Mobile Top Bar */}
       {onOpenSidebar && (
         <div className="lg:hidden flex items-center h-14 px-4 border-b border-orange-100/30 bg-white/60 backdrop-blur-md shrink-0">
           <button
@@ -161,10 +152,8 @@ export function DashboardChat({ onOpenSidebar }: DashboardChatProps) {
         </div>
       )}
 
-      {/* Chat Area */}
       <div className="flex-1 bg-white/60 backdrop-blur-xl overflow-hidden flex flex-col">
         {!conversationStarted ? (
-          /* Welcome State */
           <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
             <motion.div
               initial={{ opacity: 0, scale: 0.8 }}
@@ -204,7 +193,6 @@ export function DashboardChat({ onOpenSidebar }: DashboardChatProps) {
               <ArrowRight className="w-4 h-4" />
             </motion.button>
 
-            {/* Quick Suggestion Preview */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -229,7 +217,6 @@ export function DashboardChat({ onOpenSidebar }: DashboardChatProps) {
             </motion.div>
           </div>
         ) : (
-          /* Messages */
           <div className="flex-1 overflow-y-auto p-4 space-y-4 scroll-smooth">
             <AnimatePresence>
               {messages.map((msg) => (
@@ -243,7 +230,7 @@ export function DashboardChat({ onOpenSidebar }: DashboardChatProps) {
                   <div
                     className={`max-w-[80%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${
                       msg.role === "user"
-                        ? "bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-br-md shadow-md shadow-orange-500/15"
+                        ? "bg-gradient-to-r from-orange-50 to-orange-600 text-white rounded-br-md shadow-md shadow-orange-500/15"
                         : "bg-white border border-slate-100 text-slate-700 rounded-bl-md shadow-sm"
                     }`}
                   >
@@ -259,12 +246,10 @@ export function DashboardChat({ onOpenSidebar }: DashboardChatProps) {
                       })}
                     </p>
                   </div>
-
                 </motion.div>
               ))}
             </AnimatePresence>
 
-            {/* Typing Indicator */}
             {isTyping && (
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
@@ -295,7 +280,6 @@ export function DashboardChat({ onOpenSidebar }: DashboardChatProps) {
           </div>
         )}
 
-        {/* Suggestion Chips (visible when conversation started) */}
         {conversationStarted && !isTyping && messages.length > 0 && (
           <div className="px-4 py-2 border-t border-slate-100/50">
             <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
@@ -312,7 +296,6 @@ export function DashboardChat({ onOpenSidebar }: DashboardChatProps) {
           </div>
         )}
 
-        {/* Input Area */}
         {conversationStarted && (
           <div className="p-3 border-t border-slate-100/50 bg-white/40">
             <div className="flex items-center gap-2">

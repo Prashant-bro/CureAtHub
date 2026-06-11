@@ -1,0 +1,7 @@
+export { Navigation } from "./components/navigation"
+export { HeroSection } from "./components/hero-section"
+export { FeaturesSection } from "./components/features-section"
+export { HowItWorksSection } from "./components/how-it-works"
+export { WellnessSection } from "./components/wellness-section"
+export { RoadmapSection } from "./components/roadmap-section"
+export { Footer } from "./components/footer"

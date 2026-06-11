@@ -91,10 +91,8 @@ export function DashboardLayout() {
 
       const isPoorConnection = checkIsSlowConnection()
       if (!isPoorConnection && window.navigator.onLine) {
-        // Proper, healthy connection loads UI instantly, no fake delays!
         setLoadingSection(false)
       } else {
-        // Slow or offline connection takes time to resolve/display data
         const loadTimer = setTimeout(() => {
           setLoadingSection(false)
           if (!window.navigator.onLine) {
@@ -119,7 +117,6 @@ export function DashboardLayout() {
   const handleSectionChange = (section: ActiveSection) => {
     const isPoorConnection = checkIsSlowConnection()
 
-    // If internet connection is proper and healthy, load instantly (0ms delay)
     if (!isPoorConnection && window.navigator.onLine) {
       setActiveSection(section)
       setHasConnectionError(false)
@@ -127,7 +124,6 @@ export function DashboardLayout() {
       return
     }
 
-    // Only introduce loading delay and show skeleton if internet quality is low
     setLoadingSection(true)
     setHasConnectionError(false)
 
@@ -179,7 +175,6 @@ export function DashboardLayout() {
 
   return (
     <div className="min-h-screen bg-[#FDF6EE] flex">
-      {/* Mobile Sidebar Overlay */}
       <AnimatePresence>
         {sidebarOpen && (
           <motion.div
@@ -192,7 +187,6 @@ export function DashboardLayout() {
         )}
       </AnimatePresence>
 
-      {/* Profile Panel Overlay */}
       <AnimatePresence>
         {profileOpen && (
           <motion.div
@@ -205,7 +199,6 @@ export function DashboardLayout() {
         )}
       </AnimatePresence>
 
-      {/* Profile Slide-out Panel */}
       <AnimatePresence>
         {profileOpen && (
           <motion.div
@@ -215,7 +208,6 @@ export function DashboardLayout() {
             transition={{ type: "spring", stiffness: 300, damping: 30 }}
             className="fixed top-0 right-0 h-screen w-full max-w-md bg-[#FDF6EE] border-l border-orange-100/50 z-[70] flex flex-col shadow-2xl"
           >
-            {/* Panel Header */}
             <div className="px-5 py-4 flex items-center justify-between border-b border-orange-100/50">
               <div className="flex items-center gap-3">
                 <div className="w-9 h-9 rounded-full bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center">
@@ -230,7 +222,6 @@ export function DashboardLayout() {
                 <X className="w-5 h-5 text-slate-500" />
               </button>
             </div>
-            {/* Panel Content */}
             <div className="flex-1 overflow-y-auto px-5 py-5">
               <DashboardProfile
                 onNavigateToChat={() => { setProfileOpen(false); handleSectionChange("chat") }}
@@ -242,13 +233,11 @@ export function DashboardLayout() {
         )}
       </AnimatePresence>
 
-      {/* Sidebar */}
       <motion.aside
         className={`fixed lg:sticky top-0 left-0 h-screen w-[260px] bg-white/70 backdrop-blur-xl border-r border-orange-100/50 z-50 flex flex-col transition-transform lg:transition-none duration-300 ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         }`}
       >
-        {/* Logo */}
         <div className="px-5 py-5 flex items-center justify-between border-b border-orange-50">
           <Link href="/" className="flex items-center gap-2.5">
             <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center shadow-md shadow-orange-500/20">
@@ -267,7 +256,6 @@ export function DashboardLayout() {
           </button>
         </div>
 
-        {/* User Mini-Profile (clickable → opens profile panel) */}
         <button
           onClick={() => { setProfileOpen(true); setSidebarOpen(false) }}
           className="px-5 py-4 border-b border-orange-50 flex items-center gap-3 hover:bg-orange-50/40 transition-colors w-full text-left group"
@@ -286,7 +274,6 @@ export function DashboardLayout() {
           <UserCircle className="w-5 h-5 text-slate-300 group-hover:text-orange-400 transition-colors" />
         </button>
 
-        {/* Nav Items */}
         <nav className="flex-1 px-3 py-4 space-y-1">
           {navItems.map((item) => {
             const isActive = activeSection === item.id
@@ -320,7 +307,6 @@ export function DashboardLayout() {
           })}
         </nav>
 
-        {/* Bottom Actions */}
         <div className="px-3 py-4 border-t border-orange-50 space-y-1">
           <button
             onClick={() => {
@@ -357,9 +343,7 @@ export function DashboardLayout() {
         </div>
       </motion.aside>
 
-      {/* Main Content */}
       <div className="flex-1 flex flex-col min-h-screen lg:min-w-0">
-        {/* Header */}
         {activeSection !== "chat" && (
           <header className="sticky top-0 z-30 bg-[#FDF6EE]/80 backdrop-blur-xl border-b border-orange-100/40 px-4 sm:px-6 lg:px-8 py-3.5">
             <div className="flex items-center justify-between">
@@ -405,7 +389,6 @@ export function DashboardLayout() {
           </header>
         )}
 
-        {/* Global Connection offline banner */}
         {!isOnline && (
           <div className="bg-red-500 text-white text-[11px] font-bold px-4 py-2.5 flex items-center justify-between shadow-sm z-50">
             <div className="flex items-center gap-2">
@@ -415,7 +398,6 @@ export function DashboardLayout() {
           </div>
         )}
 
-        {/* Section Content */}
         <main className={`flex-1 ${activeSection === "chat" && !loadingSection && isOnline && !hasConnectionError ? "p-0" : "px-4 sm:px-6 lg:px-8 py-6"}`}>
           <AnimatePresence mode="wait">
             <motion.div
