@@ -123,21 +123,29 @@ export function Footer() {
             <motion.div key={section.title} variants={itemVariants}>
               <h4 className="font-semibold text-white text-sm mb-4">{section.title}</h4>
               <ul className="space-y-2.5">
-                {section.links.map((item) => (
-                  <li key={item}>
-                    <motion.div
-                      whileHover={{ x: 3 }}
-                      transition={{ type: "spring", stiffness: 400, damping: 17 }}
-                    >
-                      <Link
-                        href="#"
-                        className="text-white/50 hover:text-teal-400 text-sm transition-colors inline-block"
+                {section.links.map((item) => {
+                  let href = "#"
+                  if (item === "Privacy Policy") href = "/privacy"
+                  else if (item === "Terms of Service") href = "/terms"
+                  else if (item === "How It Works") href = "/#how-it-works"
+                  else if (item === "Wellness Modules") href = "/#wellness"
+                  else if (item === "Premium Plans") href = "/#wellness"
+                  return (
+                    <li key={item}>
+                      <motion.div
+                        whileHover={{ x: 3 }}
+                        transition={{ type: "spring", stiffness: 400, damping: 17 }}
                       >
-                        {item}
-                      </Link>
-                    </motion.div>
-                  </li>
-                ))}
+                        <Link
+                          href={href}
+                          className="text-white/50 hover:text-teal-400 text-sm transition-colors inline-block"
+                        >
+                          {item}
+                        </Link>
+                      </motion.div>
+                    </li>
+                  )
+                })}
               </ul>
             </motion.div>
           ))}

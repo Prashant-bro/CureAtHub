@@ -150,7 +150,7 @@ export function WellnessSection() {
   const [billingCycle, setBillingCycle] = useState<"monthly" | "annually">("annually")
   const [analyticsUnlocked, setAnalyticsUnlocked] = useState(false)
 
-  const basePrice = billingCycle === "monthly" ? 199 : 149
+  const basePrice = billingCycle === "monthly" ? 170 : 141
 
   return (
     <section
@@ -684,9 +684,11 @@ export function WellnessSection() {
                   <div className="my-5 space-y-4">
                     <div className="bg-white border border-slate-100 rounded-2xl p-4 shadow-sm text-center flex items-center justify-between">
                       <div className="text-left">
-                        <span className="text-[9px] text-slate-400 font-bold block uppercase tracking-wider">PREMIUM ACCESS</span>
+                        <span className="text-[9px] text-orange-500 font-bold block uppercase tracking-wider">7-DAY FREE TRIAL</span>
                         <span className="text-xl font-extrabold text-slate-800">₹{basePrice} <span className="text-xs font-semibold text-slate-400">/ month</span></span>
-                        {billingCycle === "annually" && <span className="text-[9px] text-emerald-600 font-bold block">Billed annually (₹1,788)</span>}
+                        <span className="text-[9px] text-emerald-600 font-bold block mt-0.5">
+                          {billingCycle === "annually" ? "Billed annually (₹1,699) after trial" : "Billed monthly after trial"}
+                        </span>
                       </div>
 
                       <button

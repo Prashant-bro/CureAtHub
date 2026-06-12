@@ -10,13 +10,16 @@ import {
   CheckCircle,
   X,
   Camera,
-  Lock
+  Crown,
+  Sparkles
 } from "lucide-react"
 
 interface DashboardProfileProps {
   onNavigateToChat: () => void
   profileImage: string | null
   setProfileImage: (img: string | null) => void
+  subscriptionState: "trial" | "expired" | "premium"
+  trialDaysLeft: number
 }
 
 const languages = [
@@ -31,7 +34,13 @@ const languages = [
   { code: "gu", name: "Gujarati", native: "ગુજરાતી" },
 ]
 
-export function DashboardProfile({ onNavigateToChat, profileImage, setProfileImage }: DashboardProfileProps) {
+export function DashboardProfile({ 
+  onNavigateToChat, 
+  profileImage, 
+  setProfileImage,
+  subscriptionState,
+  trialDaysLeft
+}: DashboardProfileProps) {
   const [selectedLanguage, setSelectedLanguage] = useState("en")
   const [langModalOpen, setLangModalOpen] = useState(false)
 
@@ -158,6 +167,25 @@ export function DashboardProfile({ onNavigateToChat, profileImage, setProfileIma
             <CheckCircle className="w-3.5 h-3.5 text-emerald-500" />
             <span className="text-[11px] font-semibold text-emerald-600">Verified Account</span>
           </div>
+
+          <div className="mt-3 w-full flex justify-center">
+            {subscriptionState === "premium" ? (
+              <div className="bg-amber-50 border border-amber-200 rounded-xl py-1.5 px-4 flex items-center justify-center gap-1.5 shadow-sm shadow-amber-500/5">
+                <Crown className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
+                <span className="text-[10px] font-black text-amber-700 uppercase tracking-wider">Premium Member</span>
+              </div>
+            ) : subscriptionState === "expired" ? (
+              <div className="bg-red-50 border border-red-200 rounded-xl py-1.5 px-4 flex items-center justify-center gap-1.5 shadow-sm shadow-red-500/5">
+                <X className="w-3.5 h-3.5 text-red-500 animate-pulse" />
+                <span className="text-[10px] font-black text-red-700 uppercase tracking-wider">Trial Expired</span>
+              </div>
+            ) : (
+              <div className="bg-orange-50 border border-orange-200 rounded-xl py-1.5 px-4 flex items-center justify-center gap-1.5 shadow-sm shadow-orange-500/5">
+                <Sparkles className="w-3.5 h-3.5 text-orange-500 animate-pulse" />
+                <span className="text-[10px] font-black text-orange-700 uppercase tracking-wider">Trial: {trialDaysLeft} Days Left</span>
+              </div>
+            )}
+          </div>
         </div>
 
         <div className="space-y-3">
@@ -204,40 +232,6 @@ export function DashboardProfile({ onNavigateToChat, profileImage, setProfileIma
             </span>
           </button>
 
-          <div className="bg-white/80 border border-slate-100 rounded-xl p-4 space-y-3 shadow-sm">
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Active Profiles</span>
-              <span className="text-[8px] font-black text-orange-600 bg-orange-100 px-2 py-0.5 rounded-full uppercase tracking-wider">Premium Option</span>
-            </div>
-
-            <div className="space-y-2">
-              <div className="flex items-center gap-2.5 text-xs text-slate-700 font-semibold px-1 py-1 bg-orange-50/20 border border-orange-100/30 rounded-xl">
-                <CheckCircle className="w-4 h-4 text-emerald-500 shrink-0" />
-                <span className="truncate">Profile 1: Rahul Sharma (Primary)</span>
-              </div>
-              
-              <div className="w-full flex items-center justify-between p-2.5 rounded-xl border border-dashed border-slate-200 text-slate-400 text-xs">
-                <div className="flex items-center gap-2 text-slate-400/80">
-                  <Lock className="w-3.5 h-3.5 text-slate-300" />
-                  <span>Profile 2: Locked (Premium Only)</span>
-                </div>
-              </div>
-
-              <div className="w-full flex items-center justify-between p-2.5 rounded-xl border border-dashed border-slate-200 text-slate-400 text-xs">
-                <div className="flex items-center gap-2 text-slate-400/80">
-                  <Lock className="w-3.5 h-3.5 text-slate-300" />
-                  <span>Profile 3: Locked (Premium Only)</span>
-                </div>
-              </div>
-
-              <div className="w-full flex items-center justify-between p-2.5 rounded-xl border border-dashed border-slate-200 text-slate-400 text-xs">
-                <div className="flex items-center gap-2 text-slate-400/80">
-                  <Lock className="w-3.5 h-3.5 text-slate-300" />
-                  <span>Profile 4: Locked (Premium Only)</span>
-                </div>
-              </div>
-            </div>
-          </div>
         </div>
 
         <div className="pt-2 space-y-2">
