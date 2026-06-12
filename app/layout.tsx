@@ -5,13 +5,10 @@ import { LenisProvider } from "@/components/lenis-provider"
 import ClickSpark from "@/components/click-spark"
 import "./globals.css"
 
-// Load only the weights we actually use — reduces font payload significantly
 const inter = Inter({
   subsets: ["latin"],
   variable: "--font-sans",
   display: "swap",
-  weight: ["400", "500", "600", "700"],
-  preload: true,
 })
 
 export const metadata: Metadata = {
@@ -41,12 +38,6 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <head>
-        {/* Preconnect to Google Fonts CDN for faster font loading */}
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
-      </head>
       <body className={`${inter.variable} font-sans antialiased`}>
         <ClickSpark sparkColor="#FF5722" sparkCount={10} sparkRadius={24} duration={500}>
           <LenisProvider>{children}</LenisProvider>

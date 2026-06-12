@@ -463,13 +463,9 @@ export function AuthPage() {
                 className="text-[10px] text-slate-400 text-center mt-4 leading-relaxed"
               >
                 By signing up, you agree to our{" "}
-                <Link href="/terms" className="text-orange-600 font-semibold hover:underline transition-colors">
-                  Terms of Service
-                </Link>{" "}
+                <span className="text-orange-600 font-semibold cursor-pointer hover:underline">Terms of Service</span>{" "}
                 and{" "}
-                <Link href="/privacy" className="text-orange-600 font-semibold hover:underline transition-colors">
-                  Privacy Policy
-                </Link>
+                <span className="text-orange-600 font-semibold cursor-pointer hover:underline">Privacy Policy</span>
               </motion.p>
             )}
           </div>
