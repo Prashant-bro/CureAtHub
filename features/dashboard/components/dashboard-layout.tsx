@@ -364,6 +364,31 @@ export function DashboardLayout() {
         </nav>
 
         <div className="px-3 py-4 border-t border-orange-50 space-y-1">
+          <motion.button
+            onClick={() => {
+              handleSectionChange("pricing")
+              setSidebarOpen(false)
+            }}
+            className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all relative ${
+              activeSection === "pricing"
+                ? "text-orange-600 bg-orange-50/80"
+                : "text-slate-500 hover:text-slate-700 hover:bg-slate-50/60"
+            }`}
+            whileHover={{ x: 2 }}
+            whileTap={{ scale: 0.98 }}
+          >
+            {activeSection === "pricing" && (
+              <motion.div
+                layoutId="sidebar-indicator"
+                className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 bg-gradient-to-b from-orange-500 to-orange-600 rounded-full"
+                transition={{ type: "spring", stiffness: 300, damping: 25 }}
+              />
+            )}
+            <Crown className="w-[18px] h-[18px]" strokeWidth={activeSection === "pricing" ? 2.5 : 2} />
+            <span>Pricing & Plans</span>
+            {activeSection === "pricing" && <ChevronRight className="w-3.5 h-3.5 ml-auto opacity-50" />}
+          </motion.button>
+
           <button className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium text-slate-500 hover:text-slate-700 hover:bg-slate-50/60 transition-all">
             <Settings className="w-[18px] h-[18px]" />
             <span>Settings</span>
@@ -377,70 +402,7 @@ export function DashboardLayout() {
           </button>
         </div>
 
-        {/* Simulation Controls */}
-        <div className="px-4 py-3.5 mx-3 mb-4 bg-slate-900 text-white rounded-2xl space-y-3 shadow-xl border border-slate-800">
-          <p className="text-[10px] font-black text-orange-400 tracking-wider uppercase flex items-center gap-1">
-            <RefreshCw className="w-3 h-3 animate-spin" />
-            Simulate App State
-          </p>
-          <div className="grid grid-cols-3 gap-1">
-            <button
-              onClick={() => {
-                setSubscriptionState("trial")
-                setTrialDaysLeft(7)
-                setActiveSection("home")
-              }}
-              className={`text-[9px] font-bold py-1 px-0.5 rounded-lg transition-colors cursor-pointer ${
-                subscriptionState === "trial" ? "bg-orange-500 text-white shadow" : "bg-slate-800 text-slate-300 hover:bg-slate-700"
-              }`}
-            >
-              Trial
-            </button>
-            <button
-              onClick={() => {
-                setSubscriptionState("expired")
-                setTrialDaysLeft(0)
-                setActiveSection("home")
-              }}
-              className={`text-[9px] font-bold py-1 px-0.5 rounded-lg transition-colors cursor-pointer ${
-                subscriptionState === "expired" ? "bg-red-500 text-white shadow animate-pulse" : "bg-slate-800 text-slate-300 hover:bg-slate-700"
-              }`}
-            >
-              Expire
-            </button>
-            <button
-              onClick={() => {
-                setSubscriptionState("premium")
-                setTrialDaysLeft(0)
-              }}
-              className={`text-[9px] font-bold py-1 px-0.5 rounded-lg transition-colors cursor-pointer ${
-                subscriptionState === "premium" ? "bg-emerald-500 text-white shadow" : "bg-slate-800 text-slate-300 hover:bg-slate-700"
-              }`}
-            >
-              Paid
-            </button>
-          </div>
-          {subscriptionState === "trial" && (
-            <div className="flex items-center justify-between text-[9px] text-slate-400 font-semibold pt-1 border-t border-slate-800/80">
-              <span>Days Left:</span>
-              <div className="flex gap-1.5 items-center">
-                <button
-                  onClick={() => setTrialDaysLeft(d => Math.max(1, d - 1))}
-                  className="bg-slate-800 hover:bg-slate-700 w-5 h-5 flex items-center justify-center rounded text-white font-bold cursor-pointer transition-colors"
-                >
-                  -
-                </button>
-                <span className="text-white font-black text-xs min-w-[12px] text-center">{trialDaysLeft}</span>
-                <button
-                  onClick={() => setTrialDaysLeft(d => Math.min(7, d + 1))}
-                  className="bg-slate-800 hover:bg-slate-700 w-5 h-5 flex items-center justify-center rounded text-white font-bold cursor-pointer transition-colors"
-                >
-                  +
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
+
       </motion.aside>
 
       <div className="flex-1 flex flex-col min-h-screen lg:min-w-0">
