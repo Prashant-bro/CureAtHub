@@ -507,7 +507,7 @@ export function DashboardReportAnalyzer() {
                 </div>
 
                 <div className="pt-4 mt-4 border-t border-slate-100 flex items-center justify-between">
-                  <span className="text-[10px] text-slate-400">Classified using Diapredix Risk Model v2.4</span>
+                  <span className="text-[10px] text-slate-400">Classified using Mitig8 Risk Model v2.4</span>
                   <div className="flex items-center gap-1.5 text-xs font-bold text-orange-500">
                     <Activity className="w-3.5 h-3.5 animate-pulse" /> Live Analysis Active
                   </div>

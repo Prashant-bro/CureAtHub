@@ -5,8 +5,8 @@ import { motion, AnimatePresence } from "framer-motion"
 import { DashboardSkeleton } from "./dashboard-skeleton"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
+import { createClient } from "@/lib/supabase/client"
 import {
-  Activity,
   Home,
   MessageCircle,
   FileText,
@@ -25,6 +25,7 @@ import {
   Crown,
   Lock,
 } from "lucide-react"
+import { Mitig8Logo } from "@/components/mitig8-logo"
 import { DashboardHome } from "./dashboard-home"
 import { DashboardProfile } from "./dashboard-profile"
 import { DashboardChat } from "./dashboard-chat"
@@ -63,6 +64,34 @@ export function DashboardLayout() {
   const [subscriptionState, setSubscriptionState] = useState<"trial" | "expired" | "premium">("trial")
   const [trialDaysLeft, setTrialDaysLeft] = useState<number>(7)
   const router = useRouter()
+  const supabase = createClient()
+
+  // ── Real user from Supabase ───────────────────────────
+  const [userName, setUserName] = useState<string>("")
+  const [userEmail, setUserEmail] = useState<string>("")
+  const [userInitials, setUserInitials] = useState<string>("?")
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (!user) return
+      const fullName =
+        user.user_metadata?.full_name ||
+        user.user_metadata?.name ||
+        ""
+      const email = user.email ?? ""
+      setUserName(fullName || email.split("@")[0])
+      setUserEmail(email)
+      // Compute initials from name
+      const parts = fullName.trim().split(" ").filter(Boolean)
+      if (parts.length >= 2) {
+        setUserInitials((parts[0][0] + parts[parts.length - 1][0]).toUpperCase())
+      } else if (parts.length === 1) {
+        setUserInitials(parts[0].slice(0, 2).toUpperCase())
+      } else {
+        setUserInitials(email.slice(0, 2).toUpperCase())
+      }
+    })
+  }, [])
 
   const [isOnline, setIsOnline] = useState<boolean>(true)
   const [loadingSection, setLoadingSection] = useState<boolean>(true)
@@ -167,7 +196,7 @@ export function DashboardLayout() {
               Your 7-Day Free Trial Has Ended
             </h3>
             <p className="text-sm text-slate-500 leading-relaxed">
-              Your trial period has expired and access to Diapredix features is currently suspended. Please subscribe to a premium plan to continue tracking your blood glucose, scanning meals, and chatting with the AI.
+              Your trial period has expired and access to Mitig8 features is currently suspended. Please subscribe to a premium plan to continue tracking your blood glucose, scanning meals, and chatting with the AI.
             </p>
           </div>
           <button
@@ -187,6 +216,7 @@ export function DashboardLayout() {
             onNavigateToChat={() => handleSectionChange("chat")}
             onNavigateToDiet={() => handleSectionChange("diet")}
             onNavigateToReportAnalyzer={() => handleSectionChange("report-analyzer")}
+            userName={userName}
           />
         )
       case "chat":
@@ -268,6 +298,9 @@ export function DashboardLayout() {
                 setProfileImage={setProfileImage}
                 subscriptionState={subscriptionState}
                 trialDaysLeft={trialDaysLeft}
+                userName={userName}
+                userEmail={userEmail}
+                userInitials={userInitials}
               />
             </div>
           </motion.div>
@@ -280,14 +313,8 @@ export function DashboardLayout() {
         }`}
       >
         <div className="px-5 py-5 flex items-center justify-between border-b border-orange-50">
-          <Link href="/" className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center shadow-md shadow-orange-500/20">
-              <Activity className="w-5 h-5 text-white" strokeWidth={2.5} />
-            </div>
-            <span className="text-lg font-bold tracking-tight">
-              <span className="text-[#0F172A]">Dia</span>
-              <span className="text-gradient">predix</span>
-            </span>
+          <Link href="/">
+            <Mitig8Logo size="sm" theme="dark" animated={false} />
           </Link>
           <button
             onClick={() => setSidebarOpen(false)}
@@ -305,11 +332,11 @@ export function DashboardLayout() {
             {profileImage ? (
               <img src={profileImage} className="w-full h-full object-cover" alt="Avatar" />
             ) : (
-              "RS"
+              userInitials
             )}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-bold text-[#0F172A] truncate">Rahul Sharma</p>
+            <p className="text-sm font-bold text-[#0F172A] truncate">{userName}</p>
             {subscriptionState === "premium" ? (
               <div className="flex items-center gap-1 mt-0.5">
                 <Crown className="w-3 h-3 text-amber-500 fill-amber-500" />
@@ -394,7 +421,11 @@ export function DashboardLayout() {
             <span>Settings</span>
           </button>
           <button
-            onClick={() => router.push("/")}
+            onClick={async () => {
+              await supabase.auth.signOut()
+              router.push("/")
+              router.refresh()
+            }}
             className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium text-red-400 hover:text-red-500 hover:bg-red-50/60 transition-all"
           >
             <LogOut className="w-[18px] h-[18px]" />
@@ -443,7 +474,7 @@ export function DashboardLayout() {
                   {profileImage ? (
                     <img src={profileImage} className="w-full h-full object-cover" alt="Avatar" />
                   ) : (
-                    "RS"
+                    userInitials
                   )}
                 </motion.button>
               </div>

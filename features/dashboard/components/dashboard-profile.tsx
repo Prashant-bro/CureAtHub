@@ -20,6 +20,9 @@ interface DashboardProfileProps {
   setProfileImage: (img: string | null) => void
   subscriptionState: "trial" | "expired" | "premium"
   trialDaysLeft: number
+  userName?: string
+  userEmail?: string
+  userInitials?: string
 }
 
 const languages = [
@@ -39,7 +42,10 @@ export function DashboardProfile({
   profileImage, 
   setProfileImage,
   subscriptionState,
-  trialDaysLeft
+  trialDaysLeft,
+  userName = "",
+  userEmail = "",
+  userInitials = "?",
 }: DashboardProfileProps) {
   const [selectedLanguage, setSelectedLanguage] = useState("en")
   const [langModalOpen, setLangModalOpen] = useState(false)
@@ -130,7 +136,7 @@ export function DashboardProfile({
               {profileImage ? (
                 <img src={profileImage} className="w-full h-full object-cover" alt="Profile" />
               ) : (
-                "RS"
+                userInitials
               )}
             </div>
             <input
@@ -150,8 +156,8 @@ export function DashboardProfile({
               <Camera className="w-3.5 h-3.5 text-orange-500" />
             </motion.button>
           </div>
-          <h3 className="text-lg font-bold text-[#0F172A]">Rahul Sharma</h3>
-          <p className="text-sm text-slate-400">@rahul_sharma</p>
+          <h3 className="text-lg font-bold text-[#0F172A]">{userName || "User"}</h3>
+          <p className="text-sm text-slate-400">{userEmail ? `@${userEmail.split("@")[0]}` : ""}</p>
           
           <motion.button
             whileHover={{ scale: 1.02 }}
@@ -195,7 +201,7 @@ export function DashboardProfile({
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Email</p>
-              <p className="text-sm font-semibold text-[#0F172A] truncate">rahul.sharma@gmail.com</p>
+              <p className="text-sm font-semibold text-[#0F172A] truncate">{userEmail || "—"}</p>
             </div>
           </div>
 

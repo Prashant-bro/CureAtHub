@@ -5,7 +5,6 @@ import { motion, AnimatePresence } from "framer-motion"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import {
-  Activity,
   ArrowLeft,
   Smartphone,
   Mail,
@@ -14,13 +13,53 @@ import {
   Lock,
   User,
   ChevronRight,
+  AlertCircle,
+  Loader2,
+  CheckCircle2,
+  XCircle,
+  KeyRound,
+  Send,
 } from "lucide-react"
+import { createClient } from "@/lib/supabase/client"
+import { Mitig8Logo } from "@/components/mitig8-logo"
 
 type AuthTab = "signin" | "signup"
 type AuthMethod = "mobile" | "email"
+type PasswordStrength = "weak" | "fair" | "good" | "strong"
 
+// ── Password Strength Helpers ────────────────────────────
+interface StrengthRule {
+  label: string
+  test: (pw: string) => boolean
+}
+
+const strengthRules: StrengthRule[] = [
+  { label: "At least 8 characters", test: (pw) => pw.length >= 8 },
+  { label: "Uppercase letter (A-Z)", test: (pw) => /[A-Z]/.test(pw) },
+  { label: "Number (0-9)", test: (pw) => /[0-9]/.test(pw) },
+  { label: "Special character (!@#…)", test: (pw) => /[^A-Za-z0-9]/.test(pw) },
+]
+
+function getStrength(pw: string): { level: PasswordStrength; score: number } {
+  const score = strengthRules.filter((r) => r.test(pw)).length
+  if (score <= 1) return { level: "weak", score }
+  if (score === 2) return { level: "fair", score }
+  if (score === 3) return { level: "good", score }
+  return { level: "strong", score }
+}
+
+const strengthMeta: Record<PasswordStrength, { color: string; bar: string; label: string }> = {
+  weak:   { color: "text-red-500",    bar: "bg-red-400",    label: "Weak" },
+  fair:   { color: "text-orange-500", bar: "bg-orange-400", label: "Fair" },
+  good:   { color: "text-yellow-500", bar: "bg-yellow-400", label: "Good" },
+  strong: { color: "text-green-500",  bar: "bg-green-500",  label: "Strong" },
+}
+
+// ── Component ────────────────────────────────────────────
 export function AuthPage() {
   const router = useRouter()
+  const supabase = createClient()
+
   const [activeTab, setActiveTab] = useState<AuthTab>("signin")
   const [authMethod, setAuthMethod] = useState<AuthMethod>("mobile")
   const [showPassword, setShowPassword] = useState(false)
@@ -32,6 +71,23 @@ export function AuthPage() {
   const [name, setName] = useState("")
   const [otpTimer, setOtpTimer] = useState(0)
 
+  // ── Auth state ───────────────────────────────────────────
+  const [isLoading, setIsLoading] = useState(false)
+  const [authError, setAuthError] = useState<string | null>(null)
+  const [successMessage, setSuccessMessage] = useState<string | null>(null)
+
+  // ── Forgot Password state ────────────────────────────────
+  const [showForgotPassword, setShowForgotPassword] = useState(false)
+  const [forgotEmail, setForgotEmail] = useState("")
+  const [forgotLoading, setForgotLoading] = useState(false)
+  const [forgotError, setForgotError] = useState<string | null>(null)
+  const [forgotSuccess, setForgotSuccess] = useState(false)
+
+  // ── Password strength ────────────────────────────────────
+  const [showStrength, setShowStrength] = useState(false)
+  const strength = getStrength(password)
+  const meta = strengthMeta[strength.level]
+
   const otpRefs = useRef<(HTMLInputElement | null)[]>([])
 
   useEffect(() => {
@@ -40,6 +96,13 @@ export function AuthPage() {
       return () => clearInterval(interval)
     }
   }, [otpTimer])
+
+  // Check for error param from OAuth callback
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const error = params.get("error")
+    if (error) setAuthError(decodeURIComponent(error))
+  }, [])
 
   const handleSendOtp = () => {
     if (phone.length >= 10) {
@@ -73,11 +136,98 @@ export function AuthPage() {
     setPassword("")
     setName("")
     setOtpTimer(0)
+    setAuthError(null)
+    setSuccessMessage(null)
+    setShowStrength(false)
   }
 
   const switchTab = (tab: AuthTab) => {
     resetState()
     setActiveTab(tab)
+  }
+
+  // ── Email / Password Auth ────────────────────────────────
+  const handleEmailAuth = async () => {
+    if (!email || !password) return
+    setIsLoading(true)
+    setAuthError(null)
+    setSuccessMessage(null)
+
+    try {
+      if (activeTab === "signin") {
+        const { error } = await supabase.auth.signInWithPassword({ email, password })
+        if (error) throw error
+        router.push("/dashboard")
+        router.refresh()
+      } else {
+        // Sign Up — enforce password strength
+        if (strength.score < 3) {
+          throw new Error("Please use a stronger password before signing up.")
+        }
+        const { error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            data: { full_name: name },
+            emailRedirectTo: `${window.location.origin}/auth/callback`,
+          },
+        })
+        if (error) throw error
+        setSuccessMessage(
+          "Account created! Check your email for a confirmation link before signing in."
+        )
+      }
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "An unexpected error occurred."
+      setAuthError(message)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  // ── Google OAuth ─────────────────────────────────────────
+  const handleGoogleSignIn = async () => {
+    setIsLoading(true)
+    setAuthError(null)
+
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback`,
+      },
+    })
+
+    if (error) {
+      setAuthError(error.message)
+      setIsLoading(false)
+    }
+  }
+
+  // ── Forgot Password ──────────────────────────────────────
+  const handleForgotPassword = async () => {
+    if (!forgotEmail) return
+    setForgotLoading(true)
+    setForgotError(null)
+
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(forgotEmail, {
+        redirectTo: `${window.location.origin}/auth/reset-password`,
+      })
+      if (error) throw error
+      setForgotSuccess(true)
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Failed to send reset email."
+      setForgotError(message)
+    } finally {
+      setForgotLoading(false)
+    }
+  }
+
+  const closeForgotPassword = () => {
+    setShowForgotPassword(false)
+    setForgotEmail("")
+    setForgotError(null)
+    setForgotSuccess(false)
   }
 
   const cardVariants = {
@@ -133,15 +283,9 @@ export function AuthPage() {
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.15 }}
-          className="flex items-center gap-2.5 mb-8"
+          className="mb-8"
         >
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center shadow-lg shadow-orange-500/25">
-            <Activity className="w-5.5 h-5.5 text-white" strokeWidth={2.5} />
-          </div>
-          <span className="text-2xl font-bold tracking-tight">
-            <span className="text-[#0F172A]">Dia</span>
-            <span className="text-gradient">predix</span>
-          </span>
+          <Mitig8Logo size="lg" theme="dark" animated={false} />
         </motion.div>
 
         <motion.div
@@ -192,30 +336,61 @@ export function AuthPage() {
               </motion.div>
             </AnimatePresence>
 
+            {/* ── Error / Success Banners ── */}
+            <AnimatePresence>
+              {authError && (
+                <motion.div
+                  initial={{ opacity: 0, y: -8, height: 0 }}
+                  animate={{ opacity: 1, y: 0, height: "auto" }}
+                  exit={{ opacity: 0, y: -8, height: 0 }}
+                  className="mb-4 flex items-start gap-2.5 bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-3 text-xs font-medium"
+                >
+                  <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
+                  <span>{authError}</span>
+                </motion.div>
+              )}
+              {successMessage && (
+                <motion.div
+                  initial={{ opacity: 0, y: -8, height: 0 }}
+                  animate={{ opacity: 1, y: 0, height: "auto" }}
+                  exit={{ opacity: 0, y: -8, height: 0 }}
+                  className="mb-4 flex items-start gap-2.5 bg-green-50 border border-green-200 text-green-700 rounded-xl px-4 py-3 text-xs font-medium"
+                >
+                  <span>✓ {successMessage}</span>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* ── Google OAuth Button ── */}
             <motion.button
               whileHover={{ scale: 1.01, boxShadow: "0 4px 20px rgba(0,0,0,0.06)" }}
               whileTap={{ scale: 0.99 }}
-              onClick={() => router.push('/dashboard')}
-              className="w-full flex items-center justify-center gap-3 bg-white border border-slate-200 hover:border-slate-300 rounded-xl py-3 px-4 text-sm font-semibold text-slate-700 transition-all shadow-sm"
+              onClick={handleGoogleSignIn}
+              disabled={isLoading}
+              className="w-full flex items-center justify-center gap-3 bg-white border border-slate-200 hover:border-slate-300 rounded-xl py-3 px-4 text-sm font-semibold text-slate-700 transition-all shadow-sm disabled:opacity-60 disabled:cursor-not-allowed"
             >
-              <svg className="w-5 h-5" viewBox="0 0 24 24">
-                <path
-                  d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"
-                  fill="#4285F4"
-                />
-                <path
-                  d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                  fill="#34A853"
-                />
-                <path
-                  d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
-                  fill="#FBBC05"
-                />
-                <path
-                  d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
-                  fill="#EA4335"
-                />
-              </svg>
+              {isLoading ? (
+                <Loader2 className="w-5 h-5 animate-spin text-slate-400" />
+              ) : (
+                <svg className="w-5 h-5" viewBox="0 0 24 24">
+                  <path
+                    d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"
+                    fill="#4285F4"
+                  />
+                  <path
+                    d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                    fill="#34A853"
+                  />
+                  <path
+                    d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+                    fill="#FBBC05"
+                  />
+                  <path
+                    d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+                    fill="#EA4335"
+                  />
+                </svg>
+              )}
               Continue with Google
             </motion.button>
 
@@ -376,6 +551,7 @@ export function AuthPage() {
                   )}
                 </motion.div>
               ) : (
+                /* ── Email + Password Form ── */
                 <motion.div
                   key="email-form"
                   variants={cardVariants}
@@ -418,7 +594,14 @@ export function AuthPage() {
                     <div className="flex items-center justify-between mb-1.5">
                       <label className="text-xs font-bold text-slate-600">Password</label>
                       {activeTab === "signin" && (
-                        <button className="text-xs font-semibold text-orange-600 hover:text-orange-700">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setForgotEmail(email)
+                            setShowForgotPassword(true)
+                          }}
+                          className="text-xs font-semibold text-orange-600 hover:text-orange-700 transition-colors"
+                        >
                           Forgot password?
                         </button>
                       )}
@@ -429,6 +612,8 @@ export function AuthPage() {
                         type={showPassword ? "text" : "password"}
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
+                        onFocus={() => activeTab === "signup" && setShowStrength(true)}
+                        onKeyDown={(e) => e.key === "Enter" && handleEmailAuth()}
                         placeholder={activeTab === "signup" ? "Create a strong password" : "Enter your password"}
                         className="w-full pl-10 pr-11 py-3 bg-slate-50 border border-slate-200 focus:border-orange-400 focus:ring-2 focus:ring-orange-100 rounded-xl text-sm text-slate-700 outline-none transition-all"
                       />
@@ -440,17 +625,85 @@ export function AuthPage() {
                         {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                       </button>
                     </div>
+
+                    {/* ── Password Strength Indicator ── */}
+                    <AnimatePresence>
+                      {activeTab === "signup" && showStrength && password.length > 0 && (
+                        <motion.div
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: "auto" }}
+                          exit={{ opacity: 0, height: 0 }}
+                          transition={{ duration: 0.22 }}
+                          className="mt-3 space-y-2.5 overflow-hidden"
+                        >
+                          {/* Strength bar */}
+                          <div className="flex items-center gap-2">
+                            <div className="flex-1 flex gap-1">
+                              {[0, 1, 2, 3].map((i) => (
+                                <motion.div
+                                  key={i}
+                                  className="flex-1 h-1.5 rounded-full overflow-hidden bg-slate-200"
+                                >
+                                  <motion.div
+                                    className={`h-full rounded-full ${meta.bar}`}
+                                    initial={{ width: 0 }}
+                                    animate={{ width: i < strength.score ? "100%" : "0%" }}
+                                    transition={{ duration: 0.3, delay: i * 0.05 }}
+                                  />
+                                </motion.div>
+                              ))}
+                            </div>
+                            <span className={`text-[11px] font-bold ${meta.color} min-w-[40px]`}>
+                              {meta.label}
+                            </span>
+                          </div>
+
+                          {/* Rules checklist */}
+                          <div className="grid grid-cols-2 gap-1">
+                            {strengthRules.map((rule) => {
+                              const passed = rule.test(password)
+                              return (
+                                <motion.div
+                                  key={rule.label}
+                                  className="flex items-center gap-1.5"
+                                  animate={{ opacity: 1 }}
+                                >
+                                  {passed ? (
+                                    <CheckCircle2 className="w-3 h-3 text-green-500 shrink-0" />
+                                  ) : (
+                                    <XCircle className="w-3 h-3 text-slate-300 shrink-0" />
+                                  )}
+                                  <span
+                                    className={`text-[10px] font-medium transition-colors ${
+                                      passed ? "text-green-600" : "text-slate-400"
+                                    }`}
+                                  >
+                                    {rule.label}
+                                  </span>
+                                </motion.div>
+                              )
+                            })}
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
                   </div>
 
                   <motion.button
                     whileHover={{ scale: 1.01 }}
                     whileTap={{ scale: 0.99 }}
-                    disabled={!email || !password}
-                    onClick={() => router.push('/dashboard')}
+                    disabled={!email || !password || isLoading}
+                    onClick={handleEmailAuth}
                     className="w-full bg-gradient-to-r from-orange-600 to-orange-500 hover:from-orange-500 hover:to-orange-400 disabled:from-slate-300 disabled:to-slate-300 text-white py-3 rounded-xl font-bold text-sm shadow-lg shadow-orange-500/20 disabled:shadow-none transition-all flex items-center justify-center gap-2"
                   >
-                    {activeTab === "signin" ? "Sign In" : "Create Account"}
-                    <ChevronRight className="w-4 h-4" />
+                    {isLoading ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <>
+                        {activeTab === "signin" ? "Sign In" : "Create Account"}
+                        <ChevronRight className="w-4 h-4" />
+                      </>
+                    )}
                   </motion.button>
                 </motion.div>
               )}
@@ -475,6 +728,150 @@ export function AuthPage() {
           </div>
         </motion.div>
       </div>
+
+      {/* ── Forgot Password Modal ────────────────────────────── */}
+      <AnimatePresence>
+        {showForgotPassword && (
+          <>
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={closeForgotPassword}
+              className="fixed inset-0 z-40 bg-black/30 backdrop-blur-sm"
+            />
+
+            {/* Modal */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.94, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.94, y: 20 }}
+              transition={{ type: "spring", stiffness: 300, damping: 25 }}
+              className="fixed inset-0 z-50 flex items-center justify-center px-4"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="w-full max-w-sm bg-white rounded-3xl shadow-2xl shadow-orange-500/10 border border-slate-100 p-7">
+                <AnimatePresence mode="wait">
+                  {!forgotSuccess ? (
+                    <motion.div
+                      key="forgot-form"
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -8 }}
+                      className="space-y-5"
+                    >
+                      {/* Icon + Title */}
+                      <div className="flex flex-col items-center text-center gap-3">
+                        <div className="w-12 h-12 rounded-2xl bg-orange-50 border border-orange-100 flex items-center justify-center">
+                          <KeyRound className="w-5 h-5 text-orange-500" />
+                        </div>
+                        <div>
+                          <h2 className="text-lg font-bold text-[#0F172A]">Forgot your password?</h2>
+                          <p className="text-xs text-slate-500 mt-1">
+                            No worries — we&apos;ll email you a reset link right away.
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Error */}
+                      <AnimatePresence>
+                        {forgotError && (
+                          <motion.div
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: "auto" }}
+                            exit={{ opacity: 0, height: 0 }}
+                            className="flex items-start gap-2 bg-red-50 border border-red-200 text-red-700 rounded-xl px-3 py-2.5 text-xs font-medium"
+                          >
+                            <AlertCircle className="w-3.5 h-3.5 mt-0.5 shrink-0" />
+                            <span>{forgotError}</span>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+
+                      {/* Email Input */}
+                      <div>
+                        <label className="text-xs font-bold text-slate-600 block mb-1.5">
+                          Email Address
+                        </label>
+                        <div className="relative">
+                          <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                          <input
+                            type="email"
+                            value={forgotEmail}
+                            onChange={(e) => setForgotEmail(e.target.value)}
+                            onKeyDown={(e) => e.key === "Enter" && handleForgotPassword()}
+                            placeholder="you@example.com"
+                            autoFocus
+                            className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 focus:border-orange-400 focus:ring-2 focus:ring-orange-100 rounded-xl text-sm text-slate-700 outline-none transition-all"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Actions */}
+                      <div className="flex gap-3">
+                        <button
+                          onClick={closeForgotPassword}
+                          className="flex-1 py-3 rounded-xl text-sm font-semibold text-slate-500 bg-slate-100 hover:bg-slate-200 transition-colors"
+                        >
+                          Cancel
+                        </button>
+                        <motion.button
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
+                          onClick={handleForgotPassword}
+                          disabled={!forgotEmail || forgotLoading}
+                          className="flex-1 py-3 rounded-xl text-sm font-bold text-white bg-gradient-to-r from-orange-600 to-orange-500 hover:from-orange-500 hover:to-orange-400 disabled:from-slate-300 disabled:to-slate-300 disabled:shadow-none shadow-lg shadow-orange-500/20 transition-all flex items-center justify-center gap-2"
+                        >
+                          {forgotLoading ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : (
+                            <>
+                              <Send className="w-3.5 h-3.5" />
+                              Send Link
+                            </>
+                          )}
+                        </motion.button>
+                      </div>
+                    </motion.div>
+                  ) : (
+                    /* Success State */
+                    <motion.div
+                      key="forgot-success"
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      className="flex flex-col items-center text-center gap-4 py-2"
+                    >
+                      <motion.div
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        transition={{ type: "spring", stiffness: 200, damping: 15, delay: 0.1 }}
+                        className="w-16 h-16 rounded-2xl bg-green-50 border border-green-100 flex items-center justify-center"
+                      >
+                        <CheckCircle2 className="w-8 h-8 text-green-500" />
+                      </motion.div>
+                      <div>
+                        <h2 className="text-lg font-bold text-[#0F172A]">Check your inbox!</h2>
+                        <p className="text-xs text-slate-500 mt-1.5 leading-relaxed">
+                          We&apos;ve sent a password reset link to{" "}
+                          <span className="font-semibold text-slate-700">{forgotEmail}</span>.
+                          <br />It may take a minute or two to arrive.
+                        </p>
+                      </div>
+                      <button
+                        onClick={closeForgotPassword}
+                        className="mt-1 w-full py-3 rounded-xl text-sm font-bold text-white bg-gradient-to-r from-orange-600 to-orange-500 shadow-lg shadow-orange-500/20 hover:from-orange-500 hover:to-orange-400 transition-all"
+                      >
+                        Back to Sign In
+                      </button>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </div>
   )
 }

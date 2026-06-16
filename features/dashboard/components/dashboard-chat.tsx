@@ -26,7 +26,7 @@ const SUGGESTION_CHIPS = [
 ]
 
 const AI_HEALTH_QUESTIONS: { question: string; field: string }[] = [
-  { question: "Welcome to Diapredix AI! 👋 I'm here to help assess your diabetes risk. Let me ask you a few quick questions. First, could you tell me your age?", field: "age" },
+  { question: "Welcome to Mitig8 AI! 👋 I'm here to help assess your diabetes risk. Let me ask you a few quick questions. First, could you tell me your age?", field: "age" },
   { question: "Thank you! And what is your gender? (Male/Female/Other)", field: "gender" },
   { question: "Could you help me with your current weight in kg?", field: "weight" },
   { question: "Great! And what is your height in cm?", field: "height" },

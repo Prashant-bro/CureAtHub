@@ -31,6 +31,7 @@ interface DashboardHomeProps {
   onNavigateToChat: () => void
   onNavigateToDiet: () => void
   onNavigateToReportAnalyzer: () => void
+  userName?: string
 }
 
 const fadeUp = {
@@ -42,7 +43,7 @@ const fadeUp = {
   }),
 }
 
-export function DashboardHome({ onNavigateToChat, onNavigateToDiet, onNavigateToReportAnalyzer }: DashboardHomeProps) {
+export function DashboardHome({ onNavigateToChat, onNavigateToDiet, onNavigateToReportAnalyzer, userName = "" }: DashboardHomeProps) {
   const [shareDialogOpen, setShareDialogOpen] = useState(false)
   const [sharingStatus, setSharingStatus] = useState<"idle" | "generating" | "done">("idle")
 
@@ -65,7 +66,7 @@ export function DashboardHome({ onNavigateToChat, onNavigateToDiet, onNavigateTo
       >
         <div>
           <h2 className="text-xl sm:text-2xl font-bold text-[#0F172A]">
-            Welcome back, <span className="text-gradient">Rahul</span> 👋
+            Welcome back, <span className="text-gradient">{userName.split(" ")[0] || "there"}</span> 👋
           </h2>
           <p className="text-sm text-slate-400 mt-0.5">Here's your health overview for today</p>
         </div>
@@ -107,7 +108,7 @@ export function DashboardHome({ onNavigateToChat, onNavigateToDiet, onNavigateTo
               </div>
               <div>
                 <h3 className="text-white font-bold text-base">Health Risk Card</h3>
-                <p className="text-white/40 text-xs">Powered by Diapredix AI</p>
+                <p className="text-white/40 text-xs">Powered by Mitig8 AI</p>
               </div>
             </div>
             <div className="flex items-center gap-2">
@@ -122,7 +123,7 @@ export function DashboardHome({ onNavigateToChat, onNavigateToDiet, onNavigateTo
               </motion.button>
               <div className="flex items-center gap-1.5 bg-white/10 backdrop-blur-sm rounded-full px-3 py-1.5">
                 <Shield className="w-3 h-3 text-orange-400" />
-                <span className="text-[10px] font-bold text-white/70">DIAPREDIX</span>
+                <span className="text-[10px] font-bold text-white/70">MITIG8</span>
               </div>
             </div>
           </div>
@@ -131,7 +132,7 @@ export function DashboardHome({ onNavigateToChat, onNavigateToDiet, onNavigateTo
             <div className="space-y-5">
               <div>
                 <p className="text-white/40 text-xs uppercase tracking-wider mb-1">Patient Name</p>
-                <p className="text-white font-bold text-xl">Rahul Sharma</p>
+                <p className="text-white font-bold text-xl">{userName || "Patient"}</p>
               </div>
 
               <div className="flex items-center gap-3">
@@ -424,9 +425,9 @@ export function DashboardHome({ onNavigateToChat, onNavigateToDiet, onNavigateTo
                       <div className="w-6 h-6 rounded-lg bg-orange-500 flex items-center justify-center">
                         <Heart className="w-3.5 h-3.5 text-white" />
                       </div>
-                      <span className="text-[11px] font-black tracking-wider text-orange-400">DIAPREDIX CARD</span>
+                      <span className="text-[11px] font-black tracking-wider text-orange-400">MITIG8 CARD</span>
                     </div>
-                    <span className="text-[8px] font-bold text-white/50">Rahul Sharma</span>
+                    <span className="text-[8px] font-bold text-white/50">{userName || "Patient"}</span>
                   </div>
 
                   <div className="flex justify-between items-center">
@@ -449,7 +450,7 @@ export function DashboardHome({ onNavigateToChat, onNavigateToDiet, onNavigateTo
 
                   <div className="border-t border-white/5 mt-4 pt-3 flex justify-between items-center text-[7px] text-white/30">
                     <span>Better than 70% of users</span>
-                    <span>Verify at: diapredix.com</span>
+                    <span>Verify at: mitig8.com</span>
                   </div>
                 </div>
 
@@ -492,7 +493,7 @@ export function DashboardHome({ onNavigateToChat, onNavigateToDiet, onNavigateTo
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     onClick={async () => {
-                      const shareText = `Check out my Diapredix Health Card!\nMy diabetes risk is 32/100 (Low Risk) and better than 70% of platform users. View card at: https://diapredix.com/share/rahul-sharma-risk-32`
+                      const shareText = `Check out my Mitig8 Health Card!\nMy diabetes risk is 32/100 (Low Risk) and better than 70% of platform users. View card at: https://mitig8.com/share/rahul-sharma-risk-32`
                       await navigator.clipboard.writeText(shareText)
                       alert("Share link with full card copied to clipboard!")
                     }}

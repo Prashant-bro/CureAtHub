@@ -5,7 +5,8 @@ import { motion, AnimatePresence } from "framer-motion"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useLenis } from "lenis/react"
-import { Menu, X, Activity } from "lucide-react"
+import { Menu, X } from "lucide-react"
+import { Mitig8Logo } from "@/components/mitig8-logo"
 
 export function Navigation() {
   const [scrolled, setScrolled] = useState(false)
@@ -48,22 +49,8 @@ export function Navigation() {
       }`}
     >
       <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-        <Link href="/" className="flex items-center gap-2.5">
-          <motion.div
-            className="w-9 h-9 rounded-xl bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center shadow-md"
-            whileHover={{ scale: 1.05, rotate: -3 }}
-            transition={{ type: "spring", stiffness: 400, damping: 17 }}
-          >
-            <Activity className="w-5 h-5 text-white" strokeWidth={2.5} />
-          </motion.div>
-          <motion.span
-            className="text-xl font-bold tracking-tight"
-            whileHover={{ scale: 1.02 }}
-            transition={{ type: "spring", stiffness: 400, damping: 17 }}
-          >
-            <span className="text-[#0F172A]">Dia</span>
-            <span className="text-primary">predix</span>
-          </motion.span>
+        <Link href="/">
+          <Mitig8Logo size="md" theme="dark" animated={true} />
         </Link>
 
         <div className="hidden md:flex items-center gap-8">

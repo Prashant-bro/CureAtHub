@@ -70,7 +70,7 @@ const initialStories: CommunityStory[] = [
     initialRisk: 58,
     currentRisk: 24,
     title: "10,000 steps and portion control did the trick",
-    content: "The personalized exercises and daily stress-reduction tips changed everything for me. My insulin sensitivity has improved significantly. Diapredix risk score drop validated my hard work at my latest checkup!",
+    content: "The personalized exercises and daily stress-reduction tips changed everything for me. My insulin sensitivity has improved significantly. Mitig8 risk score drop validated my hard work at my latest checkup!",
     claps: 29,
     userClapped: false,
     tags: ["Exercise", "Stress Relief", "Verification"],
@@ -127,7 +127,7 @@ const initialBadges: Badge[] = [
   {
     id: "badge-storyteller",
     title: "Storyteller",
-    description: "Shared your success story with the Diapredix community.",
+    description: "Shared your success story with the Mitig8 community.",
     icon: "✍️",
     unlocked: false,
     unlockCriteria: "Publish a success story",
@@ -498,7 +498,7 @@ export function DashboardCommunity() {
                   rows={4}
                   value={newContent}
                   onChange={e => setNewContent(e.target.value)}
-                  placeholder="Share details on how you did it, what features of Diapredix helped you (e.g. AI Chat recommendations, Meal Scan diagnostics) so other community members can learn from you!"
+                  placeholder="Share details on how you did it, what features of Mitig8 helped you (e.g. AI Chat recommendations, Meal Scan diagnostics) so other community members can learn from you!"
                   className="w-full bg-slate-50/50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs text-[#0F172A] focus:outline-none focus:border-orange-400 resize-none"
                 />
               </div>

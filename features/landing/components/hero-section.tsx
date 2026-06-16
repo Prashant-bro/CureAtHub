@@ -121,7 +121,17 @@ export function HeroSection() {
               AI-Powered Diabetes Prevention
             </motion.div>
 
-            <div className="space-y-2">
+            <div className="space-y-3">
+              <motion.div
+                variants={fadeUpVariants}
+                initial="hidden"
+                animate="visible"
+                custom={0.5}
+                className="font-serif italic text-2xl sm:text-3xl text-orange-600 font-semibold tracking-wide border-l-4 border-orange-500 pl-4 py-1 bg-gradient-to-r from-orange-50/50 to-transparent rounded-r-xl w-fit"
+              >
+                Predict early. Act early.
+              </motion.div>
+
               <motion.h1
                 variants={fadeUpVariants}
                 initial="hidden"
@@ -232,7 +242,7 @@ export function HeroSection() {
               >
                 <Image
                   src="/images/hero-dashboard.png"
-                  alt="Diapredix AI Health Dashboard"
+                  alt="Mitig8 AI Health Dashboard"
                   width={520}
                   height={520}
                   className="relative z-10 drop-shadow-xl rounded-2xl"

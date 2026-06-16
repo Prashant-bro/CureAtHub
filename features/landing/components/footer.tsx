@@ -3,7 +3,8 @@
 import { motion, useInView, Variants } from "framer-motion"
 import { useState, useRef } from "react"
 import Link from "next/link"
-import { Activity, Mail, ArrowRight } from "lucide-react"
+import { Mail, ArrowRight } from "lucide-react"
+import { Mitig8Logo } from "@/components/mitig8-logo"
 
 const containerVariants: Variants = {
   hidden: { opacity: 0 },
@@ -158,18 +159,12 @@ export function Footer() {
           viewport={{ once: true }}
           transition={{ delay: 0.5 }}
         >
-          <Link href="/" className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-teal-500 to-teal-700 flex items-center justify-center">
-              <Activity className="w-4 h-4 text-white" strokeWidth={2.5} />
-            </div>
-            <span className="text-lg font-bold">
-              <span className="text-white">Dia</span>
-              <span className="text-teal-400">predix</span>
-            </span>
+          <Link href="/">
+            <Mitig8Logo size="sm" theme="footer" animated={false} />
           </Link>
 
           <p className="text-white/40 text-sm">
-            © {new Date().getFullYear()} Diapredix. All rights reserved.
+            © {new Date().getFullYear()} Mitig8. All rights reserved.
           </p>
 
           <p className="text-white/25 text-xs">
@@ -185,7 +180,7 @@ export function Footer() {
         viewport={{ once: true }}
         transition={{ duration: 1, ease: "easeOut" }}
       >
-        DIAPREDIX
+        MITIG8
       </motion.div>
     </footer>
   )

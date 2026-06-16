@@ -4,7 +4,7 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  /* Diapredix Core Palette — Warm Cream Base */
+  /* Mitig8 Core Palette — Warm Cream Base */
   --background: oklch(0.98 0.012 75);
   --foreground: oklch(0.15 0.02 260);
   --card: oklch(1 0 0);
@@ -31,7 +31,7 @@
   --chart-5: oklch(0.6 0.2 300);
   --radius: 0.75rem;
 
-  /* Diapredix Brand Tokens */
+  /* Mitig8 Brand Tokens */
   --teal: oklch(0.55 0.14 175);
   --teal-deep: oklch(0.48 0.12 175);
   --teal-light: oklch(0.92 0.04 170);
@@ -69,6 +69,7 @@
 
 @theme inline {
   --font-sans: "Inter", "Inter Fallback", system-ui, sans-serif;
+  --font-serif: var(--font-serif), Georgia, serif;
   --font-mono: "JetBrains Mono", "Geist Mono", monospace;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -99,7 +100,7 @@
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
 
-  /* Diapredix Brand Colors */
+  /* Mitig8 Brand Colors */
   --color-teal: var(--teal);
   --color-teal-deep: var(--teal-deep);
   --color-teal-light: var(--teal-light);
@@ -122,7 +123,7 @@
   }
 }
 
-/* Diapredix Animations */
+/* Mitig8 Animations */
 @keyframes pulse-ring {
   0% {
     transform: scale(0.95);
