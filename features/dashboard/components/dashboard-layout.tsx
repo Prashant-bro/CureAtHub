@@ -73,7 +73,25 @@ export function DashboardLayout() {
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
-      if (!user) return
+      if (!user) {
+        // Fallback for mock frontend-only login testing
+        const isMockLoggedIn = document.cookie.includes("mock-login=true")
+        if (isMockLoggedIn) {
+          const match = document.cookie.match(/(?:^|; )mock-login-provider=([^;]*)/)
+          const provider = match ? match[1] : "email"
+          
+          if (provider === "phone") {
+            setUserName("Alex Smith")
+            setUserEmail("alexsmith@example.com")
+            setUserInitials("AS")
+          } else {
+            setUserName("John Doe")
+            setUserEmail("johndoe@gmail.com")
+            setUserInitials("JD")
+          }
+        }
+        return
+      }
       const fullName =
         user.user_metadata?.full_name ||
         user.user_metadata?.name ||
@@ -420,8 +438,10 @@ export function DashboardLayout() {
             <Settings className="w-[18px] h-[18px]" />
             <span>Settings</span>
           </button>
-          <button
+           <button
             onClick={async () => {
+              document.cookie = "mock-login=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;"
+              document.cookie = "mock-login-provider=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;"
               await supabase.auth.signOut()
               router.push("/")
               router.refresh()

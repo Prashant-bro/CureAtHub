@@ -38,20 +38,23 @@ export async function updateSession(request: NextRequest) {
   // ── Route Guards ──────────────────────────────────────────
   const { pathname } = request.nextUrl
 
+  // Get mock-login cookie for frontend-only testing bypass
+  const isMockLoggedIn = request.cookies.get('mock-login')?.value === 'true'
+
   // Unauthenticated users trying to access protected routes → redirect to /auth
-  const protectedRoutes = ['/dashboard']
+  const protectedRoutes = ['/dashboard', '/auth/onboarding']
   const isProtected = protectedRoutes.some((route) =>
     pathname.startsWith(route)
   )
 
-  if (isProtected && !user) {
+  if (isProtected && !user && !isMockLoggedIn) {
     const url = request.nextUrl.clone()
     url.pathname = '/auth'
     return NextResponse.redirect(url)
   }
 
   // Authenticated users trying to access /auth → redirect to /dashboard
-  if (pathname === '/auth' && user) {
+  if (pathname === '/auth' && (user || isMockLoggedIn)) {
     const url = request.nextUrl.clone()
     url.pathname = '/dashboard'
     return NextResponse.redirect(url)
