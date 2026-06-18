@@ -73,8 +73,12 @@ export function AuthPage() {
 
   // ── Auth state ───────────────────────────────────────────
   const [isLoading, setIsLoading] = useState(false)
+  const [isSendingOtp, setIsSendingOtp] = useState(false)
+  const [isVerifyingOtp, setIsVerifyingOtp] = useState(false)
   const [authError, setAuthError] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
+
+
 
   // ── Forgot Password state ────────────────────────────────
   const [showForgotPassword, setShowForgotPassword] = useState(false)
@@ -104,11 +108,102 @@ export function AuthPage() {
     if (error) setAuthError(decodeURIComponent(error))
   }, [])
 
-  const handleSendOtp = () => {
-    if (phone.length >= 10) {
+  // ── Send OTP via API ─────────────────────────────────────
+  const handleSendOtp = async () => {
+    if (phone.length < 10) return
+
+    setIsSendingOtp(true)
+    setAuthError(null)
+    setSuccessMessage(null)
+
+    try {
+      const formattedPhone = `+91${phone}`
+      const res = await fetch("/api/auth/otp/send", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone: formattedPhone }),
+      })
+
+      const data = await res.json()
+
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to send OTP.")
+      }
+
       setOtpSent(true)
       setOtpTimer(30)
+      setSuccessMessage("OTP sent successfully!")
+
+      setTimeout(() => {
+        otpRefs.current[0]?.focus()
+        setSuccessMessage(null)
+      }, 300)
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Failed to send OTP."
+      setAuthError(message)
+    } finally {
+      setIsSendingOtp(false)
+    }
+  }
+
+  // ── Resend OTP ───────────────────────────────────────────
+  const handleResendOtp = async () => {
+    setOtpValues(["", "", "", "", "", ""])
+    await handleSendOtp()
+  }
+
+  // ── Verify OTP via API ───────────────────────────────────
+  const handleVerifyOtp = async () => {
+    const otpCode = otpValues.join("")
+    if (otpCode.length !== 6) return
+
+    setIsVerifyingOtp(true)
+    setAuthError(null)
+    setSuccessMessage(null)
+
+    try {
+      const formattedPhone = `+91${phone}`
+      const res = await fetch("/api/auth/otp/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone: formattedPhone, otp: otpCode }),
+      })
+
+      const data = await res.json()
+
+      if (!res.ok) {
+        throw new Error(data.error || "OTP verification failed.")
+      }
+
+      // Set the Supabase session with the tokens from the server
+      if (data.session) {
+        await supabase.auth.setSession({
+          access_token: data.session.access_token,
+          refresh_token: data.session.refresh_token,
+        })
+      }
+
+      setSuccessMessage("Verified! Redirecting...")
+
+      // Store phone for onboarding
+      if (typeof window !== "undefined") {
+        sessionStorage.setItem("auth_phone", formattedPhone)
+        if (data.user?.id) {
+          sessionStorage.setItem("auth_user_id", data.user.id)
+        }
+      }
+
+      setTimeout(() => {
+        router.push("/auth/onboarding")
+      }, 800)
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "OTP verification failed."
+      setAuthError(message)
+      // Clear OTP inputs on failure so user can retry
+      setOtpValues(["", "", "", "", "", ""])
       setTimeout(() => otpRefs.current[0]?.focus(), 100)
+    } finally {
+      setIsVerifyingOtp(false)
     }
   }
 
@@ -125,6 +220,23 @@ export function AuthPage() {
   const handleOtpKeyDown = (index: number, e: React.KeyboardEvent) => {
     if (e.key === "Backspace" && !otpValues[index] && index > 0) {
       otpRefs.current[index - 1]?.focus()
+    }
+  }
+
+  // Auto-verify when all 6 digits are entered
+  useEffect(() => {
+    if (otpSent && otpValues.every((v) => v !== "") && !isVerifyingOtp) {
+      handleVerifyOtp()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [otpValues])
+
+  const handleOtpPaste = (e: React.ClipboardEvent) => {
+    e.preventDefault()
+    const pastedData = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, 6)
+    if (pastedData.length === 6) {
+      const newOtp = pastedData.split("")
+      setOtpValues(newOtp)
     }
   }
 
@@ -155,44 +267,26 @@ export function AuthPage() {
 
     try {
       if (activeTab === "signin") {
-        try {
-          const { error } = await supabase.auth.signInWithPassword({ email, password })
-          if (error) throw error
-        } catch (err) {
-          console.warn("Supabase auth failed, running in mock mode:", err)
-        }
-        document.cookie = "mock-login=true; path=/"
-        document.cookie = "mock-login-provider=email; path=/"
+        const { error } = await supabase.auth.signInWithPassword({ email, password })
+        if (error) throw error
         router.push("/auth/onboarding")
       } else {
         // Sign Up — enforce password strength
         if (strength.score < 3) {
           throw new Error("Please use a stronger password before signing up.")
         }
-        try {
-          const { error } = await supabase.auth.signUp({
-            email,
-            password,
-            options: {
-              data: { full_name: name },
-              emailRedirectTo: `${window.location.origin}/auth/callback`,
-            },
-          })
-          if (error) throw error
-          setSuccessMessage(
-            "Account created! Check your email for a confirmation link before signing in."
-          )
-        } catch (err) {
-          console.warn("Supabase signup failed, running in mock mode:", err)
-          document.cookie = "mock-login=true; path=/"
-          document.cookie = "mock-login-provider=email; path=/"
-          setSuccessMessage(
-            "Account created (Mock Mode)! Redirecting to onboarding..."
-          )
-          setTimeout(() => {
-            router.push("/auth/onboarding")
-          }, 1500)
-        }
+        const { error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            data: { full_name: name },
+            emailRedirectTo: `${window.location.origin}/auth/callback`,
+          },
+        })
+        if (error) throw error
+        setSuccessMessage(
+          "Account created! Check your email for a confirmation link before signing in."
+        )
       }
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "An unexpected error occurred."
@@ -207,12 +301,19 @@ export function AuthPage() {
     setIsLoading(true)
     setAuthError(null)
 
-    // Simulate Google Sign-In and transition to onboarding for pure frontend testing
-    setTimeout(() => {
-      document.cookie = "mock-login=true; path=/"
-      document.cookie = "mock-login-provider=google; path=/"
-      router.push("/auth/onboarding")
-    }, 800)
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+        },
+      })
+      if (error) throw error
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Google sign-in failed."
+      setAuthError(message)
+      setIsLoading(false)
+    }
   }
 
   // ── Forgot Password ──────────────────────────────────────
@@ -352,6 +453,7 @@ export function AuthPage() {
             <AnimatePresence>
               {authError && (
                 <motion.div
+                  key="auth-error"
                   initial={{ opacity: 0, y: -8, height: 0 }}
                   animate={{ opacity: 1, y: 0, height: "auto" }}
                   exit={{ opacity: 0, y: -8, height: 0 }}
@@ -363,6 +465,7 @@ export function AuthPage() {
               )}
               {successMessage && (
                 <motion.div
+                  key="auth-success"
                   initial={{ opacity: 0, y: -8, height: 0 }}
                   animate={{ opacity: 1, y: 0, height: "auto" }}
                   exit={{ opacity: 0, y: -8, height: 0 }}
@@ -489,11 +592,20 @@ export function AuthPage() {
                         whileHover={{ scale: 1.01 }}
                         whileTap={{ scale: 0.99 }}
                         onClick={handleSendOtp}
-                        disabled={phone.length < 10}
+                        disabled={phone.length < 10 || isSendingOtp}
                         className="w-full bg-gradient-to-r from-orange-600 to-orange-500 hover:from-orange-500 hover:to-orange-400 disabled:from-slate-300 disabled:to-slate-300 text-white py-3 rounded-xl font-bold text-sm shadow-lg shadow-orange-500/20 disabled:shadow-none transition-all flex items-center justify-center gap-2"
                       >
-                        Send OTP
-                        <ChevronRight className="w-4 h-4" />
+                        {isSendingOtp ? (
+                          <>
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                            Sending OTP...
+                          </>
+                        ) : (
+                          <>
+                            Send OTP
+                            <ChevronRight className="w-4 h-4" />
+                          </>
+                        )}
                       </motion.button>
                     </>
                   ) : (
@@ -506,7 +618,11 @@ export function AuthPage() {
                         <div className="flex items-center justify-between mb-2">
                           <label className="text-xs font-bold text-slate-600">Enter 6-digit OTP</label>
                           <button
-                            onClick={() => setOtpSent(false)}
+                            onClick={() => {
+                              setOtpSent(false)
+                              setOtpValues(["", "", "", "", "", ""])
+                              setAuthError(null)
+                            }}
                             className="text-xs font-semibold text-orange-600 hover:text-orange-700"
                           >
                             Change number
@@ -527,6 +643,7 @@ export function AuthPage() {
                               value={val}
                               onChange={(e) => handleOtpChange(idx, e.target.value)}
                               onKeyDown={(e) => handleOtpKeyDown(idx, e)}
+                              onPaste={idx === 0 ? handleOtpPaste : undefined}
                               className="w-12 h-12 text-center text-lg font-bold bg-slate-50 border-2 border-slate-200 focus:border-orange-400 focus:ring-2 focus:ring-orange-100 rounded-xl outline-none transition-all text-slate-800"
                             />
                           ))}
@@ -539,10 +656,11 @@ export function AuthPage() {
                             ? `Resend in ${otpTimer}s`
                             : (
                               <button
-                                onClick={() => setOtpTimer(30)}
-                                className="text-orange-600 font-bold hover:underline"
+                                onClick={handleResendOtp}
+                                disabled={isSendingOtp}
+                                className="text-orange-600 font-bold hover:underline disabled:opacity-50"
                               >
-                                Resend OTP
+                                {isSendingOtp ? "Sending..." : "Resend OTP"}
                               </button>
                             )
                           }
@@ -552,16 +670,21 @@ export function AuthPage() {
                       <motion.button
                         whileHover={{ scale: 1.01 }}
                         whileTap={{ scale: 0.99 }}
-                        disabled={otpValues.some((v) => !v)}
-                        onClick={() => {
-                          document.cookie = "mock-login=true; path=/";
-                          document.cookie = "mock-login-provider=phone; path=/";
-                          router.push('/auth/onboarding');
-                        }}
+                        disabled={otpValues.some((v) => !v) || isVerifyingOtp}
+                        onClick={handleVerifyOtp}
                         className="w-full bg-gradient-to-r from-orange-600 to-orange-500 hover:from-orange-500 hover:to-orange-400 disabled:from-slate-300 disabled:to-slate-300 text-white py-3 rounded-xl font-bold text-sm shadow-lg shadow-orange-500/20 disabled:shadow-none transition-all flex items-center justify-center gap-2"
                       >
-                        {activeTab === "signin" ? "Sign In" : "Create Account"}
-                        <ChevronRight className="w-4 h-4" />
+                        {isVerifyingOtp ? (
+                          <>
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                            Verifying...
+                          </>
+                        ) : (
+                          <>
+                            {activeTab === "signin" ? "Sign In" : "Create Account"}
+                            <ChevronRight className="w-4 h-4" />
+                          </>
+                        )}
                       </motion.button>
                     </motion.div>
                   )}

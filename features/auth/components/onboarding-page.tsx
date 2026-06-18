@@ -14,13 +14,28 @@ import {
   AlertCircle,
   Smartphone,
   Info,
+  Heart,
+  Droplets,
 } from "lucide-react"
 import { Mitig8Logo } from "@/components/mitig8-logo"
+import { createClient } from "@/lib/supabase/client"
 
 type LoginProvider = "phone" | "google_email"
 
+const GENDER_OPTIONS = [
+  { value: "male", label: "Male" },
+  { value: "female", label: "Female" },
+  { value: "other", label: "Other" },
+  { value: "prefer_not_to_say", label: "Prefer not to say" },
+]
+
+const BLOOD_GROUP_OPTIONS = [
+  "A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-",
+]
+
 export function OnboardingPage() {
   const router = useRouter()
+  const supabase = createClient()
 
   // Simulator State (so user can toggle between paths on the frontend)
   const [provider, setProvider] = useState<LoginProvider>("phone")
@@ -30,40 +45,114 @@ export function OnboardingPage() {
   const [email, setEmail] = useState("")
   const [age, setAge] = useState("")
   const [dob, setDob] = useState("")
+  const [gender, setGender] = useState("")
+  const [bloodGroup, setBloodGroup] = useState("")
+
+  // Auth session data
+  const [userId, setUserId] = useState<string | null>(null)
+  const [authPhone, setAuthPhone] = useState<string | null>(null)
 
   // UI & Loading States
   const [isLoading, setIsLoading] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [showSuccess, setShowSuccess] = useState(false)
+  const [submitError, setSubmitError] = useState<string | null>(null)
 
-  // Check cookie on mount to set initial provider
+  // Check session and cookies on mount
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const match = document.cookie.match(/(?:^|; )mock-login-provider=([^;]*)/)
-      const savedProvider = match ? match[1] : null
-      if (savedProvider === "phone") {
-        setProvider("phone")
-      } else if (savedProvider === "email" || savedProvider === "google") {
-        setProvider("google_email")
+    async function loadSession() {
+      // Try getting user from Supabase session first
+      const { data: { user } } = await supabase.auth.getUser()
+
+      let currentUserId: string | null = null
+      let currentPhone: string | null = null
+
+      if (user) {
+        currentUserId = user.id
+        setUserId(user.id)
+
+        // Check if user signed in via phone or email/Google
+        if (user.phone) {
+          setProvider("phone")
+          setAuthPhone(user.phone)
+          currentPhone = user.phone
+        } else if (user.email) {
+          setProvider("google_email")
+          setName(user.user_metadata?.full_name || user.user_metadata?.name || "")
+          setEmail(user.email)
+        }
+      } else {
+        // Fallback to sessionStorage for phone OTP flow
+        if (typeof window !== "undefined") {
+          const storedUserId = sessionStorage.getItem("auth_user_id")
+          const storedPhone = sessionStorage.getItem("auth_phone")
+
+          if (storedUserId) {
+            currentUserId = storedUserId
+            setUserId(storedUserId)
+          }
+          if (storedPhone) {
+            setAuthPhone(storedPhone)
+            currentPhone = storedPhone
+            setProvider("phone")
+          }
+
+          // Check cookie for provider info
+          const match = document.cookie.match(/(?:^|; )mock-login-provider=([^;]*)/)
+          const savedProvider = match ? match[1] : null
+          if (savedProvider === "email" || savedProvider === "google") {
+            setProvider("google_email")
+          }
+        }
+      }
+
+      // If we have a userId, fetch the existing profile to avoid asking for details again
+      if (currentUserId) {
+        try {
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("*")
+            .eq("id", currentUserId)
+            .maybeSingle()
+
+          if (profile) {
+            // Check if profile is complete (has name, email, age, dob, gender, bloodGroup)
+            if (
+              profile.full_name &&
+              profile.email &&
+              profile.age &&
+              profile.date_of_birth &&
+              profile.gender &&
+              profile.blood_group
+            ) {
+              // Redirect to dashboard immediately
+              router.push("/dashboard")
+              return
+            }
+
+            // Pre-populate fields we have
+            if (profile.full_name) setName(profile.full_name)
+            if (profile.email) setEmail(profile.email)
+            if (profile.age) setAge(String(profile.age))
+            if (profile.date_of_birth) setDob(profile.date_of_birth)
+            if (profile.gender) setGender(profile.gender)
+            if (profile.blood_group) setBloodGroup(profile.blood_group)
+          } else if (currentPhone && !authPhone) {
+            setAuthPhone(currentPhone)
+          }
+        } catch (err) {
+          console.error("Error loading profile:", err)
+        }
       }
     }
-  }, [])
+
+    loadSession()
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Reset fields on provider toggle to show clean dynamic behavior
   useEffect(() => {
     setErrors({})
-    if (provider === "google_email") {
-      // Prefilled values as if they came from Google/Email Auth
-      setName("John Doe")
-      setEmail("johndoe@gmail.com")
-      setAge("")
-      setDob("")
-    } else {
-      setName("")
-      setEmail("")
-      setAge("")
-      setDob("")
-    }
+    setSubmitError(null)
   }, [provider])
 
   // Simple validation logic
@@ -104,26 +193,69 @@ export function OnboardingPage() {
       }
     }
 
+    if (!gender) {
+      newErrors.gender = "Please select your gender."
+    }
+
+    if (!bloodGroup) {
+      newErrors.bloodGroup = "Please select your blood group."
+    }
+
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!validateForm()) return
 
     setIsLoading(true)
+    setSubmitError(null)
 
-    // Simulate Frontend Submission API Call
-    setTimeout(() => {
-      setIsLoading(false)
+    try {
+      // If we don't have a userId, we can't save the profile
+      if (!userId) {
+        throw new Error("User session not found. Please go back and sign in again.")
+      }
+
+      const res = await fetch("/api/auth/profile", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          user_id: userId,
+          full_name: name.trim(),
+          email: email.trim(),
+          phone: authPhone || null,
+          age: age,
+          date_of_birth: dob,
+          gender: gender,
+          blood_group: bloodGroup,
+        }),
+      })
+
+      const data = await res.json()
+
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to save profile.")
+      }
+
+      // Clean up sessionStorage
+      if (typeof window !== "undefined") {
+        sessionStorage.removeItem("auth_user_id")
+        sessionStorage.removeItem("auth_phone")
+      }
+
       setShowSuccess(true)
-      
+
       // Redirect to dashboard after showing success state
       setTimeout(() => {
         router.push("/dashboard")
       }, 1500)
-    }, 1200)
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "An unexpected error occurred."
+      setSubmitError(message)
+      setIsLoading(false)
+    }
   }
 
   const containerVariants: Variants = {
@@ -160,7 +292,6 @@ export function OnboardingPage() {
 
       <div className="relative z-10 w-full max-w-lg space-y-6">
         
-
 
         {/* ── Logo ── */}
         <motion.div
@@ -217,6 +348,21 @@ export function OnboardingPage() {
                       Please provide these essential health details to personalize your glucose recommendations.
                     </p>
                   </div>
+
+                  {/* Submit Error Banner */}
+                  <AnimatePresence>
+                    {submitError && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -8, height: 0 }}
+                        animate={{ opacity: 1, y: 0, height: "auto" }}
+                        exit={{ opacity: 0, y: -8, height: 0 }}
+                        className="flex items-start gap-2.5 bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-3 text-xs font-medium"
+                      >
+                        <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
+                        <span>{submitError}</span>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
 
                   {/* Onboarding Form */}
                   <form onSubmit={handleSubmit} className="space-y-5">
@@ -356,6 +502,83 @@ export function OnboardingPage() {
                         {errors.dob && (
                           <p className="text-[11px] text-red-500 font-semibold flex items-center gap-1">
                             <AlertCircle className="w-3.5 h-3.5" /> {errors.dob}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Gender and Blood Group */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {/* Gender */}
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-bold text-slate-600 block">Gender</label>
+                        <div className="relative">
+                          <Heart className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-slate-400" />
+                          <select
+                            value={gender}
+                            onChange={(e) => setGender(e.target.value)}
+                            className={`w-full pl-11 pr-4 py-3 bg-slate-50 border rounded-xl text-sm outline-none transition-all appearance-none cursor-pointer ${
+                              gender ? "text-slate-700" : "text-slate-400"
+                            } ${
+                              errors.gender
+                                ? "border-red-300 focus:border-red-400 focus:ring-2 focus:ring-red-100"
+                                : "border-slate-200 focus:border-orange-400 focus:ring-2 focus:ring-orange-100"
+                            }`}
+                          >
+                            <option value="" disabled>Select gender</option>
+                            {GENDER_OPTIONS.map((opt) => (
+                              <option key={opt.value} value={opt.value}>
+                                {opt.label}
+                              </option>
+                            ))}
+                          </select>
+                          {/* Custom dropdown arrow */}
+                          <div className="absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none">
+                            <svg className="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                            </svg>
+                          </div>
+                        </div>
+                        {errors.gender && (
+                          <p className="text-[11px] text-red-500 font-semibold flex items-center gap-1">
+                            <AlertCircle className="w-3.5 h-3.5" /> {errors.gender}
+                          </p>
+                        )}
+                      </div>
+
+                      {/* Blood Group */}
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-bold text-slate-600 block">Blood Group</label>
+                        <div className="relative">
+                          <Droplets className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-slate-400" />
+                          <select
+                            value={bloodGroup}
+                            onChange={(e) => setBloodGroup(e.target.value)}
+                            className={`w-full pl-11 pr-4 py-3 bg-slate-50 border rounded-xl text-sm outline-none transition-all appearance-none cursor-pointer ${
+                              bloodGroup ? "text-slate-700" : "text-slate-400"
+                            } ${
+                              errors.bloodGroup
+                                ? "border-red-300 focus:border-red-400 focus:ring-2 focus:ring-red-100"
+                                : "border-slate-200 focus:border-orange-400 focus:ring-2 focus:ring-orange-100"
+                            }`}
+                          >
+                            <option value="" disabled>Select blood group</option>
+                            {BLOOD_GROUP_OPTIONS.map((bg) => (
+                              <option key={bg} value={bg}>
+                                {bg}
+                              </option>
+                            ))}
+                          </select>
+                          {/* Custom dropdown arrow */}
+                          <div className="absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none">
+                            <svg className="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                            </svg>
+                          </div>
+                        </div>
+                        {errors.bloodGroup && (
+                          <p className="text-[11px] text-red-500 font-semibold flex items-center gap-1">
+                            <AlertCircle className="w-3.5 h-3.5" /> {errors.bloodGroup}
                           </p>
                         )}
                       </div>
