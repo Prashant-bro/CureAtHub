@@ -48,50 +48,12 @@ interface Badge {
   dateUnlocked?: string
 }
 
-const initialStories: CommunityStory[] = [
-  {
-    id: "story-1",
-    name: "Amit Kumar",
-    avatar: "AK",
-    initialRisk: 74,
-    currentRisk: 29,
-    title: "How I reversed my high risk score in 90 days",
-    content: "Using the Meal Scanner made me realize how much hidden sugar was in my breakfast 'healthy' cereals. Replacing them with eggs, spinach, and avocados brought my glycemic variance down dramatically. I also walked for 30 minutes after dinner.",
-    claps: 42,
-    userClapped: false,
-    tags: ["Diet Swap", "Meal Scan", "Walking"],
-    days: 90,
-    date: "2 days ago"
-  },
-  {
-    id: "story-2",
-    name: "Sneha Iyer",
-    avatar: "SI",
-    initialRisk: 58,
-    currentRisk: 24,
-    title: "10,000 steps and portion control did the trick",
-    content: "The personalized exercises and daily stress-reduction tips changed everything for me. My insulin sensitivity has improved significantly. Mitig8 risk score drop validated my hard work at my latest checkup!",
-    claps: 29,
-    userClapped: false,
-    tags: ["Exercise", "Stress Relief", "Verification"],
-    days: 60,
-    date: "4 days ago"
-  },
-  {
-    id: "story-3",
-    name: "Vikram Patel",
-    avatar: "VP",
-    initialRisk: 65,
-    currentRisk: 32,
-    title: "Cut out late night snacks & tracked glycemic loads",
-    content: "Getting real-time insights on my diet from the AI Chat allowed me to select low glycemic index options during lunch meetings. Keeping my night fasting to a clean 12 hours made a huge difference.",
-    claps: 56,
-    userClapped: false,
-    tags: ["AI Guidance", "Fasting", "Snacks"],
-    days: 45,
-    date: "1 week ago"
-  }
-]
+interface DashboardCommunityProps {
+  userName?: string
+  userInitials?: string
+}
+
+const initialStories: CommunityStory[] = []
 
 const initialBadges: Badge[] = [
   {
@@ -99,30 +61,27 @@ const initialBadges: Badge[] = [
     title: "First Scan",
     description: "Successfully scanned your first meal using the AI Meal Scanner.",
     icon: "📸",
-    unlocked: true,
+    unlocked: false,
     unlockCriteria: "Scan 1 meal",
-    points: 100,
-    dateUnlocked: "June 05, 2026"
+    points: 100
   },
   {
     id: "badge-risk-buster",
     title: "Risk Buster",
     description: "Lowered your diabetes risk score by more than 10 points.",
     icon: "📉",
-    unlocked: true,
+    unlocked: false,
     unlockCriteria: "Drop risk score by 10+",
-    points: 250,
-    dateUnlocked: "June 08, 2026"
+    points: 250
   },
   {
     id: "badge-streak-7",
     title: "Weekly Warrior",
     description: "Logged your meals and met daily active exercises for 7 consecutive days.",
     icon: "🔥",
-    unlocked: true,
+    unlocked: false,
     unlockCriteria: "7-day habit streak",
-    points: 150,
-    dateUnlocked: "June 09, 2026"
+    points: 150
   },
   {
     id: "badge-storyteller",
@@ -153,24 +112,16 @@ const initialBadges: Badge[] = [
   }
 ]
 
-const leaderboardUsers = [
-  { rank: 1, name: "Meera Nair", avatar: "MN", drop: 45, points: 2840, isCurrentUser: false },
-  { rank: 2, name: "Aravind Swami", avatar: "AS", drop: 38, points: 2420, isCurrentUser: false },
-  { rank: 3, name: "Sneha Iyer", avatar: "SI", drop: 34, points: 2180, isCurrentUser: false },
-  { rank: 4, name: "Rahul Sharma", avatar: "RS", drop: 28, points: 1450, isCurrentUser: true },
-  { rank: 5, name: "Vikram Patel", avatar: "VP", drop: 33, points: 1390, isCurrentUser: false },
-  { rank: 6, name: "Amit Kumar", avatar: "AK", drop: 45, points: 1320, isCurrentUser: false },
-  { rank: 7, name: "Priya Das", avatar: "PD", drop: 20, points: 1100, isCurrentUser: false }
-]
+const leaderboardUsers: { rank: number; name: string; avatar: string; drop: number; points: number; isCurrentUser: boolean }[] = []
 
-export function DashboardCommunity() {
+export function DashboardCommunity({ userName = "", userInitials = "U" }: DashboardCommunityProps) {
   const [activeTab, setActiveTab] = useState<"stories" | "leaderboard" | "badges">("stories")
   const [stories, setStories] = useState<CommunityStory[]>(initialStories)
   const [badges, setBadges] = useState<Badge[]>(initialBadges)
   const [leaderboard, setLeaderboard] = useState(leaderboardUsers)
   
-  const [xp, setXp] = useState(1450)
-  const [level, setLevel] = useState(4)
+  const [xp, setXp] = useState(0)
+  const [level, setLevel] = useState(1)
   const maxXp = 2000
 
   const [isFormOpen, setIsFormOpen] = useState(false)
@@ -216,8 +167,8 @@ export function DashboardCommunity() {
 
     const newStory: CommunityStory = {
       id: `story-${Date.now()}`,
-      name: "Rahul Sharma",
-      avatar: "RS",
+      name: userName || "User",
+      avatar: userInitials || "U",
       initialRisk: startRisk,
       currentRisk: currRisk,
       title: newTitle,
@@ -237,10 +188,10 @@ export function DashboardCommunity() {
     if (newXp >= maxXp) {
       setLevel(prev => prev + 1)
       setXp(newXp - maxXp)
-      setToastMessage(`Story published! +${xpReward} XP. LEVEL UP to Level 5! 🎉`)
+      setToastMessage(`Story published! +${xpReward} XP. LEVEL UP to Level ${level + 1}! 🎉`)
     } else {
       setXp(newXp)
-      setToastMessage(`Story published! Eearned +${xpReward} XP for helping the community! 🌟`)
+      setToastMessage(`Story published! Earned +${xpReward} XP for helping the community! 🌟`)
     }
 
     setBadges(prev =>
@@ -252,18 +203,26 @@ export function DashboardCommunity() {
       })
     )
 
-    setLeaderboard(prev =>
-      prev.map(user => {
-        if (user.isCurrentUser) {
-          return {
-            ...user,
-            points: user.points + xpReward,
-            drop: Math.max(user.drop, startRisk - currRisk)
+    // Add current user to leaderboard dynamically upon posting their story
+    setLeaderboard(prev => {
+      const exists = prev.some(u => u.isCurrentUser)
+      if (exists) {
+        return prev.map(user => {
+          if (user.isCurrentUser) {
+            return {
+              ...user,
+              points: user.points + xpReward,
+              drop: Math.max(user.drop, startRisk - currRisk)
+            }
           }
-        }
-        return user
-      })
-    )
+          return user
+        })
+      } else {
+        return [
+          { rank: 1, name: userName || "User", avatar: userInitials || "U", drop: startRisk - currRisk, points: xpReward, isCurrentUser: true }
+        ]
+      }
+    })
 
     setNewTitle("")
     setNewContent("")
@@ -312,7 +271,7 @@ export function DashboardCommunity() {
           <div className="flex items-center gap-4">
             <div className="relative">
               <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center text-white font-bold text-xl shadow-lg border border-orange-500/20 overflow-hidden">
-                RS
+                {userInitials || "U"}
               </div>
               <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-orange-500 border-2 border-[#0F172A] flex items-center justify-center text-[10px] font-bold text-white shadow-sm" title="Your Current Level">
                 {level}
@@ -321,7 +280,7 @@ export function DashboardCommunity() {
 
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="text-white font-bold text-lg">Rahul Sharma</h3>
+                <h3 className="text-white font-bold text-lg">{userName || "User"}</h3>
                 <span className="text-[10px] font-extrabold text-orange-400 bg-orange-500/10 border border-orange-500/20 px-2 py-0.5 rounded-full uppercase tracking-wider">
                   Level {level} Glycemic Guru
                 </span>
@@ -365,7 +324,7 @@ export function DashboardCommunity() {
               <p className="text-[9px] text-white/40 font-bold uppercase tracking-wider">Rank</p>
               <div className="flex items-center justify-center gap-1 mt-1 text-white font-black text-lg">
                 <Trophy className="w-4 h-4 text-yellow-400" />
-                <span>#4</span>
+                <span>{leaderboard.length > 0 ? `#${leaderboard.findIndex(u => u.isCurrentUser) + 1 || "—"}` : "—"}</span>
               </div>
             </div>
           </div>
@@ -527,85 +486,101 @@ export function DashboardCommunity() {
         
         {activeTab === "stories" && (
           <div className="space-y-4">
-            {stories.map(story => {
-              const reduction = story.initialRisk - story.currentRisk
-              return (
-                <motion.div
-                  key={story.id}
-                  layout
-                  className="bg-white/80 border border-slate-100 rounded-2xl p-5 sm:p-6 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden flex flex-col gap-4"
+            {stories.length === 0 ? (
+              <div className="bg-white/80 border border-dashed border-slate-200 rounded-3xl p-8 text-center flex flex-col items-center justify-center">
+                <Users className="w-8 h-8 text-slate-300 mb-2.5 animate-pulse" />
+                <h4 className="text-sm font-bold text-slate-600">No Success Stories Yet</h4>
+                <p className="text-[11px] text-slate-400 mt-1 max-w-[260px] mx-auto leading-relaxed">
+                  Be the first to share your diabetes risk score reduction journey and help inspire others!
+                </p>
+                <button
+                  onClick={() => setIsFormOpen(true)}
+                  className="mt-3.5 inline-flex items-center gap-1 bg-gradient-to-r from-orange-500 to-orange-600 text-white px-4 py-2 rounded-xl text-xs font-bold shadow-md shadow-orange-500/10 hover:shadow-lg transition-all"
                 >
-                  <div className="absolute right-0 top-0 w-24 h-24 bg-gradient-to-bl from-emerald-500/5 to-transparent rounded-full pointer-events-none" />
+                  Post Your Story Now <Plus className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            ) : (
+              stories.map(story => {
+                const reduction = story.initialRisk - story.currentRisk
+                return (
+                  <motion.div
+                    key={story.id}
+                    layout
+                    className="bg-white/80 border border-slate-100 rounded-2xl p-5 sm:p-6 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden flex flex-col gap-4"
+                  >
+                    <div className="absolute right-0 top-0 w-24 h-24 bg-gradient-to-bl from-emerald-500/5 to-transparent rounded-full pointer-events-none" />
 
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3.5 border-b border-slate-100">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center text-white font-bold text-sm shadow-sm overflow-hidden">
-                        {story.avatar === "RS" ? "RS" : story.avatar}
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3.5 border-b border-slate-100">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center text-white font-bold text-sm shadow-sm overflow-hidden">
+                          {story.avatar}
+                        </div>
+                        <div>
+                          <h4 className="text-sm font-bold text-[#0F172A] flex items-center gap-1.5">
+                            {story.name}
+                            {story.name === (userName || "User") && (
+                              <span className="text-[9px] font-bold text-orange-600 bg-orange-100 px-1.5 py-0.5 rounded-md">You</span>
+                            )}
+                          </h4>
+                          <div className="flex items-center gap-2 text-[10px] text-slate-400 mt-0.5">
+                            <Calendar className="w-3 h-3" />
+                            <span>{story.date}</span>
+                            <span>•</span>
+                            <span>{story.days} Days Tracker</span>
+                          </div>
+                        </div>
                       </div>
-                      <div>
-                        <h4 className="text-sm font-bold text-[#0F172A] flex items-center gap-1.5">
-                          {story.name}
-                          {story.avatar === "RS" && (
-                            <span className="text-[9px] font-bold text-orange-600 bg-orange-100 px-1.5 py-0.5 rounded-md">You</span>
-                          )}
-                        </h4>
-                        <div className="flex items-center gap-2 text-[10px] text-slate-400 mt-0.5">
-                          <Calendar className="w-3 h-3" />
-                          <span>{story.date}</span>
-                          <span>•</span>
-                          <span>{story.days} Days Tracker</span>
+
+                      <div className="flex items-center gap-3 bg-emerald-50/50 border border-emerald-100/50 p-2 rounded-xl">
+                        <div className="text-right">
+                          <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wide">Risk Reduction</p>
+                          <div className="flex items-center justify-end gap-1 text-emerald-600 font-bold text-sm">
+                            <TrendingDown className="w-3.5 h-3.5" />
+                            <span>-{reduction} Points</span>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-1 text-[11px] font-bold">
+                          <span className="text-slate-400 line-through bg-slate-100/60 px-1.5 py-0.5 rounded-md">{story.initialRisk}</span>
+                          <ArrowRight className="w-3 h-3 text-emerald-500" />
+                          <span className="text-white bg-emerald-500 px-1.5 py-0.5 rounded-md shadow-sm">{story.currentRisk}</span>
                         </div>
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-3 bg-emerald-50/50 border border-emerald-100/50 p-2 rounded-xl">
-                      <div className="text-right">
-                        <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wide">Risk Reduction</p>
-                        <div className="flex items-center justify-end gap-1 text-emerald-600 font-bold text-sm">
-                          <TrendingDown className="w-3.5 h-3.5" />
-                          <span>-{reduction} Points</span>
-                        </div>
+                    <div className="space-y-3">
+                      <h5 className="text-sm font-bold text-[#0F172A]">{story.title}</h5>
+                      <p className="text-xs text-slate-600 leading-relaxed font-normal">{story.content}</p>
+                    </div>
+
+                    <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
+                      <div className="flex flex-wrap gap-1.5">
+                        {story.tags.map(tag => (
+                          <span key={tag} className="text-[10px] font-semibold text-slate-500 bg-slate-50 border border-slate-100 px-2.5 py-0.5 rounded-full">
+                            #{tag}
+                          </span>
+                        ))}
                       </div>
 
-                      <div className="flex items-center gap-1 text-[11px] font-bold">
-                        <span className="text-slate-400 line-through bg-slate-100/60 px-1.5 py-0.5 rounded-md">{story.initialRisk}</span>
-                        <ArrowRight className="w-3 h-3 text-emerald-500" />
-                        <span className="text-white bg-emerald-500 px-1.5 py-0.5 rounded-md shadow-sm">{story.currentRisk}</span>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => handleClap(story.id)}
+                          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all border ${
+                            story.userClapped
+                              ? "bg-orange-50 border-orange-200 text-orange-600"
+                              : "bg-white border-slate-200 text-slate-400 hover:text-slate-700"
+                          }`}
+                        >
+                          <ThumbsUp className={`w-3.5 h-3.5 ${story.userClapped ? "fill-orange-600" : ""}`} />
+                          <span>Clap {story.claps}</span>
+                        </button>
                       </div>
                     </div>
-                  </div>
-
-                  <div className="space-y-3">
-                    <h5 className="text-sm font-bold text-[#0F172A]">{story.title}</h5>
-                    <p className="text-xs text-slate-600 leading-relaxed font-normal">{story.content}</p>
-                  </div>
-
-                  <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
-                    <div className="flex flex-wrap gap-1.5">
-                      {story.tags.map(tag => (
-                        <span key={tag} className="text-[10px] font-semibold text-slate-500 bg-slate-50 border border-slate-100 px-2.5 py-0.5 rounded-full">
-                          #{tag}
-                        </span>
-                      ))}
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => handleClap(story.id)}
-                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all border ${
-                          story.userClapped
-                            ? "bg-orange-50 border-orange-200 text-orange-600"
-                            : "bg-white border-slate-200 text-slate-400 hover:text-slate-700"
-                        }`}
-                      >
-                        <ThumbsUp className={`w-3.5 h-3.5 ${story.userClapped ? "fill-orange-600" : ""}`} />
-                        <span>Clap {story.claps}</span>
-                      </button>
-                    </div>
-                  </div>
-                </motion.div>
-              )
-            })}
+                  </motion.div>
+                )
+              })
+            )}
           </div>
         )}
 
@@ -633,45 +608,53 @@ export function DashboardCommunity() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {leaderboard.map(user => (
-                    <tr
-                      key={user.name}
-                      className={`text-xs transition-colors ${
-                        user.isCurrentUser ? "bg-orange-50/40" : "hover:bg-slate-50/30"
-                      }`}
-                    >
-                      <td className="px-5 py-4 font-bold text-[#0F172A]">
-                        <div className="flex items-center gap-2">
-                          {user.rank === 1 && <span className="text-base">🥇</span>}
-                          {user.rank === 2 && <span className="text-base">🥈</span>}
-                          {user.rank === 3 && <span className="text-base">🥉</span>}
-                          {user.rank > 3 && <span className="pl-1 text-slate-400">#{user.rank}</span>}
-                        </div>
+                  {leaderboard.length === 0 ? (
+                    <tr>
+                      <td colSpan={4} className="px-5 py-8 text-center text-slate-400 font-medium">
+                        No entries yet. Share your success story to join the leaderboard!
                       </td>
-                      <td className="px-5 py-4">
-                        <div className="flex items-center gap-2.5">
-                          <div className="w-7 h-7 rounded-full bg-gradient-to-br from-orange-400 to-orange-600 text-white font-bold text-[10px] flex items-center justify-center shadow-sm">
-                            {user.avatar}
-                          </div>
-                          <div>
-                            <span className="font-bold text-slate-800 flex items-center gap-1.5">
-                              {user.name}
-                              {user.isCurrentUser && (
-                                <span className="text-[8px] font-extrabold text-orange-600 bg-orange-100 px-1 py-0.5 rounded uppercase tracking-wider">You</span>
-                              )}
-                            </span>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-5 py-4">
-                        <div className="flex items-center gap-1 text-emerald-600 font-semibold">
-                          <TrendingDown className="w-3.5 h-3.5" />
-                          <span>-{user.drop} pts risk</span>
-                        </div>
-                      </td>
-                      <td className="px-5 py-4 text-right font-black text-[#0F172A]">{user.points} XP</td>
                     </tr>
-                  ))}
+                  ) : (
+                    leaderboard.map(user => (
+                      <tr
+                        key={user.name}
+                        className={`text-xs transition-colors ${
+                          user.isCurrentUser ? "bg-orange-50/40" : "hover:bg-slate-50/30"
+                        }`}
+                      >
+                        <td className="px-5 py-4 font-bold text-[#0F172A]">
+                          <div className="flex items-center gap-2">
+                            {user.rank === 1 && <span className="text-base">🥇</span>}
+                            {user.rank === 2 && <span className="text-base">🥈</span>}
+                            {user.rank === 3 && <span className="text-base">🥉</span>}
+                            {user.rank > 3 && <span className="pl-1 text-slate-400">#{user.rank}</span>}
+                          </div>
+                        </td>
+                        <td className="px-5 py-4">
+                          <div className="flex items-center gap-2.5">
+                            <div className="w-7 h-7 rounded-full bg-gradient-to-br from-orange-400 to-orange-600 text-white font-bold text-[10px] flex items-center justify-center shadow-sm">
+                              {user.avatar}
+                            </div>
+                            <div>
+                              <span className="font-bold text-slate-800 flex items-center gap-1.5">
+                                {user.name}
+                                {user.isCurrentUser && (
+                                  <span className="text-[8px] font-extrabold text-orange-600 bg-orange-100 px-1 py-0.5 rounded uppercase tracking-wider">You</span>
+                                )}
+                              </span>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-5 py-4">
+                          <div className="flex items-center gap-1 text-emerald-600 font-semibold">
+                            <TrendingDown className="w-3.5 h-3.5" />
+                            <span>-{user.drop} pts risk</span>
+                          </div>
+                        </td>
+                        <td className="px-5 py-4 text-right font-black text-[#0F172A]">{user.points} XP</td>
+                      </tr>
+                    ))
+                  )}
                 </tbody>
               </table>
             </div>

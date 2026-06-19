@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState } from "react"
+import React, { useEffect, useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import {
   Heart,
@@ -32,6 +32,7 @@ interface DashboardHomeProps {
   onNavigateToDiet: () => void
   onNavigateToReportAnalyzer: () => void
   userName?: string
+  latestReport?: any
 }
 
 const fadeUp = {
@@ -43,16 +44,48 @@ const fadeUp = {
   }),
 }
 
-export function DashboardHome({ onNavigateToChat, onNavigateToDiet, onNavigateToReportAnalyzer, userName = "" }: DashboardHomeProps) {
+export function DashboardHome({ onNavigateToChat, onNavigateToDiet, onNavigateToReportAnalyzer, userName = "", latestReport }: DashboardHomeProps) {
   const [shareDialogOpen, setShareDialogOpen] = useState(false)
   const [sharingStatus, setSharingStatus] = useState<"idle" | "generating" | "done">("idle")
+  const [analyzedReport, setAnalyzedReport] = useState<any>(null)
 
-  const riskScore = 32
-  const comparisonPercent = 70
+  useEffect(() => {
+    if (latestReport) {
+      setAnalyzedReport(latestReport)
+      return
+    }
+    const loadReport = () => {
+      if (typeof window !== "undefined") {
+        const saved = localStorage.getItem("mitig8_analyzed_report")
+        if (saved) {
+          try {
+            setAnalyzedReport(JSON.parse(saved))
+          } catch (e) {
+            // silent catch
+          }
+        } else {
+          setAnalyzedReport(null)
+        }
+      }
+    }
+    loadReport()
+    window.addEventListener("mitig8_report_updated", loadReport)
+    return () => {
+      window.removeEventListener("mitig8_report_updated", loadReport)
+    }
+  }, [latestReport])
+
+  const riskScore = analyzedReport ? analyzedReport.riskScore : null
+  const riskClass = analyzedReport ? analyzedReport.riskClass : "No Report"
+  
+  // Compute platform comparison based on risk class
+  const comparisonPercent = analyzedReport
+    ? (analyzedReport.riskClass === "Low Risk" ? 88 : analyzedReport.riskClass === "Moderate Risk" ? 48 : 12)
+    : null
 
   const radius = 52
   const circumference = 2 * Math.PI * radius
-  const progress = (riskScore / 100) * circumference
+  const progress = riskScore ? (riskScore / 100) * circumference : 0
 
   const handleShare = () => {
     setShareDialogOpen(true)
@@ -114,9 +147,10 @@ export function DashboardHome({ onNavigateToChat, onNavigateToDiet, onNavigateTo
             <div className="flex items-center gap-2">
               <motion.button
                 onClick={handleShare}
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
-                className="w-9 h-9 rounded-xl bg-white/10 hover:bg-white/20 backdrop-blur-sm flex items-center justify-center transition-colors"
+                disabled={riskScore === null}
+                whileHover={{ scale: riskScore === null ? 1 : 1.1 }}
+                whileTap={{ scale: riskScore === null ? 1 : 0.9 }}
+                className="w-9 h-9 rounded-xl bg-white/10 hover:bg-white/20 backdrop-blur-sm flex items-center justify-center transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 title="Share your health score"
               >
                 <Share2 className="w-4 h-4 text-white/70" />
@@ -136,52 +170,71 @@ export function DashboardHome({ onNavigateToChat, onNavigateToDiet, onNavigateTo
               </div>
 
               <div className="flex items-center gap-3">
-                <div className="flex items-center gap-2 bg-emerald-50 rounded-full px-4 py-1.5">
-                  <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
-                  <span className="text-xs font-bold text-emerald-600">Low Risk</span>
+                <div className={`flex items-center gap-2 rounded-full px-4 py-1.5 ${
+                  riskClass === "Low Risk" ? "bg-emerald-500/20 text-emerald-400" :
+                  riskClass === "Moderate Risk" ? "bg-amber-500/20 text-amber-400" :
+                  riskClass === "High Risk" ? "bg-rose-500/20 text-rose-400" :
+                  "bg-white/10 text-white/60"
+                }`}>
+                  <Sparkles className="w-3.5 h-3.5" />
+                  <span className="text-xs font-bold">{riskClass}</span>
                 </div>
                 <span className="text-white/30 text-xs">•</span>
                 <span className="text-white/50 text-xs">Last updated today</span>
               </div>
 
-              <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <TrendingUp className="w-4 h-4 text-emerald-400" />
-                  <span className="text-white/80 text-sm font-medium">Platform Comparison</span>
+              {riskScore !== null ? (
+                <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <TrendingUp className="w-4 h-4 text-emerald-400" />
+                    <span className="text-white/80 text-sm font-medium">Platform Comparison</span>
+                  </div>
+                  <p className="text-white text-sm leading-relaxed">
+                    Your health is better than <span className="text-emerald-400 font-bold text-lg">{comparisonPercent}%</span> of people on this platform
+                  </p>
+                  <div className="mt-3 h-2 bg-white/10 rounded-full overflow-hidden">
+                    <motion.div
+                      className="h-full bg-gradient-to-r from-emerald-400 to-emerald-500 rounded-full"
+                      initial={{ width: 0 }}
+                      animate={{ width: `${comparisonPercent}%` }}
+                      transition={{ duration: 1.5, delay: 0.5, ease: [0.25, 0.4, 0.25, 1] }}
+                    />
+                  </div>
                 </div>
-                <p className="text-white text-sm leading-relaxed">
-                  Your health is better than <span className="text-emerald-400 font-bold text-lg">{comparisonPercent}%</span> of people on this platform
-                </p>
-                <div className="mt-3 h-2 bg-white/10 rounded-full overflow-hidden">
-                  <motion.div
-                    className="h-full bg-gradient-to-r from-emerald-400 to-emerald-500 rounded-full"
-                    initial={{ width: 0 }}
-                    animate={{ width: `${comparisonPercent}%` }}
-                    transition={{ duration: 1.5, delay: 0.5, ease: [0.25, 0.4, 0.25, 1] }}
-                  />
+              ) : (
+                <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <FileText className="w-4 h-4 text-orange-400" />
+                    <span className="text-white/85 text-xs font-bold">No Report Analyzed Yet</span>
+                  </div>
+                  <p className="text-white/70 text-xs leading-relaxed">
+                    To calculate your metabolic diabetes risk score, please navigate to the Report Analyzer page and upload your latest clinical laboratory report PDF.
+                  </p>
                 </div>
-              </div>
+              )}
 
               <div className="flex items-center gap-3 flex-wrap">
                 <motion.button
-                  onClick={onNavigateToChat}
+                  onClick={onNavigateToReportAnalyzer}
                   whileHover={{ scale: 1.02, boxShadow: "0 8px 30px rgba(255,87,34,0.3)" }}
                   whileTap={{ scale: 0.98 }}
                   className="inline-flex items-center gap-2 bg-gradient-to-r from-orange-500 to-orange-600 text-white px-5 py-2.5 rounded-xl font-semibold text-sm shadow-lg shadow-orange-500/25 transition-all"
                 >
-                  <Sparkles className="w-4 h-4" />
-                  Try Yours
+                  <FileText className="w-4 h-4" />
+                  Analyze Lab Report
                   <ExternalLink className="w-3.5 h-3.5 opacity-70" />
                 </motion.button>
-                <motion.button
-                  onClick={handleShare}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  className="inline-flex items-center gap-2 bg-white/10 hover:bg-white/15 text-white/80 px-4 py-2.5 rounded-xl font-semibold text-sm border border-white/10 transition-all"
-                >
-                  <Share2 className="w-4 h-4" />
-                  Share Score
-                </motion.button>
+                {riskScore !== null && (
+                  <motion.button
+                    onClick={handleShare}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    className="inline-flex items-center gap-2 bg-white/10 hover:bg-white/15 text-white/80 px-4 py-2.5 rounded-xl font-semibold text-sm border border-white/10 transition-all"
+                  >
+                    <Share2 className="w-4 h-4" />
+                    Share Score
+                  </motion.button>
+                )}
               </div>
             </div>
 
@@ -212,7 +265,7 @@ export function DashboardHome({ onNavigateToChat, onNavigateToDiet, onNavigateTo
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ duration: 0.5, delay: 0.8 }}
                   >
-                    {riskScore}
+                    {riskScore !== null ? riskScore : "--"}
                   </motion.span>
                   <span className="text-white/40 text-[10px] font-semibold uppercase tracking-wider mt-1">Risk Score</span>
                 </div>
@@ -222,47 +275,12 @@ export function DashboardHome({ onNavigateToChat, onNavigateToDiet, onNavigateTo
         </div>
       </motion.div>
 
-      <motion.div
-        variants={fadeUp} initial="hidden" animate="visible" custom={2}
-        className="relative overflow-hidden rounded-3xl bg-[#FFF6EE] border border-orange-200/50 p-6 shadow-sm hover:shadow-md transition-shadow group cursor-pointer"
-        onClick={onNavigateToReportAnalyzer}
-      >
-        <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-orange-400/5 to-transparent rounded-full blur-2xl pointer-events-none" />
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5 relative z-10">
-          <div className="flex gap-4 items-start sm:items-center">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center text-white shadow-md shadow-orange-500/25 shrink-0 group-hover:scale-105 transition-transform">
-              <FileText className="w-6 h-6" />
-            </div>
-            <div>
-              <h3 className="text-base font-bold text-[#0F172A] flex items-center gap-2">
-                AI Health Report Analyzer
-                <span className="text-[9px] font-bold text-orange-600 bg-orange-100 px-2.5 py-0.5 rounded-full uppercase tracking-wider">New</span>
-              </h3>
-              <p className="text-xs text-slate-500 leading-relaxed mt-1 max-w-2xl">
-                Upload your lab test PDF reports. Our AI immediately extracts glycemic metrics (HbA1c, glucose levels) to compile an interactive diagnostic dashboard.
-              </p>
-            </div>
-          </div>
-          <motion.button
-            whileHover={{ scale: 1.03 }}
-            whileTap={{ scale: 0.97 }}
-            onClick={(e) => {
-              e.stopPropagation()
-              onNavigateToReportAnalyzer()
-            }}
-            className="whitespace-nowrap inline-flex items-center gap-1.5 bg-gradient-to-r from-orange-500 to-orange-600 text-white px-5 py-2.5 rounded-xl font-semibold text-xs shadow-md shadow-orange-500/20 hover:shadow-lg transition-all"
-          >
-            Analyze Report <ArrowRight className="w-3.5 h-3.5" />
-          </motion.button>
-        </div>
-      </motion.div>
-
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
-          { icon: Droplets, label: "Water Intake", value: "6 / 8 glasses", color: "text-blue-500", bg: "bg-blue-50" },
-          { icon: Flame, label: "Calories", value: "1,420 kcal", color: "text-orange-500", bg: "bg-orange-50" },
-          { icon: Dumbbell, label: "Activity", value: "32 min", color: "text-purple-500", bg: "bg-purple-50" },
-          { icon: Clock, label: "Sleep", value: "7.5 hrs", color: "text-indigo-500", bg: "bg-indigo-50" },
+          { icon: Droplets, label: "Water Intake", value: "0 / 8 glasses", color: "text-blue-500", bg: "bg-blue-50" },
+          { icon: Flame, label: "Calories", value: "0 kcal", color: "text-orange-500", bg: "bg-orange-50" },
+          { icon: Dumbbell, label: "Activity", value: "0 min", color: "text-purple-500", bg: "bg-purple-50" },
+          { icon: Clock, label: "Sleep", value: "0.0 hrs", color: "text-indigo-500", bg: "bg-indigo-50" },
         ].map((stat, i) => (
           <motion.div
             key={stat.label}
@@ -299,35 +317,19 @@ export function DashboardHome({ onNavigateToChat, onNavigateToDiet, onNavigateTo
           </div>
 
           <div className="space-y-3">
-            {[
-              { time: "7:30 AM", icon: Coffee, meal: "Breakfast", food: "Moong dal cheela, green chutney", cal: "280 kcal", done: true },
-              { time: "12:30 PM", icon: Sun, meal: "Lunch", food: "Brown rice, dal, mixed sabzi", cal: "420 kcal", done: true },
-              { time: "4:00 PM", icon: Coffee, meal: "Snack", food: "Almonds + green tea", cal: "120 kcal", done: false },
-              { time: "8:00 PM", icon: Moon, meal: "Dinner", food: "Roti, paneer bhurji, raita", cal: "380 kcal", done: false },
-            ].map((item, i) => (
-              <motion.div
-                key={item.meal}
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.4 + i * 0.08 }}
-                className={`flex items-center gap-3 p-3 rounded-xl transition-colors ${
-                  item.done ? "bg-emerald-50/50 border border-emerald-100/50" : "bg-slate-50/40 border border-slate-100/50"
-                }`}
+            <div className="bg-slate-50/40 border border-dashed border-slate-200 rounded-2xl p-6 text-center flex flex-col items-center justify-center">
+              <Salad className="w-7 h-7 text-slate-300 mb-2 animate-pulse" />
+              <p className="text-xs font-bold text-slate-600">No Meals Planned Today</p>
+              <p className="text-[10px] text-slate-400 mt-1 max-w-[250px] leading-relaxed">
+                Generate a glycemic-tailored diabetes diet schedule to balance glucose spikes.
+              </p>
+              <button
+                onClick={onNavigateToChat}
+                className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-orange-500 hover:text-orange-600 transition-colors"
               >
-                <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${item.done ? "bg-emerald-100" : "bg-slate-100"}`}>
-                  <item.icon className={`w-4 h-4 ${item.done ? "text-emerald-500" : "text-slate-400"}`} />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-bold text-slate-700">{item.meal}</span>
-                    <span className="text-[10px] text-slate-400">{item.time}</span>
-                    {item.done && <span className="text-[9px] font-bold text-emerald-500 bg-emerald-100 px-1.5 py-0.5 rounded-full">Done</span>}
-                  </div>
-                  <p className="text-[11px] text-slate-400 truncate mt-0.5">{item.food}</p>
-                </div>
-                <span className="text-[11px] font-semibold text-slate-500 shrink-0">{item.cal}</span>
-              </motion.div>
-            ))}
+                Create with AI Chat <ArrowRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
           </div>
         </motion.div>
 
@@ -351,35 +353,19 @@ export function DashboardHome({ onNavigateToChat, onNavigateToDiet, onNavigateTo
           </div>
 
           <div className="space-y-3">
-            {[
-              { time: "6:00 AM", activity: "Morning Walk", duration: "30 min", icon: "🚶", done: true },
-              { time: "7:00 AM", activity: "Yoga & Stretching", duration: "20 min", icon: "🧘", done: true },
-              { time: "10:00 AM", activity: "Blood Sugar Check", duration: "5 min", icon: "🩸", done: true },
-              { time: "5:00 PM", activity: "Evening Exercise", duration: "45 min", icon: "💪", done: false },
-              { time: "9:00 PM", activity: "Meditation", duration: "15 min", icon: "🧘‍♂️", done: false },
-              { time: "10:00 PM", activity: "Night Blood Sugar Check", duration: "5 min", icon: "🩸", done: false },
-            ].map((item, i) => (
-              <motion.div
-                key={item.activity}
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.4 + i * 0.08 }}
-                className={`flex items-center gap-3 p-3 rounded-xl transition-colors ${
-                  item.done ? "bg-blue-50/50 border border-blue-100/50" : "bg-slate-50/40 border border-slate-100/50"
-                }`}
+            <div className="bg-slate-50/40 border border-dashed border-slate-200 rounded-2xl p-6 text-center flex flex-col items-center justify-center">
+              <CalendarDays className="w-7 h-7 text-slate-300 mb-2 animate-pulse" />
+              <p className="text-xs font-bold text-slate-600">No Activities Scheduled</p>
+              <p className="text-[10px] text-slate-400 mt-1 max-w-[250px] leading-relaxed">
+                Add daily checkups, active workouts, walks, or meditation triggers.
+              </p>
+              <button
+                onClick={onNavigateToDiet}
+                className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-orange-500 hover:text-orange-600 transition-colors"
               >
-                <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center shrink-0 text-base shadow-sm">
-                  {item.icon}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-bold text-slate-700">{item.activity}</span>
-                    {item.done && <span className="text-[9px] font-bold text-blue-500 bg-blue-100 px-1.5 py-0.5 rounded-full">Done</span>}
-                  </div>
-                  <p className="text-[10px] text-slate-400 mt-0.5">{item.time} • {item.duration}</p>
-                </div>
-              </motion.div>
-            ))}
+                Open Schedule Planner <ArrowRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
           </div>
         </motion.div>
       </div>

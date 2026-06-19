@@ -47,6 +47,7 @@ export function OnboardingPage() {
   const [dob, setDob] = useState("")
   const [gender, setGender] = useState("")
   const [bloodGroup, setBloodGroup] = useState("")
+  const [phoneInput, setPhoneInput] = useState("")
 
   // Auth session data
   const [userId, setUserId] = useState<string | null>(null)
@@ -57,6 +58,27 @@ export function OnboardingPage() {
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [showSuccess, setShowSuccess] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
+
+  // Helper to calculate age in years from DOB
+  const calculateAge = (dobString: string) => {
+    if (!dobString) return ""
+    const today = new Date()
+    const birthDate = new Date(dobString)
+    let computedAge = today.getFullYear() - birthDate.getFullYear()
+    const monthDiff = today.getMonth() - birthDate.getMonth()
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+      computedAge--
+    }
+    return computedAge >= 0 ? String(computedAge) : ""
+  }
+
+  // Handle DOB change and compute age
+  const handleDobChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value
+    setDob(val)
+    const computedAge = calculateAge(val)
+    setAge(computedAge)
+  }
 
   // Check session and cookies on mount
   useEffect(() => {
@@ -137,6 +159,10 @@ export function OnboardingPage() {
             if (profile.date_of_birth) setDob(profile.date_of_birth)
             if (profile.gender) setGender(profile.gender)
             if (profile.blood_group) setBloodGroup(profile.blood_group)
+            if (profile.phone) {
+              const cleaned = profile.phone.replace("+91", "")
+              setPhoneInput(cleaned)
+            }
           } else if (currentPhone && !authPhone) {
             setAuthPhone(currentPhone)
           }
@@ -159,21 +185,35 @@ export function OnboardingPage() {
   const validateForm = () => {
     const newErrors: Record<string, string> = {}
 
+    // 1. Full Name Validation
     if (provider === "phone") {
       if (!name.trim()) {
         newErrors.name = "Full name is required."
       } else if (name.trim().length < 2) {
         newErrors.name = "Name must be at least 2 characters."
+      } else if (!/^[A-Za-z\s.'-]+$/.test(name.trim())) {
+        newErrors.name = "Name can only contain letters, spaces, hyphens, and apostrophes."
       }
 
+      // 2. Email Validation
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
       if (!email.trim()) {
         newErrors.email = "Email address is required."
       } else if (!emailRegex.test(email)) {
         newErrors.email = "Please enter a valid email address."
       }
+    } else if (provider === "google_email") {
+      // 3. Phone number validation (Google Auth user must provide one)
+      if (!phoneInput.trim()) {
+        newErrors.phone = "Phone number is required."
+      } else if (!/^\d{10}$/.test(phoneInput.trim())) {
+        newErrors.phone = "Please enter a valid 10-digit mobile number."
+      } else if (!/^[6-9]\d{9}$/.test(phoneInput.trim())) {
+        newErrors.phone = "Indian mobile numbers must start with 6, 7, 8, or 9."
+      }
     }
 
+    // 4. Age Validation
     if (!age) {
       newErrors.age = "Age is required."
     } else {
@@ -183,16 +223,24 @@ export function OnboardingPage() {
       }
     }
 
+    // 5. DOB Validation
     if (!dob) {
       newErrors.dob = "Date of birth is required."
     } else {
       const birthDate = new Date(dob)
       const today = new Date()
       if (isNaN(birthDate.getTime()) || birthDate > today) {
-        newErrors.dob = "Please enter a valid date in the past."
+        newErrors.dob = "Date of birth cannot be in the future."
+      } else {
+        // Enforce that calculated age matches the age field
+        const computed = calculateAge(dob)
+        if (computed !== age) {
+          newErrors.age = "Computed age from date of birth does not match."
+        }
       }
     }
 
+    // 6. Gender & Blood Group Validation
     if (!gender) {
       newErrors.gender = "Please select your gender."
     }
@@ -225,7 +273,7 @@ export function OnboardingPage() {
           user_id: userId,
           full_name: name.trim(),
           email: email.trim(),
-          phone: authPhone || null,
+          phone: provider === "phone" ? (authPhone || null) : (phoneInput ? `+91${phoneInput}` : null),
           age: age,
           date_of_birth: dob,
           gender: gender,
@@ -432,23 +480,55 @@ export function OnboardingPage() {
                           animate={{ opacity: 1, height: "auto" }}
                           exit={{ opacity: 0, height: 0 }}
                           transition={{ duration: 0.25 }}
-                          className="p-4 bg-slate-50 border border-slate-100 rounded-2xl space-y-3 overflow-hidden text-xs text-slate-600"
+                          className="space-y-4 overflow-hidden"
                         >
-                          <div className="flex justify-between items-center pb-2.5 border-b border-slate-200/50">
-                            <span className="font-bold text-slate-500">Sign-in Account Details</span>
-                            <span className="px-2 py-0.5 bg-green-100 text-green-700 rounded-full font-bold uppercase text-[9px] tracking-wider">
-                              Synced
-                            </span>
+                          <div className="p-4 bg-slate-50 border border-slate-100 rounded-2xl space-y-3 text-xs text-slate-600">
+                            <div className="flex justify-between items-center pb-2.5 border-b border-slate-200/50">
+                              <span className="font-bold text-slate-500">Sign-in Account Details</span>
+                              <span className="px-2 py-0.5 bg-green-100 text-green-700 rounded-full font-bold uppercase text-[9px] tracking-wider">
+                                Synced
+                              </span>
+                            </div>
+                            <div className="grid grid-cols-2 gap-2 text-xs">
+                              <div>
+                                <p className="text-[10px] font-bold text-slate-400 uppercase">Name</p>
+                                <p className="font-semibold text-slate-700 mt-0.5">{name || "Not Available"}</p>
+                              </div>
+                              <div>
+                                <p className="text-[10px] font-bold text-slate-400 uppercase">Email</p>
+                                <p className="font-semibold text-slate-700 mt-0.5">{email || "Not Available"}</p>
+                              </div>
+                            </div>
                           </div>
-                          <div className="grid grid-cols-2 gap-2 text-xs">
-                            <div>
-                              <p className="text-[10px] font-bold text-slate-400 uppercase">Name</p>
-                              <p className="font-semibold text-slate-700 mt-0.5">{name || "Not Available"}</p>
+
+                          {/* Phone Number Input for Google Auth users */}
+                          <div className="space-y-1.5">
+                            <label className="text-xs font-bold text-slate-600 block">Mobile Phone Number</label>
+                            <div className="relative flex gap-2">
+                              <div className="flex items-center bg-slate-50 border border-slate-200 rounded-xl px-3 text-sm text-slate-600 font-semibold shrink-0 font-mono">
+                                +91
+                              </div>
+                              <div className="relative flex-1">
+                                <Smartphone className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-slate-400" />
+                                <input
+                                  type="tel"
+                                  maxLength={10}
+                                  value={phoneInput}
+                                  onChange={(e) => setPhoneInput(e.target.value.replace(/\D/g, ""))}
+                                  placeholder="Enter 10-digit number"
+                                  className={`w-full pl-11 pr-4 py-3 bg-slate-50 border rounded-xl text-sm text-slate-700 outline-none transition-all ${
+                                    errors.phone
+                                      ? "border-red-300 focus:border-red-400 focus:ring-2 focus:ring-red-100"
+                                      : "border-slate-200 focus:border-orange-400 focus:ring-2 focus:ring-orange-100"
+                                  }`}
+                                />
+                              </div>
                             </div>
-                            <div>
-                              <p className="text-[10px] font-bold text-slate-400 uppercase">Email</p>
-                              <p className="font-semibold text-slate-700 mt-0.5">{email || "Not Available"}</p>
-                            </div>
+                            {errors.phone && (
+                              <p className="text-[11px] text-red-500 font-semibold flex items-center gap-1">
+                                <AlertCircle className="w-3.5 h-3.5" /> {errors.phone}
+                              </p>
+                            )}
                           </div>
                         </motion.div>
                       )}
@@ -463,16 +543,11 @@ export function OnboardingPage() {
                           <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-slate-400" />
                           <input
                             type="number"
-                            placeholder="e.g. 28"
-                            min="1"
-                            max="120"
+                            placeholder="Derived from DOB"
                             value={age}
-                            onChange={(e) => setAge(e.target.value.replace(/\D/g, ""))}
-                            className={`w-full pl-11 pr-4 py-3 bg-slate-50 border rounded-xl text-sm text-slate-700 outline-none transition-all ${
-                              errors.age
-                                ? "border-red-300 focus:border-red-400 focus:ring-2 focus:ring-red-100"
-                                : "border-slate-200 focus:border-orange-400 focus:ring-2 focus:ring-orange-100"
-                            }`}
+                            readOnly
+                            disabled
+                            className="w-full pl-11 pr-4 py-3 bg-slate-100 border border-slate-200 rounded-xl text-sm text-slate-500 outline-none cursor-not-allowed"
                           />
                         </div>
                         {errors.age && (
@@ -490,7 +565,7 @@ export function OnboardingPage() {
                           <input
                             type="date"
                             value={dob}
-                            onChange={(e) => setDob(e.target.value)}
+                            onChange={handleDobChange}
                             max={new Date().toISOString().split("T")[0]}
                             className={`w-full pl-11 pr-4 py-3 bg-slate-50 border rounded-xl text-sm text-slate-700 outline-none transition-all ${
                               errors.dob

@@ -2,6 +2,7 @@
 
 import React, { useState, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion"
+import { createClient } from "@/lib/supabase/client"
 import {
   FileText,
   Upload,
@@ -159,7 +160,11 @@ const fadeUp = {
   })
 }
 
-export function DashboardReportAnalyzer() {
+interface DashboardReportAnalyzerProps {
+  onReportScanned?: (report: ReportProfile) => void
+}
+
+export function DashboardReportAnalyzer({ onReportScanned }: DashboardReportAnalyzerProps) {
   const [analyzingState, setAnalyzingState] = useState<"idle" | "scanning" | "result">("idle")
   const [currentPhase, setCurrentPhase] = useState(0)
   const [selectedProfile, setSelectedProfile] = useState<ReportProfile | null>(null)
@@ -194,6 +199,29 @@ export function DashboardReportAnalyzer() {
       } else {
         setTimeout(() => {
           setAnalyzingState("result")
+          if (typeof window !== "undefined") {
+            localStorage.setItem("mitig8_analyzed_report", JSON.stringify(profile))
+            window.dispatchEvent(new Event("mitig8_report_updated"))
+          }
+          if (onReportScanned) {
+            onReportScanned(profile)
+          }
+
+          // Save to Supabase profiles
+          const supabase = createClient()
+          supabase.auth.getUser().then(async ({ data: { user } }) => {
+            if (user) {
+              await fetch("/api/auth/profile", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  user_id: user.id,
+                  latest_report: profile,
+                  medical_report: profile,
+                }),
+              })
+            }
+          })
         }, SCAN_PHASES[phase].duration)
       }
     }

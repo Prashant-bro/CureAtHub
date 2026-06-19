@@ -61,6 +61,7 @@ export function DashboardLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [profileOpen, setProfileOpen] = useState(false)
   const [profileImage, setProfileImage] = useState<string | null>(null)
+  const [latestReport, setLatestReport] = useState<any>(null)
   const [subscriptionState, setSubscriptionState] = useState<"trial" | "expired" | "premium">("trial")
   const [trialDaysLeft, setTrialDaysLeft] = useState<number>(7)
   const router = useRouter()
@@ -70,9 +71,34 @@ export function DashboardLayout() {
   const [userName, setUserName] = useState<string>("")
   const [userEmail, setUserEmail] = useState<string>("")
   const [userInitials, setUserInitials] = useState<string>("?")
+  const [userPhone, setUserPhone] = useState<string>("")
+  const [userAge, setUserAge] = useState<string>("")
+  const [userDob, setUserDob] = useState<string>("")
+  const [userGender, setUserGender] = useState<string>("")
+  const [userBloodGroup, setUserBloodGroup] = useState<string>("")
+
+  const handleUploadProfileImage = async (img: string | null) => {
+    setProfileImage(img)
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        await fetch("/api/auth/profile", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            user_id: user.id,
+            avatar_url: img,
+            profile_image: img,
+          }),
+        })
+      }
+    } catch (err) {
+      // safe silent error handling
+    }
+  }
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data: { user } }) => {
+    supabase.auth.getUser().then(async ({ data: { user } }) => {
       if (!user) {
         // Fallback for mock frontend-only login testing
         const isMockLoggedIn = document.cookie.includes("mock-login=true")
@@ -84,10 +110,12 @@ export function DashboardLayout() {
             setUserName("Alex Smith")
             setUserEmail("alexsmith@example.com")
             setUserInitials("AS")
+            setUserPhone("+91 98765 43210")
           } else {
             setUserName("John Doe")
             setUserEmail("johndoe@gmail.com")
             setUserInitials("JD")
+            setUserPhone("+91 88888 88888")
           }
         }
         return
@@ -99,8 +127,37 @@ export function DashboardLayout() {
       const email = user.email ?? ""
       setUserName(fullName || email.split("@")[0])
       setUserEmail(email)
+
+      try {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("id", user.id)
+          .maybeSingle()
+
+        if (profile) {
+          if (profile.full_name) setUserName(profile.full_name)
+          if (profile.phone) setUserPhone(profile.phone)
+          if (profile.age) setUserAge(String(profile.age))
+          if (profile.date_of_birth) setUserDob(profile.date_of_birth)
+          if (profile.gender) setUserGender(profile.gender)
+          if (profile.blood_group) setUserBloodGroup(profile.blood_group)
+
+          const img = profile.avatar_url || profile.profile_image
+          if (img) setProfileImage(img)
+
+          const report = profile.latest_report || profile.medical_report
+          if (report) setLatestReport(report)
+        } else {
+          if (user.phone) setUserPhone(user.phone)
+        }
+      } catch (err) {
+        // safe empty catch or log-less error handling
+      }
+
       // Compute initials from name
-      const parts = fullName.trim().split(" ").filter(Boolean)
+      const nameToUse = fullName || email.split("@")[0]
+      const parts = nameToUse.trim().split(" ").filter(Boolean)
       if (parts.length >= 2) {
         setUserInitials((parts[0][0] + parts[parts.length - 1][0]).toUpperCase())
       } else if (parts.length === 1) {
@@ -235,12 +292,17 @@ export function DashboardLayout() {
             onNavigateToDiet={() => handleSectionChange("diet")}
             onNavigateToReportAnalyzer={() => handleSectionChange("report-analyzer")}
             userName={userName}
+            latestReport={latestReport}
           />
         )
       case "chat":
         return <DashboardChat onOpenSidebar={() => setSidebarOpen(true)} />
       case "report-analyzer":
-        return <DashboardReportAnalyzer />
+        return (
+          <DashboardReportAnalyzer
+            onReportScanned={(report) => setLatestReport(report)}
+          />
+        )
       case "meal-scan":
         return <DashboardMealScan />
       case "diet":
@@ -256,7 +318,7 @@ export function DashboardLayout() {
           />
         )
       case "community":
-        return <DashboardCommunity />
+        return <DashboardCommunity userName={userName} userInitials={userInitials} />
     }
   }
 
@@ -313,12 +375,16 @@ export function DashboardLayout() {
               <DashboardProfile
                 onNavigateToChat={() => { setProfileOpen(false); handleSectionChange("chat") }}
                 profileImage={profileImage}
-                setProfileImage={setProfileImage}
+                setProfileImage={handleUploadProfileImage}
                 subscriptionState={subscriptionState}
                 trialDaysLeft={trialDaysLeft}
                 userName={userName}
                 userEmail={userEmail}
                 userInitials={userInitials}
+                userPhone={userPhone}
+                userAge={userAge}
+                userGender={userGender}
+                userBloodGroup={userBloodGroup}
               />
             </div>
           </motion.div>

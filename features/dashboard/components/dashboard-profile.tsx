@@ -23,6 +23,10 @@ interface DashboardProfileProps {
   userName?: string
   userEmail?: string
   userInitials?: string
+  userPhone?: string
+  userAge?: string
+  userGender?: string
+  userBloodGroup?: string
 }
 
 const languages = [
@@ -46,6 +50,10 @@ export function DashboardProfile({
   userName = "",
   userEmail = "",
   userInitials = "?",
+  userPhone = "",
+  userAge = "",
+  userGender = "",
+  userBloodGroup = "",
 }: DashboardProfileProps) {
   const [selectedLanguage, setSelectedLanguage] = useState("en")
   const [langModalOpen, setLangModalOpen] = useState(false)
@@ -211,9 +219,26 @@ export function DashboardProfile({
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Phone</p>
-              <p className="text-sm font-semibold text-[#0F172A]">+91 98765 43210</p>
+              <p className="text-sm font-semibold text-[#0F172A]">{userPhone || "Not Provided"}</p>
             </div>
           </div>
+
+          {(userAge || userGender || userBloodGroup) && (
+            <div className="bg-white/80 border border-slate-100 rounded-xl p-4 space-y-2 text-xs">
+              <div className="flex justify-between border-b border-slate-100/50 pb-1.5">
+                <span className="text-slate-400 font-semibold uppercase text-[9px] tracking-wider">Age</span>
+                <span className="font-bold text-[#0F172A]">{userAge ? `${userAge} years` : "—"}</span>
+              </div>
+              <div className="flex justify-between border-b border-slate-100/50 pb-1.5">
+                <span className="text-slate-400 font-semibold uppercase text-[9px] tracking-wider">Gender</span>
+                <span className="font-bold text-[#0F172A] capitalize">{userGender || "—"}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-400 font-semibold uppercase text-[9px] tracking-wider">Blood Group</span>
+                <span className="font-bold text-[#0F172A]">{userBloodGroup || "—"}</span>
+              </div>
+            </div>
+          )}
 
           <button
             onClick={() => setLangModalOpen(true)}
