@@ -18,13 +18,21 @@ const containerVariants: Variants = {
 }
 
 const itemVariants: Variants = {
+<<<<<<< HEAD
   hidden: { opacity: 0, y: 12 },
+=======
+  hidden: { opacity: 0, y: 15 },
+>>>>>>> 334e91459002889ca61e3ec5ffe64d677e0030ba
   visible: {
     opacity: 1,
     y: 0,
     transition: {
       type: "spring",
+<<<<<<< HEAD
       stiffness: 80,
+=======
+      stiffness: 100,
+>>>>>>> 334e91459002889ca61e3ec5ffe64d677e0030ba
       damping: 20,
     },
   },
@@ -157,7 +165,11 @@ export function Footer() {
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
           viewport={{ once: true }}
+<<<<<<< HEAD
           transition={{ delay: 0.5, ease: [0.22, 1, 0.36, 1] }}
+=======
+          transition={{ delay: 0.5 }}
+>>>>>>> 334e91459002889ca61e3ec5ffe64d677e0030ba
         >
           <Link href="/">
             <Mitig8Logo size="sm" theme="footer" animated={false} />
@@ -171,6 +183,7 @@ export function Footer() {
             Built with care for healthier lives
           </p>
         </motion.div>
+<<<<<<< HEAD
 
         {/* Comprehensive Disclaimer Section */}
         <motion.div
@@ -217,6 +230,8 @@ export function Footer() {
             <Link href="/privacy" className="text-white/40 hover:text-white/60 underline underline-offset-2 transition-colors">Privacy Policy</Link>.
           </p>
         </motion.div>
+=======
+>>>>>>> 334e91459002889ca61e3ec5ffe64d677e0030ba
       </div>
 
       <motion.div

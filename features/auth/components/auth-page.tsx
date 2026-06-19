@@ -19,10 +19,6 @@ import {
   XCircle,
   KeyRound,
   Send,
-  ShieldCheck,
-  Users,
-  CreditCard,
-  Stethoscope,
 } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { Mitig8Logo } from "@/components/mitig8-logo"
@@ -353,21 +349,13 @@ export function AuthPage() {
       opacity: 1,
       y: 0,
       scale: 1,
-      transition: { type: "spring" as const, stiffness: 90, damping: 20, mass: 0.8 },
+      transition: { type: "spring" as const, stiffness: 120, damping: 16, mass: 0.8 },
     },
-    exit: { opacity: 0, y: -12, scale: 0.98, transition: { duration: 0.18, ease: [0.22, 1, 0.36, 1] as [number, number, number, number] } },
+    exit: { opacity: 0, y: -15, scale: 0.98, transition: { duration: 0.2 } },
   }
-
-  const trustBadges = [
-    { icon: ShieldCheck, label: "SSL Secured" },
-    { icon: Users, label: "50k+ Users" },
-    { icon: CreditCard, label: "No Credit Card" },
-    { icon: Stethoscope, label: "HIPAA Safe" },
-  ]
 
   return (
     <div className="min-h-screen bg-[#FDF6EE] relative overflow-hidden flex items-center justify-center px-4 py-12">
-      {/* Dot grid background */}
       <div
         className="absolute inset-0 opacity-[0.025]"
         style={{
@@ -375,39 +363,31 @@ export function AuthPage() {
           backgroundSize: "48px 48px",
         }}
       />
-      {/* Mesh gradient blobs */}
       <motion.div
         className="absolute top-20 -left-32 w-96 h-96 rounded-full"
-        style={{ background: "radial-gradient(circle, rgba(255,87,34,0.07) 0%, transparent 70%)", willChange: "transform" }}
-        animate={{ x: [0, 28, 0], y: [0, -18, 0] }}
-        transition={{ duration: 22, repeat: Infinity, ease: [0.45, 0.05, 0.55, 0.95] }}
+        style={{ background: "radial-gradient(circle, rgba(255,87,34,0.06) 0%, transparent 70%)" }}
+        animate={{ x: [0, 30, 0], y: [0, -20, 0] }}
+        transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }}
       />
       <motion.div
         className="absolute bottom-20 -right-32 w-[500px] h-[500px] rounded-full"
-        style={{ background: "radial-gradient(circle, rgba(255,87,34,0.04) 0%, transparent 70%)", willChange: "transform" }}
-        animate={{ x: [0, -36, 0], y: [0, 28, 0] }}
-        transition={{ duration: 28, repeat: Infinity, ease: [0.45, 0.05, 0.55, 0.95] }}
-      />
-      <motion.div
-        className="absolute top-1/3 right-1/4 w-64 h-64 rounded-full"
-        style={{ background: "radial-gradient(circle, rgba(255,140,66,0.04) 0%, transparent 70%)", willChange: "transform" }}
-        animate={{ x: [0, 18, -12, 0], y: [0, -14, 8, 0] }}
-        transition={{ duration: 18, repeat: Infinity, ease: [0.45, 0.05, 0.55, 0.95] }}
+        style={{ background: "radial-gradient(circle, rgba(255,87,34,0.04) 0%, transparent 70%)" }}
+        animate={{ x: [0, -40, 0], y: [0, 30, 0] }}
+        transition={{ duration: 15, repeat: Infinity, ease: "easeInOut" }}
       />
 
       <div className="relative z-10 w-full max-w-md">
-        {/* Back link */}
         <motion.div
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
+          transition={{ delay: 0.1 }}
           className="mb-8"
         >
           <Link
             href="/"
             className="inline-flex items-center gap-2 text-sm font-medium text-slate-500 hover:text-orange-600 transition-colors group"
           >
-            <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform duration-200" />
+            <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
             Back to Home
           </Link>
         </motion.div>
@@ -415,37 +395,16 @@ export function AuthPage() {
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.15, ease: [0.22, 1, 0.36, 1] }}
+          transition={{ delay: 0.15 }}
           className="mb-8"
         >
           <Mitig8Logo size="lg" theme="dark" animated={false} />
         </motion.div>
 
-        {/* Trust Badges */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.22, ease: [0.22, 1, 0.36, 1] }}
-          className="flex flex-wrap gap-2 mb-5"
-        >
-          {trustBadges.map((badge, i) => (
-            <motion.div
-              key={badge.label}
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.25 + i * 0.06, ease: [0.22, 1, 0.36, 1] }}
-              className="flex items-center gap-1.5 bg-white/70 border border-slate-200/80 rounded-full px-3 py-1.5 text-[11px] font-semibold text-slate-600 shadow-sm backdrop-blur-sm"
-            >
-              <badge.icon className="w-3 h-3 text-orange-500" />
-              {badge.label}
-            </motion.div>
-          ))}
-        </motion.div>
-
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2, type: "spring", stiffness: 80, damping: 22 }}
+          transition={{ delay: 0.2, type: "spring", stiffness: 100, damping: 18 }}
           className="bg-white/80 backdrop-blur-xl border border-white/60 rounded-3xl shadow-2xl shadow-orange-500/[0.06] overflow-hidden"
         >
           <div className="flex border-b border-slate-100">
@@ -462,7 +421,7 @@ export function AuthPage() {
                   <motion.div
                     layoutId="auth-tab-indicator"
                     className="absolute bottom-0 left-0 right-0 h-[3px] bg-gradient-to-r from-orange-500 to-orange-600 rounded-full"
-                    transition={{ type: "spring", stiffness: 250, damping: 28 }}
+                    transition={{ type: "spring", stiffness: 300, damping: 25 }}
                   />
                 )}
               </button>
@@ -889,53 +848,22 @@ export function AuthPage() {
               )}
             </AnimatePresence>
 
-            {/* Terms/Privacy for BOTH tabs */}
-            <motion.p
-              key={activeTab + "-legal"}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.1 }}
-              className="text-[10px] text-slate-400 text-center mt-4 leading-relaxed"
-            >
-              {activeTab === "signup" ? (
-                <>
-                  By signing up, you agree to our{" "}
-                  <Link href="/terms" className="text-orange-600 font-semibold hover:underline">Terms of Service</Link>
-                  {" "}and{" "}
-                  <Link href="/privacy" className="text-orange-600 font-semibold hover:underline">Privacy Policy</Link>
-                </>
-              ) : (
-                <>
-                  By signing in, you accept our{" "}
-                  <Link href="/terms" className="text-orange-600 font-semibold hover:underline">Terms of Service</Link>
-                  {" "}and{" "}
-                  <Link href="/privacy" className="text-orange-600 font-semibold hover:underline">Privacy Policy</Link>
-                </>
-              )}
-            </motion.p>
-          </div>
-        </motion.div>
-
-        {/* Medical Disclaimer Card */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.35, ease: [0.22, 1, 0.36, 1] }}
-          className="mt-4 bg-orange-50/70 border border-orange-100 rounded-2xl px-4 py-3.5 backdrop-blur-sm"
-        >
-          <div className="flex items-start gap-3">
-            <div className="w-7 h-7 rounded-lg bg-orange-100 flex items-center justify-center shrink-0 mt-0.5">
-              <Stethoscope className="w-3.5 h-3.5 text-orange-600" />
-            </div>
-            <div>
-              <p className="text-[11px] font-bold text-orange-800 mb-0.5">Medical Disclaimer</p>
-              <p className="text-[10px] text-orange-700/80 leading-relaxed">
-                Mitig8 is an AI-powered wellness tool for informational purposes only. It is{" "}
-                <strong>not a medical device</strong> and does not provide medical diagnoses or treatment.
-                Always consult a qualified healthcare professional for medical advice, diagnosis, or treatment.
-                Individual results may vary.
-              </p>
-            </div>
+            {activeTab === "signup" && (
+              <motion.p
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="text-[10px] text-slate-400 text-center mt-4 leading-relaxed"
+              >
+                By signing up, you agree to our{" "}
+                <Link href="/terms" className="text-orange-600 font-semibold hover:underline">
+                  Terms of Service
+                </Link>{" "}
+                and{" "}
+                <Link href="/privacy" className="text-orange-600 font-semibold hover:underline">
+                  Privacy Policy
+                </Link>
+              </motion.p>
+            )}
           </div>
         </motion.div>
       </div>

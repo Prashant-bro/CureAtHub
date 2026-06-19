@@ -36,27 +36,47 @@ const playTone = (freq = 440, type: OscillatorType = "sine", duration = 0.1) => 
 }
 
 const bounceInLeft = {
+<<<<<<< HEAD
   hidden: { opacity: 0, x: -50 },
   visible: {
     opacity: 1,
     x: 0,
     transition: { type: "spring" as const, stiffness: 80, damping: 20, mass: 0.7 },
+=======
+  hidden: { opacity: 0, x: -60 },
+  visible: {
+    opacity: 1,
+    x: 0,
+    transition: { type: "spring" as const, stiffness: 100, damping: 14, mass: 0.6 },
+>>>>>>> 334e91459002889ca61e3ec5ffe64d677e0030ba
   },
 }
 
 const bounceInRight = {
+<<<<<<< HEAD
   hidden: { opacity: 0, x: 50 },
   visible: {
     opacity: 1,
     x: 0,
     transition: { type: "spring" as const, stiffness: 80, damping: 20, mass: 0.7 },
+=======
+  hidden: { opacity: 0, x: 60 },
+  visible: {
+    opacity: 1,
+    x: 0,
+    transition: { type: "spring" as const, stiffness: 100, damping: 14, mass: 0.6 },
+>>>>>>> 334e91459002889ca61e3ec5ffe64d677e0030ba
   },
 }
 
 const staggerContainer = {
   hidden: {},
   visible: {
+<<<<<<< HEAD
     transition: { staggerChildren: 0.1, delayChildren: 0.05 },
+=======
+    transition: { staggerChildren: 0.12, delayChildren: 0.04 },
+>>>>>>> 334e91459002889ca61e3ec5ffe64d677e0030ba
   },
 }
 
