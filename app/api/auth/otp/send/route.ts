@@ -45,43 +45,27 @@ async function storeOTP(phone: string, otp: string): Promise<void> {
 }
 
 /**
- * Checks if MSG91 credentials are configured (not placeholder values).
+ * Checks if 2Factor credentials are configured (not placeholder values).
  */
-function isMSG91Configured(): boolean {
-  const authKey = process.env.MSG91_AUTH_KEY || ""
-  const templateId = process.env.MSG91_TEMPLATE_ID || ""
+function is2FactorConfigured(): boolean {
+  const apiKey = process.env.TWOFACTOR_API_KEY || ""
   return (
-    authKey.length > 0 &&
-    !authKey.includes("your_") &&
-    templateId.length > 0 &&
-    !templateId.includes("your_")
+    apiKey.length > 0 &&
+    !apiKey.includes("your_")
   )
 }
 
 /**
- * Sends the OTP code to MSG91 Flow API.
+ * Sends the OTP code to 2Factor SMS API.
  */
-async function sendSMS(phone: string, otp: string): Promise<Response> {
-  const authKey = process.env.MSG91_AUTH_KEY || ""
-  const templateId = process.env.MSG91_TEMPLATE_ID || ""
-  
-  const payload = {
-    template_id: templateId,
-    recipients: [
-      {
-        mobiles: phone,
-        otp: otp,
-      },
-    ],
-  }
+async function send2FactorSMS(phone: string, otp: string): Promise<Response> {
+  const apiKey = process.env.TWOFACTOR_API_KEY || ""
+  // We use the 2Factor custom OTP endpoint. Because we don't have a template ID,
+  // we omit the template name parameter.
+  const url = `https://2factor.in/API/V1/${apiKey}/SMS/${encodeURIComponent(phone)}/${otp}`
 
-  return await fetch("https://control.msg91.com/api/v5/flow", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "authkey": authKey,
-    },
-    body: JSON.stringify(payload),
+  return await fetch(url, {
+    method: "GET",
   })
 }
 
@@ -117,12 +101,12 @@ export async function POST(request: Request) {
     // 3. Store OTP and metadata in Upstash Redis
     await storeOTP(formattedPhone, otp)
 
-    // 4. Dispatch SMS via MSG91 (skipped silently if not configured)
-    if (isMSG91Configured()) {
-      const smsResponse = await sendSMS(formattedPhone, otp)
+    // 4. Dispatch SMS via 2Factor (skipped silently if not configured)
+    if (is2FactorConfigured()) {
+      const smsResponse = await send2FactorSMS(formattedPhone, otp)
       if (!smsResponse.ok) {
         const errorText = await smsResponse.text()
-        console.error("MSG91 API error response:", errorText)
+        console.error("2Factor API error response:", errorText)
         return NextResponse.json({ error: "Failed to send OTP. Please try again." }, { status: 502 })
       }
     }
