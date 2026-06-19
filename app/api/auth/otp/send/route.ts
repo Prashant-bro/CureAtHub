@@ -1,68 +1,18 @@
 import { NextResponse } from "next/server"
-import { Redis } from "@upstash/redis"
 import crypto from "crypto"
-
-// Initialize Upstash Redis Client
-const redis = new Redis({
-  url: process.env.UPSTASH_REDIS_REST_URL || "",
-  token: process.env.UPSTASH_REDIS_REST_TOKEN || "",
-})
-
-/**
- * Checks if the OTP requests for a specific phone number exceed rate limits.
- * Maximum of 3 OTP requests within a 10-minute window.
- */
-async function checkRateLimit(phone: string): Promise<boolean> {
-  const rateKey = `rate:otp:${phone}`
-  const count = await redis.incr(rateKey)
-  
-  if (count === 1) {
-    await redis.expire(rateKey, 600) // Set 10 minutes expiry on first request
-  }
-  
-  return count <= 3
-}
-
-/**
- * Generates a secure, random 6-digit OTP code.
- */
-function generateOTP(): string {
-  const otpVal = crypto.randomInt(100000, 1000000)
-  return otpVal.toString()
-}
-
-/**
- * Stores the generated OTP in Upstash Redis, set to expire in 5 minutes (300s).
- */
-async function storeOTP(phone: string, otp: string): Promise<void> {
-  const otpKey = `otp:${phone}`
-  const data = JSON.stringify({
-    otp,
-    attempts: 0,
-    createdAt: Date.now(),
-  })
-  await redis.set(otpKey, data, { ex: 300 })
-}
-
-/**
- * Checks if 2Factor credentials are configured (not placeholder values).
- */
-function is2FactorConfigured(): boolean {
-  const apiKey = process.env.TWOFACTOR_API_KEY || ""
-  return (
-    apiKey.length > 0 &&
-    !apiKey.includes("your_")
-  )
-}
+import {
+  getRealIP,
+  checkRateLimits,
+  RateLimitLayer,
+  redis,
+} from "@/lib/rateLimitOtp"
 
 /**
  * Sends the OTP code to 2Factor SMS API.
  */
-async function send2FactorSMS(phone: string, otp: string): Promise<Response> {
+async function send2FactorSMS(localPhone: string, otp: string): Promise<Response> {
   const apiKey = process.env.TWOFACTOR_API_KEY || ""
-  // We use the 2Factor custom OTP endpoint. Because we don't have a template ID,
-  // we omit the template name parameter.
-  const url = `https://2factor.in/API/V1/${apiKey}/SMS/${encodeURIComponent(phone)}/${otp}`
+  const url = `https://2factor.in/API/V1/${apiKey}/SMS/${encodeURIComponent(localPhone)}/${otp}`
 
   return await fetch(url, {
     method: "GET",
@@ -75,48 +25,128 @@ export async function POST(request: Request) {
     const { phone } = body
 
     if (!phone) {
-      return NextResponse.json({ error: "Missing required fields." }, { status: 400 })
-    }
-
-    const formattedPhone = phone.trim()
-    if (!formattedPhone.startsWith("+")) {
       return NextResponse.json(
-        { error: "Invalid phone number format." },
+        {
+          error: "invalid_request",
+          message: "Missing phone number.",
+        },
         { status: 400 }
       )
     }
 
-    // 1. Rate Limiting Check
-    const isAllowed = await checkRateLimit(formattedPhone)
-    if (!isAllowed) {
+    const formattedPhone = phone.trim()
+    
+    // Strict Indian phone number validation: 91 followed by exactly 10 digits
+    const phoneRegex = /^91\d{10}$/
+    if (!phoneRegex.test(formattedPhone)) {
       return NextResponse.json(
-        { error: "Too many requests. Please try again later." },
-        { status: 429 }
+        {
+          error: "invalid_phone",
+          message: "Phone number must be in the format 91XXXXXXXXXX.",
+        },
+        { status: 400 }
       )
     }
 
-    // 2. Generate secure 6-digit OTP
-    const otp = generateOTP()
+    // Extract client IP
+    const ip = getRealIP(request)
 
-    // 3. Store OTP and metadata in Upstash Redis
-    await storeOTP(formattedPhone, otp)
-
-    // 4. Dispatch SMS via 2Factor (skipped silently if not configured)
-    if (is2FactorConfigured()) {
-      const smsResponse = await send2FactorSMS(formattedPhone, otp)
-      if (!smsResponse.ok) {
-        const errorText = await smsResponse.text()
-        console.error("2Factor API error response:", errorText)
-        return NextResponse.json({ error: "Failed to send OTP. Please try again." }, { status: 502 })
+    // Run all 4 layers of rate limiting
+    const rateLimitResult = await checkRateLimits(formattedPhone, ip)
+    if (!rateLimitResult.allowed) {
+      if (rateLimitResult.layer === RateLimitLayer.GLOBAL) {
+        return NextResponse.json(
+          {
+            error: "service_unavailable",
+            message: rateLimitResult.reason || "OTP service is temporarily busy. Please try again shortly.",
+          },
+          { status: 503 }
+        )
+      } else {
+        return NextResponse.json(
+          {
+            error: "rate_limited",
+            message: rateLimitResult.reason || "Too many requests. Please try again later.",
+            retry_after_seconds: rateLimitResult.retryAfter || 0,
+          },
+          { status: 429 }
+        )
       }
+    }
+
+    // Generate secure 6-digit OTP
+    const otpVal = crypto.randomInt(100000, 1000000)
+    const otp = otpVal.toString()
+
+    // Store OTP in Upstash Redis (TTL: 300 seconds)
+    const otpKey = `otp:${formattedPhone}`
+    const data = JSON.stringify({
+      otp,
+      attempts: 0,
+      createdAt: Date.now(),
+    })
+    await redis.set(otpKey, data, { ex: 300 })
+
+    // Send OTP via 2Factor (GET request, strip 91 prefix)
+    const localPhone = formattedPhone.slice(2)
+    const apiKey = process.env.TWOFACTOR_API_KEY
+
+    if (!apiKey) {
+      console.error("Missing TWOFACTOR_API_KEY environment variable.")
+      // Delete stored OTP and return 503
+      await redis.del(otpKey)
+      return NextResponse.json(
+        {
+          error: "service_unavailable",
+          message: "OTP service is temporarily busy. Please try again shortly.",
+        },
+        { status: 503 }
+      )
+    }
+
+    let smsSuccess = false
+    let smsAttempts = 0
+
+    // Try sending SMS, retry once on failure
+    while (smsAttempts < 2 && !smsSuccess) {
+      try {
+        const smsResponse = await send2FactorSMS(localPhone, otp)
+        if (smsResponse.ok) {
+          smsSuccess = true
+        } else {
+          const errorText = await smsResponse.text()
+          console.error(`2Factor API error (Attempt ${smsAttempts + 1}):`, errorText)
+        }
+      } catch (err) {
+        console.error(`2Factor fetch error (Attempt ${smsAttempts + 1}):`, err)
+      }
+      smsAttempts++
+    }
+
+    if (!smsSuccess) {
+      // Clean up stored OTP and return 503
+      await redis.del(otpKey)
+      return NextResponse.json(
+        {
+          error: "service_unavailable",
+          message: "OTP service is temporarily busy. Please try again shortly.",
+        },
+        { status: 503 }
+      )
     }
 
     return NextResponse.json({
       success: true,
       message: "OTP sent successfully.",
     })
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Send OTP Endpoint Error:", error)
-    return NextResponse.json({ error: "Something went wrong. Please try again." }, { status: 500 })
+    return NextResponse.json(
+      {
+        error: "internal_error",
+        message: "Something went wrong. Please try again.",
+      },
+      { status: 500 }
+    )
   }
 }

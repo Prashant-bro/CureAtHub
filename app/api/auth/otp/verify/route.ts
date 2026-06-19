@@ -1,13 +1,13 @@
 import { NextResponse } from "next/server"
-import { Redis } from "@upstash/redis"
 import { createClient } from "@supabase/supabase-js"
 import jwt from "jsonwebtoken"
-
-// Initialize Upstash Redis Client
-const redis = new Redis({
-  url: process.env.UPSTASH_REDIS_REST_URL || "",
-  token: process.env.UPSTASH_REDIS_REST_TOKEN || "",
-})
+import {
+  getRealIP,
+  checkIPRateLimit,
+  timingSafeCompare,
+  RateLimitLayer,
+  redis,
+} from "@/lib/rateLimitOtp"
 
 // Initialize Supabase Admin Client
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ""
@@ -19,55 +19,17 @@ const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
     persistSession: false,
   },
 })
-/**
- * Verifies the OTP, manages attempt limits, and handles expiration/cleanup.
- */
-async function verifyOTP(phone: string, inputOtp: string): Promise<{ success: boolean; error?: string }> {
-  const otpKey = `otp:${phone}`
-  const data: any = await redis.get(otpKey)
-
-  if (!data) {
-    return { success: false, error: "Invalid or expired OTP. Please request a new one." }
-  }
-
-  // Handle both string and parsed object outputs from Upstash SDK
-  const parsed = typeof data === "string" ? JSON.parse(data) : data
-
-  // Brute force protection: check max attempts
-  if (parsed.attempts >= 5) {
-    await redis.del(otpKey)
-    return { success: false, error: "Too many attempts. Please request a new OTP." }
-  }
-
-  // Validate match
-  if (parsed.otp !== inputOtp) {
-    parsed.attempts += 1
-    const ttl = await redis.ttl(otpKey)
-    if (ttl > 0) {
-      await redis.set(otpKey, JSON.stringify(parsed), { ex: ttl })
-    } else {
-      await redis.del(otpKey)
-    }
-    return { success: false, error: "Invalid OTP. Please try again." }
-  }
-
-  // If match, remove OTP key to prevent reuse
-  await redis.del(otpKey)
-  return { success: true }
-}
 
 /**
  * Finds existing user by phone or creates a new one.
  * Strategy: try to create first — if phone already exists, look up the existing user.
  */
 async function findOrCreateUser(phone: string): Promise<string> {
-  // Try creating a new user first
   const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
     phone: phone,
     phone_confirm: true,
   })
 
-  // If created successfully, return the new user ID
   if (!createError && newUser?.user) {
     return newUser.user.id
   }
@@ -78,10 +40,8 @@ async function findOrCreateUser(phone: string): Promise<string> {
     createError.message?.toLowerCase().includes("already registered")
   )
 
-  // If phone already exists, find the existing user
   if (isPhoneExists) {
     const normalizedInput = phone.replace(/\D/g, "")
-    // Paginate through users to find by phone
     let page = 1
     const perPage = 50
     while (true) {
@@ -97,13 +57,11 @@ async function findOrCreateUser(phone: string): Promise<string> {
       })
       if (found) return found.id
 
-      // No more pages
       if (data.users.length < perPage) break
       page++
     }
   }
 
-  // If we get here, something unexpected happened
   throw createError || new Error("Unable to find or create user.")
 }
 
@@ -161,22 +119,116 @@ export async function POST(request: Request) {
     const { phone, otp } = body
 
     if (!phone || !otp) {
-      return NextResponse.json({ error: "Missing required fields." }, { status: 400 })
+      return NextResponse.json(
+        {
+          error: "invalid_request",
+          message: "Missing required fields: phone and otp.",
+        },
+        { status: 400 }
+      )
     }
 
     const formattedPhone = phone.trim()
     const trimmedOtp = otp.trim()
 
-    // 1. Validate OTP
-    const verificationResult = await verifyOTP(formattedPhone, trimmedOtp)
-    if (!verificationResult.success) {
-      return NextResponse.json({ error: verificationResult.error }, { status: 400 })
+    // Validate phone number structure
+    const phoneRegex = /^91\d{10}$/
+    if (!phoneRegex.test(formattedPhone)) {
+      return NextResponse.json(
+        {
+          error: "invalid_phone",
+          message: "Phone number must be in the format 91XXXXXXXXXX.",
+        },
+        { status: 400 }
+      )
     }
 
-    // 2. Identify or construct Supabase Auth User
+    // Extract client IP
+    const ip = getRealIP(request)
+
+    // Check IP rate limit only on verify
+    const ipRateLimitResult = await checkIPRateLimit(ip, formattedPhone)
+    if (!ipRateLimitResult.allowed) {
+      return NextResponse.json(
+        {
+          error: "rate_limited",
+          message: ipRateLimitResult.reason || "Too many verification attempts from this connection. Please try again later.",
+          retry_after_seconds: ipRateLimitResult.retryAfter || 0,
+        },
+        { status: 429 }
+      )
+    }
+
+    // Retrieve the stored OTP structure from Upstash Redis
+    const otpKey = `otp:${formattedPhone}`
+    const data: any = await redis.get(otpKey)
+
+    if (!data) {
+      return NextResponse.json(
+        {
+          error: "invalid_otp",
+          message: "Invalid or expired OTP. Please request a new one.",
+        },
+        { status: 400 }
+      )
+    }
+
+    const parsed = typeof data === "string" ? JSON.parse(data) : data
+
+    // Brute force protection: check max verification attempts
+    if (parsed.attempts >= 5) {
+      await redis.del(otpKey)
+      return NextResponse.json(
+        {
+          error: "rate_limited",
+          message: "Too many attempts. Please request a new OTP.",
+        },
+        { status: 429 }
+      )
+    }
+
+    // Compare stored OTP with input in a timing-safe manner
+    const isOtpMatched = timingSafeCompare(parsed.otp, trimmedOtp)
+
+    if (!isOtpMatched) {
+      parsed.attempts += 1
+      
+      // If the incremented attempts reach 5, delete the key immediately
+      if (parsed.attempts >= 5) {
+        await redis.del(otpKey)
+        return NextResponse.json(
+          {
+            error: "rate_limited",
+            message: "Too many attempts. Please request a new OTP.",
+          },
+          { status: 429 }
+        )
+      }
+
+      // Preserve TTL
+      const ttl = await redis.ttl(otpKey)
+      if (ttl > 0) {
+        await redis.set(otpKey, JSON.stringify(parsed), { ex: ttl })
+      } else {
+        await redis.del(otpKey)
+      }
+
+      return NextResponse.json(
+        {
+          error: "invalid_otp",
+          message: "Invalid OTP. Please try again.",
+        },
+        { status: 400 }
+      )
+    }
+
+    // OTP matched: delete the key immediately to prevent reuse
+    await redis.del(otpKey)
+
+    // Find or create the user in Supabase
     const userId = await findOrCreateUser(formattedPhone)
 
-    // 3. Establish customized JWT credentials session
+    // Create customized JWT session credentials
     const session = createSession(userId, formattedPhone)
 
     return NextResponse.json({
@@ -184,8 +236,14 @@ export async function POST(request: Request) {
       user: { id: userId },
       session,
     })
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Verify OTP Endpoint Error:", error)
-    return NextResponse.json({ error: "Something went wrong. Please try again." }, { status: 500 })
+    return NextResponse.json(
+      {
+        error: "internal_error",
+        message: "Something went wrong. Please try again.",
+      },
+      { status: 500 }
+    )
   }
 }
