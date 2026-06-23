@@ -13,8 +13,6 @@ export default async function DashboardPage() {
     data: { user },
   } = await supabase.auth.getUser()
 
-  // Double-check on the server — middleware covers most cases,
-  // but this is a defense-in-depth guard for direct server renders.
   if (!user && !isMockLoggedIn) {
     redirect("/auth")
   }

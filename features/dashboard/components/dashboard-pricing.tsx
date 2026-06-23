@@ -25,16 +25,16 @@ const PRICING_PLANS = [
     price: 170,
     period: "month",
     monthlyEquivalent: 170,
-    savingsText: "Premium Features (7 Days Free)",
+    savingsText: "Premium Features (3 Days Free)",
     popular: false,
     color: "border-slate-200 bg-white/70 hover:border-slate-300",
     features: [
-      "3 Report scan uploads / month",
-      "2 Meal scans / day",
-      "15 Chat questions / day",
+      "Unlimited Report scan uploads",
+      "Unlimited Meal scans",
+      "Unlimited AI Chat questions",
       "Diet + exercise planning with timeline timers & alarms"
     ],
-    ctaText: "Start 7-Day Free Trial",
+    ctaText: "Start 3-Day Free Trial",
     disabled: false
   },
   {
@@ -42,16 +42,16 @@ const PRICING_PLANS = [
     price: 799,
     period: "6 months",
     monthlyEquivalent: 133.2,
-    savingsText: "Save 22% (7 Days Free)",
+    savingsText: "Save 22% (3 Days Free)",
     popular: true,
     color: "border-orange-500 bg-orange-50/15 shadow-orange-500/5 hover:border-orange-600 shadow-md",
     features: [
-      "3 Report scan uploads / month",
-      "2 Meal scans / day",
-      "15 Chat questions / day",
+      "Unlimited Report scan uploads",
+      "Unlimited Meal scans",
+      "Unlimited AI Chat questions",
       "Diet + exercise planning with timeline timers & alarms"
     ],
-    ctaText: "Start 7-Day Free Trial",
+    ctaText: "Start 3-Day Free Trial",
     disabled: false
   },
   {
@@ -59,16 +59,16 @@ const PRICING_PLANS = [
     price: 1699,
     period: "year",
     monthlyEquivalent: 141.6,
-    savingsText: "Save 17% (7 Days Free)",
+    savingsText: "Save 17% (3 Days Free)",
     popular: false,
     color: "border-slate-200 bg-white/70 hover:border-slate-300",
     features: [
-      "3 Report scan uploads / month",
-      "2 Meal scans / day",
-      "15 Chat questions / day",
+      "Unlimited Report scan uploads",
+      "Unlimited Meal scans",
+      "Unlimited AI Chat questions",
       "Diet + exercise planning with timeline timers & alarms"
     ],
-    ctaText: "Start 7-Day Free Trial",
+    ctaText: "Start 3-Day Free Trial",
     disabled: false
   }
 ]
@@ -87,13 +87,13 @@ export function DashboardPricing({ subscriptionState, onSubscribe }: DashboardPr
       >
         <div className="inline-flex items-center gap-1.5 bg-orange-100/65 text-orange-600 px-3.5 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider shadow-sm">
           <Sparkles className="w-3.5 h-3.5" />
-          7-Day Free Trial
+          3-Day Free Trial
         </div>
         <h2 className="text-2xl sm:text-3xl font-black text-[#0F172A] tracking-tight">
-          Try Premium Free for 7 Days
+          Try Premium Free for 3 Days
         </h2>
         <p className="text-sm text-slate-400 max-w-md mx-auto leading-relaxed">
-          Enjoy unlimited access to all features free for 7 days. Choose a plan to start your trial; billing begins only after 7 days if you choose to continue.
+          Enjoy unlimited access to all features free for 3 days. Choose a plan to start your trial; billing begins only after 3 days if you choose to continue.
         </p>
       </motion.div>
 
@@ -114,7 +114,7 @@ export function DashboardPricing({ subscriptionState, onSubscribe }: DashboardPr
               <div className="flex justify-between items-start">
                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{plan.name}</span>
                 <span className="text-[8px] font-bold text-orange-600 bg-orange-100 border border-orange-200/35 px-1.5 py-0.5 rounded-full uppercase tracking-wider">
-                  7-Day Trial
+                  3-Day Trial
                 </span>
               </div>
 
@@ -186,7 +186,7 @@ export function DashboardPricing({ subscriptionState, onSubscribe }: DashboardPr
             <div>
               <h5 className="text-xs font-bold text-[#0F172A] uppercase tracking-wider">Day 1: Start Trial</h5>
               <p className="text-[11px] text-slate-500 mt-1 leading-relaxed">
-                Choose a plan and start your 7-day trial. Instant access to all Premium health insights, AI chat, and diet planning tools.
+                Choose a plan and start your 3-day trial. Instant access to all Premium health insights, AI chat, and diet planning tools.
               </p>
             </div>
           </div>
@@ -196,9 +196,9 @@ export function DashboardPricing({ subscriptionState, onSubscribe }: DashboardPr
               2
             </div>
             <div>
-              <h5 className="text-xs font-bold text-[#0F172A] uppercase tracking-wider">Day 5: Trial Reminder</h5>
+              <h5 className="text-xs font-bold text-[#0F172A] uppercase tracking-wider">Day 2: Trial Reminder</h5>
               <p className="text-[11px] text-slate-500 mt-1 leading-relaxed">
-                We'll notify you that your free trial is ending in 2 days. Cancel anytime via settings if you don't wish to continue.
+                We'll notify you that your free trial is ending in 1 day. Cancel anytime via settings if you don't wish to continue.
               </p>
             </div>
           </div>
@@ -208,7 +208,7 @@ export function DashboardPricing({ subscriptionState, onSubscribe }: DashboardPr
               3
             </div>
             <div>
-              <h5 className="text-xs font-bold text-[#0F172A] uppercase tracking-wider">Day 8: Paid Term Starts</h5>
+              <h5 className="text-xs font-bold text-[#0F172A] uppercase tracking-wider">Day 4: Paid Term Starts</h5>
               <p className="text-[11px] text-slate-500 mt-1 leading-relaxed">
                 If you choose to continue, your subscription begins. If not, your access is suspended with no charge.
               </p>
@@ -229,24 +229,24 @@ export function DashboardPricing({ subscriptionState, onSubscribe }: DashboardPr
         <div className="space-y-2">
           <div className="hidden md:grid grid-cols-3 gap-4 pb-2 text-[9px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100/50">
             <span>Feature Name</span>
-            <span>During 7-Day Trial</span>
+            <span>During 3-Day Trial</span>
             <span>After Trial (No Subscription)</span>
           </div>
 
           {[
             {
               name: "Lab Report Uploads (PDF)",
-              trial: "Full Premium (3 scan uploads / mo)",
+              trial: "Unlimited uploads",
               after: "No Access"
             },
             {
               name: "Meal Scanner (App)",
-              trial: "Full Premium (2 scans / day)",
+              trial: "Unlimited scans",
               after: "No Access"
             },
             {
               name: "AI Health Chat Questions",
-              trial: "Full Premium (15 questions / day)",
+              trial: "Unlimited questions",
               after: "No Access"
             },
             {
@@ -267,7 +267,7 @@ export function DashboardPricing({ subscriptionState, onSubscribe }: DashboardPr
               <span className="font-bold text-[#0F172A]">{row.name}</span>
               
               <div className="flex md:block gap-1.5">
-                <span className="md:hidden font-semibold text-orange-500 uppercase text-[8px] tracking-wide w-32 shrink-0">7-Day Trial:</span>
+                <span className="md:hidden font-semibold text-orange-500 uppercase text-[8px] tracking-wide w-32 shrink-0">3-Day Trial:</span>
                 <span className="text-[#0f172a] font-semibold">{row.trial}</span>
               </div>
               

@@ -57,6 +57,7 @@ export function OnboardingPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [showSuccess, setShowSuccess] = useState(false)
+  const [showPricing, setShowPricing] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
 
   // Helper to calculate age in years from DOB
@@ -147,9 +148,22 @@ export function OnboardingPage() {
               profile.gender &&
               profile.blood_group
             ) {
-              // Redirect to dashboard immediately
-              router.push("/dashboard")
-              return
+              const isSubscribed = document.cookie.includes("mock-subscribed=true")
+              if (isSubscribed) {
+                router.push("/dashboard")
+                return
+              } else {
+                // Populate states and show pricing screen immediately
+                setName(profile.full_name)
+                setEmail(profile.email)
+                setAge(String(profile.age))
+                setDob(profile.date_of_birth)
+                setGender(profile.gender)
+                setBloodGroup(profile.blood_group)
+                setShowPricing(true)
+                setIsLoading(false)
+                return
+              }
             }
 
             // Pre-populate fields we have
@@ -295,9 +309,10 @@ export function OnboardingPage() {
 
       setShowSuccess(true)
 
-      // Redirect to dashboard after showing success state
+      // Transition to pricing screen after showing success state
       setTimeout(() => {
-        router.push("/dashboard")
+        setShowSuccess(false)
+        setShowPricing(true)
       }, 1500)
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "An unexpected error occurred."
@@ -375,12 +390,108 @@ export function OnboardingPage() {
                   <div>
                     <h2 className="text-2xl font-black text-[#0F172A]">Profile Completed!</h2>
                     <p className="text-sm text-slate-500 mt-1.5">
-                      Your preferences have been saved. Taking you to your dashboard...
+                      Your preferences have been saved successfully...
                     </p>
                   </div>
                   <div className="pt-4 flex items-center justify-center text-xs text-orange-500 font-bold gap-2 animate-pulse">
-                    <Loader2 className="w-4 h-4 animate-spin" /> Redirecting...
+                    <Loader2 className="w-4 h-4 animate-spin" /> Preparing your subscription plan...
                   </div>
+                </motion.div>
+              ) : showPricing ? (
+                <motion.div
+                  key="pricing-screen"
+                  initial={{ opacity: 0, y: 15 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -15 }}
+                  className="space-y-6"
+                >
+                  {/* Pricing Header */}
+                  <div className="text-center">
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-orange-50 border border-orange-100 text-orange-600 rounded-full text-xs font-bold mb-3 uppercase tracking-wider">
+                      ★ Exclusive Offer ★
+                    </span>
+                    <h1 className="text-2xl sm:text-3xl font-black text-[#0F172A] tracking-tight">
+                      Mitig8 Premium Plan
+                    </h1>
+                    <p className="text-sm text-slate-500 mt-1.5 leading-relaxed">
+                      Unlock full AI capabilities to predict, monitor, and reverse diabetes risk.
+                    </p>
+                  </div>
+
+                  {/* Pricing Card Details */}
+                  <div className="bg-gradient-to-br from-orange-50 to-orange-100/50 border border-orange-200/60 rounded-2xl p-6 text-center space-y-4 shadow-sm relative overflow-hidden">
+                    <div className="absolute top-0 right-0 bg-orange-500 text-white text-[9px] font-black uppercase px-3 py-1 rounded-bl-lg tracking-wider">
+                      3-Day Free Trial
+                    </div>
+                    <div>
+                      <span className="text-xs font-bold text-orange-600 block uppercase tracking-wider">Try free then subscribe</span>
+                      <div className="mt-1 flex items-baseline justify-center gap-1">
+                        <span className="text-3xl sm:text-4xl font-black text-[#0F172A]">₹499</span>
+                        <span className="text-sm font-semibold text-slate-500">/ month</span>
+                      </div>
+                      <p className="text-xs text-slate-500 mt-1.5">
+                        Cancel anytime during the first 3 days. No charges will apply.
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Feature Checklist */}
+                  <div className="space-y-3.5 bg-slate-50/50 border border-slate-100 rounded-2xl p-5">
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider mb-2">What's Included in Premium</p>
+                    
+                    <div className="flex items-start gap-3 text-left">
+                      <div className="w-5 h-5 rounded-full bg-orange-500/10 border border-orange-200 flex items-center justify-center text-orange-600 mt-0.5 shrink-0">
+                        <CheckCircle2 className="w-3.5 h-3.5" />
+                      </div>
+                      <div>
+                        <h4 className="text-xs font-bold text-slate-800">Smart Diagnostic Reader</h4>
+                        <p className="text-[10.5px] text-slate-500 leading-normal">Parse HbA1c/blood sugar reports and explain clinical parameters instantly.</p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-start gap-3 text-left">
+                      <div className="w-5 h-5 rounded-full bg-orange-500/10 border border-orange-200 flex items-center justify-center text-orange-600 mt-0.5 shrink-0">
+                        <CheckCircle2 className="w-3.5 h-3.5" />
+                      </div>
+                      <div>
+                        <h4 className="text-xs font-bold text-slate-800">Camera Meal Scanner</h4>
+                        <p className="text-[10.5px] text-slate-500 leading-normal">Scan dishes to project carbohydrate levels and post-meal glucose changes.</p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-start gap-3 text-left">
+                      <div className="w-5 h-5 rounded-full bg-orange-500/10 border border-orange-200 flex items-center justify-center text-orange-600 mt-0.5 shrink-0">
+                        <CheckCircle2 className="w-3.5 h-3.5" />
+                      </div>
+                      <div>
+                        <h4 className="text-xs font-bold text-slate-800">24/7 AI Health Chat (8 Languages)</h4>
+                        <p className="text-[10.5px] text-slate-500 leading-normal">Voice & text transcription in Hindi, Tamil, Telugu, Marathi, Kannada, Bengali, Gujarati, and English.</p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-start gap-3 text-left">
+                      <div className="w-5 h-5 rounded-full bg-orange-500/10 border border-orange-200 flex items-center justify-center text-orange-600 mt-0.5 shrink-0">
+                        <CheckCircle2 className="w-3.5 h-3.5" />
+                      </div>
+                      <div>
+                        <h4 className="text-xs font-bold text-slate-800">Tailored Weekly Blueprints</h4>
+                        <p className="text-[10.5px] text-slate-500 leading-normal">Regional diet recipes, yoga routines, and activity blueprints based on your profile.</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Activate Trial Button */}
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => {
+                      document.cookie = "mock-subscribed=true; path=/; max-age=259200"
+                      router.push("/dashboard")
+                    }}
+                    className="w-full bg-gradient-to-r from-orange-600 to-orange-500 hover:from-orange-500 hover:to-orange-400 text-white py-3.5 px-4 rounded-xl font-bold text-sm shadow-xl shadow-orange-500/25 transition-all flex items-center justify-center gap-2 cursor-pointer animate-fade-in"
+                  >
+                    Activate 3-Day Free Trial <ArrowRight className="w-4 h-4" />
+                  </motion.button>
                 </motion.div>
               ) : (
                 <motion.div key="form-screen" className="space-y-6">

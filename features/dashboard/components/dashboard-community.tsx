@@ -150,6 +150,33 @@ export function DashboardCommunity({ userName = "", userInitials = "U" }: Dashbo
     )
   }
 
+  // ── Input Sanitization (shared with Chat) ──────────────────────
+  const BLOCKED_PATTERNS_COMM = [
+    /<script[\s\S]*?>[\s\S]*?<\/script>/gi,
+    /<[^>]+>/g,
+    /javascript:/gi,
+    /on\w+\s*=/gi,
+    /\b(SELECT|INSERT|UPDATE|DELETE|DROP|UNION|ALTER|CREATE|EXEC|EXECUTE|TRUNCATE|REPLACE)\b/gi,
+    /[;&|`${}[\]\\]/g,
+    /\b(hack|exploit|inject|bypass|attack|malware|phishing|ddos|ransomware|sql\s*injection|xss|csrf|overflow|brute\s*force)\b/gi,
+  ]
+  const ABUSE_WORDS_COMM = [
+    "fuck", "shit", "bitch", "asshole", "bastard", "cunt", "dick", "pussy",
+    "motherfucker", "whore", "slut", "nigger", "faggot", "retard",
+    "madarchod", "behenchod", "chutiya", "randi", "gaand", "harami", "kamina",
+  ]
+  const isInputSafe = (raw: string): boolean => {
+    const lower = raw.toLowerCase()
+    for (const word of ABUSE_WORDS_COMM) {
+      if (lower.includes(word)) return false
+    }
+    for (const pattern of BLOCKED_PATTERNS_COMM) {
+      pattern.lastIndex = 0
+      if (pattern.test(raw)) return false
+    }
+    return true
+  }
+
   const handleCreateStory = (e: React.FormEvent) => {
     e.preventDefault()
     if (!newTitle.trim() || !newContent.trim()) {
@@ -158,6 +185,12 @@ export function DashboardCommunity({ userName = "", userInitials = "U" }: Dashbo
     }
     if (startRisk <= currRisk) {
       setFormError("Your starting risk score must be higher than your current score to show a reduction!")
+      return
+    }
+
+    // Sanitize all text fields
+    if (!isInputSafe(newTitle) || !isInputSafe(newContent) || !isInputSafe(newTags)) {
+      setFormError("⚠️ Your story contains inappropriate or unsafe content. Please revise and try again.")
       return
     }
 

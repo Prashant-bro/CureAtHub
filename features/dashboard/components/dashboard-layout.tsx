@@ -12,7 +12,6 @@ import {
   FileText,
   Camera,
   Dumbbell,
-  Settings,
   LogOut,
   Menu,
   X,
@@ -63,7 +62,7 @@ export function DashboardLayout() {
   const [profileImage, setProfileImage] = useState<string | null>(null)
   const [latestReport, setLatestReport] = useState<any>(null)
   const [subscriptionState, setSubscriptionState] = useState<"trial" | "expired" | "premium">("trial")
-  const [trialDaysLeft, setTrialDaysLeft] = useState<number>(7)
+  const [trialDaysLeft, setTrialDaysLeft] = useState<number>(3)
   const router = useRouter()
   const supabase = createClient()
 
@@ -223,25 +222,9 @@ export function DashboardLayout() {
   }, [])
 
   const handleSectionChange = (section: ActiveSection) => {
-    const isPoorConnection = checkIsSlowConnection()
-
-    if (!isPoorConnection && window.navigator.onLine) {
-      setActiveSection(section)
-      setHasConnectionError(false)
-      setLoadingSection(false)
-      return
-    }
-
-    setLoadingSection(true)
+    // Switch instantly — skeleton only shows on initial load or offline, never on tab switch
+    setActiveSection(section)
     setHasConnectionError(false)
-
-    setTimeout(() => {
-      setActiveSection(section)
-      if (!window.navigator.onLine) {
-        setHasConnectionError(true)
-      }
-      setLoadingSection(false)
-    }, 1200)
   }
 
   const handleRetryConnection = () => {
@@ -268,7 +251,7 @@ export function DashboardLayout() {
               Trial Expired
             </span>
             <h3 className="text-2xl font-black text-[#0F172A] tracking-tight mt-2">
-              Your 7-Day Free Trial Has Ended
+              Your 3-Day Free Trial Has Ended
             </h3>
             <p className="text-sm text-slate-500 leading-relaxed">
               Your trial period has expired and access to Mitig8 features is currently suspended. Please subscribe to a premium plan to continue tracking your blood glucose, scanning meals, and chatting with the AI.
@@ -396,50 +379,17 @@ export function DashboardLayout() {
           sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         }`}
       >
-        <div className="px-5 py-5 flex items-center justify-between border-b border-orange-50">
-          <Link href="/">
-            <Mitig8Logo size="sm" theme="dark" animated={false} />
-          </Link>
+        <div className="px-5 py-5 flex items-center justify-between border-b border-orange-50 lg:hidden">
           <button
             onClick={() => setSidebarOpen(false)}
-            className="lg:hidden p-1.5 rounded-lg hover:bg-orange-50 transition-colors"
+            className="p-1.5 rounded-lg hover:bg-orange-50 transition-colors ml-auto"
           >
             <X className="w-5 h-5 text-slate-500" />
           </button>
         </div>
 
-        <button
-          onClick={() => { setProfileOpen(true); setSidebarOpen(false) }}
-          className="px-5 py-4 border-b border-orange-50 flex items-center gap-3 hover:bg-orange-50/40 transition-colors w-full text-left group"
-        >
-          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center text-white font-bold text-sm shadow-md group-hover:shadow-lg transition-shadow overflow-hidden shrink-0">
-            {profileImage ? (
-              <img src={profileImage} className="w-full h-full object-cover" alt="Avatar" />
-            ) : (
-              userInitials
-            )}
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-bold text-[#0F172A] truncate">{userName}</p>
-            {subscriptionState === "premium" ? (
-              <div className="flex items-center gap-1 mt-0.5">
-                <Crown className="w-3 h-3 text-amber-500 fill-amber-500" />
-                <span className="text-[10px] font-bold text-amber-600">Premium Member</span>
-              </div>
-            ) : subscriptionState === "expired" ? (
-              <div className="flex items-center gap-1 mt-0.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
-                <span className="text-[10px] font-bold text-red-500">Trial Expired</span>
-              </div>
-            ) : (
-              <div className="flex items-center gap-1 mt-0.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-orange-500 animate-pulse" />
-                <span className="text-[10px] font-bold text-orange-500">Trial: {trialDaysLeft}d left</span>
-              </div>
-            )}
-          </div>
-          <UserCircle className="w-5 h-5 text-slate-300 group-hover:text-orange-400 transition-colors" />
-        </button>
+
+
 
         <nav className="flex-1 px-3 py-4 space-y-1">
           {navItems.map((item) => {
@@ -500,10 +450,7 @@ export function DashboardLayout() {
             {activeSection === "pricing" && <ChevronRight className="w-3.5 h-3.5 ml-auto opacity-50" />}
           </motion.button>
 
-          <button className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium text-slate-500 hover:text-slate-700 hover:bg-slate-50/60 transition-all">
-            <Settings className="w-[18px] h-[18px]" />
-            <span>Settings</span>
-          </button>
+
            <button
             onClick={async () => {
               document.cookie = "mock-login=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;"
@@ -522,7 +469,7 @@ export function DashboardLayout() {
 
       </motion.aside>
 
-      <div className="flex-1 flex flex-col min-h-screen lg:min-w-0">
+      <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
         {activeSection !== "chat" && (
           <header className="sticky top-0 z-30 bg-[#FDF6EE]/80 backdrop-blur-xl border-b border-orange-100/40 px-4 sm:px-6 lg:px-8 py-3.5">
             <div className="flex items-center justify-between">
@@ -577,15 +524,15 @@ export function DashboardLayout() {
           </div>
         )}
 
-        <main className={`flex-1 ${activeSection === "chat" && !loadingSection && isOnline && !hasConnectionError ? "p-0" : "px-4 sm:px-6 lg:px-8 py-6"}`}>
-          <AnimatePresence mode="wait">
+        <main className={`flex-1 min-h-0 overflow-hidden ${activeSection === "chat" && !loadingSection && isOnline && !hasConnectionError ? "p-0" : "px-4 sm:px-6 lg:px-8 py-6 overflow-y-auto"}`}>
+          <AnimatePresence>
             <motion.div
               key={loadingSection ? "loading" : (!isOnline || hasConnectionError) ? "offline" : activeSection}
-              initial={{ opacity: 0, y: 12 }}
+              initial={{ opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -12 }}
-              transition={{ duration: 0.3, ease: [0.25, 0.4, 0.25, 1] }}
-              className={activeSection === "chat" && !loadingSection && isOnline && !hasConnectionError ? "h-screen flex flex-col" : ""}
+              exit={{ opacity: 0, y: -6 }}
+              transition={{ duration: 0.15, ease: [0.25, 0.4, 0.25, 1] }}
+              className={activeSection === "chat" && !loadingSection && isOnline && !hasConnectionError ? "h-full flex flex-col" : ""}
             >
               {loadingSection ? (
                 <DashboardSkeleton type="loading" />

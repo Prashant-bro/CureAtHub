@@ -11,6 +11,8 @@ interface Mitig8LogoProps {
   animated?: boolean
   /** Additional class names on the wrapper */
   className?: string
+  /** Whether to hide brand text */
+  hideText?: boolean
 }
 
 const sizeMap = {
@@ -24,6 +26,7 @@ export function Mitig8Logo({
   theme = "dark",
   animated = true,
   className = "",
+  hideText = false,
 }: Mitig8LogoProps) {
   const { img, textClass } = sizeMap[size]
 
@@ -65,10 +68,12 @@ export function Mitig8Logo({
       />
 
       {/* Brand text */}
-      <span className={`${textClass} font-bold tracking-tight`}>
-        <span className={colors.main}>Mitig</span>
-        <span className={colors.accent}>8</span>
-      </span>
+      {!hideText && (
+        <span className={`${textClass} font-bold tracking-tight`}>
+          <span className={colors.main}>Mitig</span>
+          <span className={colors.accent}>8</span>
+        </span>
+      )}
     </Wrapper>
   )
 }
