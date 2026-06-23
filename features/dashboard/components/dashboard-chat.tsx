@@ -122,6 +122,8 @@ export function DashboardChat({ onOpenSidebar }: DashboardChatProps) {
   const [isTyping, setIsTyping] = useState(false)
   const [questionIndex, setQuestionIndex] = useState(0)
   const [conversationStarted, setConversationStarted] = useState(false)
+  const [isAssessmentMode, setIsAssessmentMode] = useState(false)
+  const [answers, setAnswers] = useState<string[]>([])
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
 
@@ -213,6 +215,8 @@ export function DashboardChat({ onOpenSidebar }: DashboardChatProps) {
 
   const startConversation = () => {
     setConversationStarted(true)
+    setIsAssessmentMode(true)
+    setAnswers([])
     setIsTyping(true)
     setTimeout(() => {
       const questionsList = LOCALIZED_QUESTIONS[selectedLang] || LOCALIZED_QUESTIONS["en-IN"]
@@ -328,12 +332,134 @@ export function DashboardChat({ onOpenSidebar }: DashboardChatProps) {
 
     setMessages((prev) => [...prev, userMsg])
     setInput("")
+
+    if (isAssessmentMode) {
+      setIsTyping(true)
+      const updatedAnswers = [...answers, clean]
+      setAnswers(updatedAnswers)
+
+      const questionsList = LOCALIZED_QUESTIONS[selectedLang] || LOCALIZED_QUESTIONS["en-IN"]
+
+      if (questionIndex < questionsList.length) {
+        setTimeout(() => {
+          setMessages((prev) => [
+            ...prev,
+            {
+              id: `ai-${Date.now()}`,
+              role: "ai",
+              text: questionsList[questionIndex],
+              timestamp: new Date(),
+            },
+          ])
+          setQuestionIndex((prev) => prev + 1)
+          setIsTyping(false)
+        }, 800)
+      } else {
+        // Compute and calculate risk score via LightGBM backend API
+        try {
+          const age = parseFloat(updatedAnswers[0]) || 30
+          const gender = updatedAnswers[1]
+          const weight = parseFloat(updatedAnswers[2]) || 70
+          const height = parseFloat(updatedAnswers[3]) || 170
+          const bmi = weight / ((height / 100) * (height / 100))
+          const bp = updatedAnswers[4]
+          const chol = parseFloat(updatedAnswers[5]) || 180
+          const fbg = parseFloat(updatedAnswers[6]) || 90
+          const hba1c = parseFloat(updatedAnswers[7]) || 5.2
+          const family = updatedAnswers[8]
+          const activity = updatedAnswers[9]
+          const diet = updatedAnswers[10]
+          const smoke = updatedAnswers[11]
+          const alcohol = updatedAnswers[12]
+
+          const predictRes = await fetch("/api/model/predict", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              Age: age,
+              Gender: gender,
+              State: "Urban",
+              BMI: bmi,
+              Blood_Pre: bp,
+              Cholestero: chol,
+              Fasting_Bl: fbg,
+              Glucose_2: 120,
+              Serum_Ins: 15,
+              HbA1c_percent: hba1c,
+              Family_His: family,
+              Physical_A: activity,
+              Diet_Type: diet,
+              Smoking: smoke,
+              Alcohol: alcohol,
+              Weight_Lo: "No"
+            })
+          })
+
+          if (!predictRes.ok) throw new Error("Predict request failed")
+          const data = await predictRes.json()
+
+          if (typeof window !== "undefined") {
+            localStorage.setItem("mitig8_analyzed_report", JSON.stringify(data))
+            window.dispatchEvent(new Event("mitig8_report_updated"))
+          }
+
+          setMessages((prev) => [
+            ...prev,
+            {
+              id: `ai-${Date.now()}`,
+              role: "ai",
+              text: `Thank you! Based on your responses, your computed Metabolic Diabetes Risk Score is **${data.riskScore}/100** (${data.riskClass}).\n\n${data.summary}\n\nYou can view your detailed recommendation analysis and personalized targets on the Home and Diet sections!`,
+              timestamp: new Date(),
+            },
+          ])
+          setIsAssessmentMode(false)
+        } catch (err) {
+          console.error("Predict fetch error:", err)
+          setMessages((prev) => [
+            ...prev,
+            {
+              id: `ai-${Date.now()}`,
+              role: "ai",
+              text: "Thank you for completing the assessment! Your health profile and risk parameters have been updated.",
+              timestamp: new Date(),
+            },
+          ])
+          setIsAssessmentMode(false)
+        } finally {
+          setIsTyping(false)
+        }
+      }
+      return
+    }
+
     setIsTyping(true)
 
     const historyForApi = messages.slice(-10).map((m) => ({
       role: m.role === "ai" ? "assistant" : "user",
       content: m.text,
     }))
+
+    let riskProfile = null
+    let dailyMetrics = null
+
+    if (typeof window !== "undefined") {
+      try {
+        const savedReport = localStorage.getItem("mitig8_analyzed_report")
+        if (savedReport) riskProfile = JSON.parse(savedReport)
+
+        const water = Number(localStorage.getItem("mitig8_water_intake")) || 0
+        const cals = Number(localStorage.getItem("mitig8_calories")) || 0
+        const act = Number(localStorage.getItem("mitig8_activity")) || 0
+
+        dailyMetrics = {
+          waterIntake: water,
+          caloriesConsumed: cals,
+          exerciseMinutes: act
+        }
+      } catch (e) {
+        // silent catch
+      }
+    }
 
     try {
       const res = await fetch("/api/chat", {
@@ -343,6 +469,8 @@ export function DashboardChat({ onOpenSidebar }: DashboardChatProps) {
           message: clean,
           language: selectedLang,
           conversationHistory: historyForApi,
+          riskProfile,
+          dailyMetrics,
         }),
       })
 
@@ -359,20 +487,14 @@ export function DashboardChat({ onOpenSidebar }: DashboardChatProps) {
       }
       setMessages((prev) => [...prev, aiMsg])
     } catch (err) {
-      const questionsList = LOCALIZED_QUESTIONS[selectedLang] || LOCALIZED_QUESTIONS["en-IN"]
-      let fallbackText = ""
-      if (questionIndex < questionsList.length) {
-        fallbackText = questionsList[questionIndex]
-        setQuestionIndex((prev) => prev + 1)
-      } else {
-        fallbackText =
-          selectedLang === "hi-IN"
-            ? "वह सारी जानकारी साझा करने के लिए धन्यवाद! आपकी व्यक्तिगत स्वास्थ्य योजना तैयार की जा रही है।"
-            : "Thank you for sharing! Your personalized health plan is being generated. Check your Profile section for your updated risk score! "
-      }
       setMessages((prev) => [
         ...prev,
-        { id: `ai-${Date.now()}`, role: "ai", text: fallbackText, timestamp: new Date() },
+        { 
+          id: `ai-${Date.now()}`, 
+          role: "ai", 
+          text: "I am having difficulty connecting to my AI core right now. However, I'm here to support you! Please continue logging your food and exercise so we can optimize your diabetes risk profile.", 
+          timestamp: new Date() 
+        },
       ])
     } finally {
       setIsTyping(false)

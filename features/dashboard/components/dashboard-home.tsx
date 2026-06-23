@@ -48,24 +48,33 @@ export function DashboardHome({ onNavigateToChat, onNavigateToDiet, onNavigateTo
   const [shareDialogOpen, setShareDialogOpen] = useState(false)
   const [sharingStatus, setSharingStatus] = useState<"idle" | "generating" | "done">("idle")
   const [analyzedReport, setAnalyzedReport] = useState<any>(null)
+  const [waterIntake, setWaterIntake] = useState(0)
+  const [calories, setCalories] = useState(0)
+  const [activity, setActivity] = useState(0)
+  const [sleep, setSleep] = useState(0.0)
 
   useEffect(() => {
-    if (latestReport) {
-      setAnalyzedReport(latestReport)
-      return
-    }
     const loadReport = () => {
       if (typeof window !== "undefined") {
-        const saved = localStorage.getItem("mitig8_analyzed_report")
-        if (saved) {
-          try {
-            setAnalyzedReport(JSON.parse(saved))
-          } catch (e) {
-            // silent catch
-          }
+        if (latestReport) {
+          setAnalyzedReport(latestReport)
         } else {
-          setAnalyzedReport(null)
+          const saved = localStorage.getItem("mitig8_analyzed_report")
+          if (saved) {
+            try {
+              setAnalyzedReport(JSON.parse(saved))
+            } catch (e) {
+              // silent catch
+            }
+          } else {
+            setAnalyzedReport(null)
+          }
         }
+
+        setWaterIntake(Number(localStorage.getItem("mitig8_water_intake")) || 0)
+        setCalories(Number(localStorage.getItem("mitig8_calories")) || 0)
+        setActivity(Number(localStorage.getItem("mitig8_activity")) || 0)
+        setSleep(Number(localStorage.getItem("mitig8_sleep")) || 0.0)
       }
     }
     loadReport()
@@ -277,10 +286,10 @@ export function DashboardHome({ onNavigateToChat, onNavigateToDiet, onNavigateTo
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
-          { icon: Droplets, label: "Water Intake", value: "0 / 8 glasses", color: "text-blue-500", bg: "bg-blue-50" },
-          { icon: Flame, label: "Calories", value: "0 kcal", color: "text-orange-500", bg: "bg-orange-50" },
-          { icon: Dumbbell, label: "Activity", value: "0 min", color: "text-purple-500", bg: "bg-purple-50" },
-          { icon: Clock, label: "Sleep", value: "0.0 hrs", color: "text-indigo-500", bg: "bg-indigo-50" },
+          { icon: Droplets, label: "Water Intake", value: `${waterIntake} / 8 glasses`, color: "text-blue-500", bg: "bg-blue-50" },
+          { icon: Flame, label: "Calories", value: `${calories} kcal`, color: "text-orange-500", bg: "bg-orange-50" },
+          { icon: Dumbbell, label: "Activity", value: `${activity} min`, color: "text-purple-500", bg: "bg-purple-50" },
+          { icon: Clock, label: "Sleep", value: `${sleep.toFixed(1)} hrs`, color: "text-indigo-500", bg: "bg-indigo-50" },
         ].map((stat, i) => (
           <motion.div
             key={stat.label}

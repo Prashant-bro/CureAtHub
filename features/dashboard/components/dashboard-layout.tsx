@@ -63,6 +63,8 @@ export function DashboardLayout() {
   const [latestReport, setLatestReport] = useState<any>(null)
   const [subscriptionState, setSubscriptionState] = useState<"trial" | "expired" | "premium">("trial")
   const [trialDaysLeft, setTrialDaysLeft] = useState<number>(3)
+  const [notifications, setNotifications] = useState<any[]>([])
+  const [notificationsOpen, setNotificationsOpen] = useState(false)
   const router = useRouter()
   const supabase = createClient()
 
@@ -490,14 +492,77 @@ export function DashboardLayout() {
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  className="relative p-2.5 rounded-xl bg-white/60 border border-orange-100/50 hover:bg-white transition-all shadow-sm"
-                >
-                  <Bell className="w-[18px] h-[18px] text-slate-500" />
-                  <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-orange-500 rounded-full" />
-                </motion.button>
+                <div className="relative">
+                  <motion.button
+                    onClick={() => setNotificationsOpen(!notificationsOpen)}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="relative p-2.5 rounded-xl bg-white/60 border border-orange-100/50 hover:bg-white transition-all shadow-sm cursor-pointer"
+                  >
+                    <Bell className="w-[18px] h-[18px] text-slate-500" />
+                    {notifications.length > 0 && (
+                      <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-orange-500 rounded-full animate-pulse" />
+                    )}
+                  </motion.button>
+
+                  <AnimatePresence>
+                    {notificationsOpen && (
+                      <>
+                        <div 
+                          className="fixed inset-0 z-40 cursor-default" 
+                          onClick={() => setNotificationsOpen(false)}
+                        />
+                        <motion.div
+                          initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                          animate={{ opacity: 1, y: 0, scale: 1 }}
+                          exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                          transition={{ duration: 0.15 }}
+                          className="absolute right-0 mt-2 w-80 bg-white rounded-2xl border border-orange-100/60 shadow-xl z-50 overflow-hidden"
+                        >
+                          <div className="p-4 border-b border-orange-50 flex items-center justify-between">
+                            <span className="font-bold text-sm text-[#0F172A]">Notifications</span>
+                            {notifications.length > 0 && (
+                              <button 
+                                onClick={() => setNotifications([])}
+                                className="text-xs text-orange-600 hover:text-orange-700 font-semibold transition-colors"
+                              >
+                                Clear all
+                              </button>
+                            )}
+                          </div>
+                          <div className="max-h-72 overflow-y-auto p-2">
+                            {notifications.length === 0 ? (
+                              <div className="py-8 px-4 flex flex-col items-center justify-center text-center space-y-2">
+                                <div className="w-10 h-10 rounded-full bg-orange-50 flex items-center justify-center">
+                                  <Bell className="w-5 h-5 text-orange-400" />
+                                </div>
+                                <div className="space-y-1">
+                                  <p className="text-sm font-semibold text-slate-700">No notifications</p>
+                                  <p className="text-xs text-slate-400">You're all caught up!</p>
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="space-y-1">
+                                {notifications.map((noti) => (
+                                  <div key={noti.id} className="p-3 hover:bg-orange-50/50 rounded-xl transition-colors cursor-pointer flex gap-3">
+                                    <div className="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center flex-shrink-0">
+                                      <Bell className="w-4 h-4 text-orange-600" />
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                      <p className="text-xs font-semibold text-slate-800 leading-tight">{noti.title}</p>
+                                      <p className="text-[11px] text-slate-500 mt-0.5 leading-snug">{noti.message}</p>
+                                      <p className="text-[9px] text-slate-400 mt-1">{noti.time}</p>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        </motion.div>
+                      </>
+                    )}
+                  </AnimatePresence>
+                </div>
                 <motion.button
                   onClick={() => setProfileOpen(true)}
                   whileHover={{ scale: 1.08 }}

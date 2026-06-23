@@ -1,158 +1,361 @@
 "use client"
 
-import React from "react"
-import { motion } from "framer-motion"
+import React, { useState, useEffect } from "react"
+import { motion, AnimatePresence } from "framer-motion"
 import {
   Camera,
-  Smartphone,
   Sparkles,
   ScanLine,
   Apple,
+  AlertTriangle,
+  CheckCircle,
+  TrendingUp,
+  Loader2,
+  RefreshCw,
+  Plus
 } from "lucide-react"
 
-const fadeUp = {
-  hidden: { opacity: 0, y: 16 },
-  visible: (i: number) => ({
-    opacity: 1,
-    y: 0,
-    transition: { delay: i * 0.1, duration: 0.5, ease: [0.25, 0.4, 0.25, 1] as [number, number, number, number] },
-  }),
+interface FoodItem {
+  id: string
+  name: string
+  glycemicIndex: "High" | "Medium" | "Low"
+  giValue: number
+  calories: number
+  carbs: string
+  protein: string
+  fat: string
+  alternative?: string
 }
 
+const INDIAN_FOODS: FoodItem[] = [
+  { id: "samosa", name: "Samosa (1 pc)", glycemicIndex: "High", giValue: 80, calories: 262, carbs: "32g", protein: "3.5g", fat: "13g", alternative: "Oats Upma" },
+  { id: "gulab_jamun", name: "Gulab Jamun (2 pcs)", glycemicIndex: "High", giValue: 85, calories: 300, carbs: "48g", protein: "4g", fat: "10g", alternative: "Paneer Tikka" },
+  { id: "rice_dal", name: "White Rice & Dal", glycemicIndex: "Medium", giValue: 68, calories: 380, carbs: "55g", protein: "12g", fat: "4g", alternative: "Quinoa or Millets" },
+  { id: "oats_upma", name: "Oats Upma", glycemicIndex: "Low", giValue: 50, calories: 190, carbs: "26g", protein: "6g", fat: "5g" },
+  { id: "salad", name: "Green Salad Bowl", glycemicIndex: "Low", giValue: 20, calories: 75, carbs: "12g", protein: "2g", fat: "1.5g" },
+  { id: "paneer_tikka", name: "Paneer Tikka (4 blocks)", glycemicIndex: "Low", giValue: 25, calories: 240, carbs: "8g", protein: "18g", fat: "16g" },
+]
+
 export function DashboardMealScan() {
+  const [selectedFood, setSelectedFood] = useState<FoodItem | null>(null)
+  const [scanState, setScanState] = useState<"idle" | "scanning" | "alert" | "success">("idle")
+  const [scanProgress, setScanProgress] = useState(0)
+  const [userRiskProfile, setUserRiskProfile] = useState<any>(null)
+
+  const loadRiskProfile = () => {
+    if (typeof window !== "undefined") {
+      try {
+        const saved = localStorage.getItem("mitig8_analyzed_report")
+        if (saved) {
+          setUserRiskProfile(JSON.parse(saved))
+        }
+      } catch (e) {
+        // silent catch
+      }
+    }
+  }
+
+  useEffect(() => {
+    loadRiskProfile()
+    window.addEventListener("mitig8_report_updated", loadRiskProfile)
+    return () => {
+      window.removeEventListener("mitig8_report_updated", loadRiskProfile)
+    }
+  }, [])
+
+  const startScan = (food: FoodItem) => {
+    setSelectedFood(food)
+    setScanState("scanning")
+    setScanProgress(0)
+
+    let progress = 0
+    const interval = setInterval(() => {
+      progress += 20
+      setScanProgress(progress)
+      if (progress >= 100) {
+        clearInterval(interval)
+        // Evaluate based on patient risk
+        const riskClass = userRiskProfile?.riskClass || "Low Risk"
+        const isDangerous = (food.glycemicIndex === "High" || food.glycemicIndex === "Medium") && (riskClass === "High Risk" || riskClass === "Moderate Risk")
+        
+        if (isDangerous) {
+          setScanState("alert")
+        } else {
+          setScanState("success")
+          logMealDirectly(food)
+        }
+      }
+    }, 400)
+  }
+
+  const logMealDirectly = (food: FoodItem) => {
+    if (typeof window !== "undefined") {
+      // 1. Log calories
+      const currentCalories = Number(localStorage.getItem("mitig8_calories")) || 0
+      localStorage.setItem("mitig8_calories", String(currentCalories + food.calories))
+
+      // 2. Adjust Risk Score based on glycemic index of eaten food
+      if (userRiskProfile) {
+        let scoreChange = 0
+        if (food.glycemicIndex === "High") scoreChange = 3
+        else if (food.glycemicIndex === "Medium") scoreChange = 1
+        else if (food.glycemicIndex === "Low") scoreChange = -2
+
+        const newScore = Math.max(0, Math.min(100, userRiskProfile.riskScore + scoreChange))
+        let newClass = userRiskProfile.riskClass
+        let newColor = userRiskProfile.riskColor
+        let newSummary = userRiskProfile.summary
+
+        if (newScore >= 70) {
+          newClass = "High Risk"
+          newColor = "from-red-500 to-rose-600 text-rose-600 bg-rose-50 border-rose-100"
+          newSummary = "Biomarker analysis indicates high metabolic diabetes risk indicators. Direct lifestyle changes and medical consultation are recommended."
+        } else if (newScore >= 40) {
+          newClass = "Moderate Risk"
+          newColor = "from-amber-400 to-orange-500 text-orange-600 bg-orange-50 border-orange-100"
+          newSummary = "Your biomarkers indicate borderline pre-diabetic ranges. Targeted nutritional habits can effectively reverse this risk profile."
+        } else {
+          newClass = "Low Risk"
+          newColor = "from-emerald-400 to-teal-500 text-emerald-600 bg-emerald-50 border-emerald-100"
+          newSummary = "All clinical biomarkers fall well within optimal reference intervals. Continue maintaining your excellent health parameters."
+        }
+
+        const updatedProfile = {
+          ...userRiskProfile,
+          riskScore: newScore,
+          riskClass: newClass,
+          riskColor: newColor,
+          summary: newSummary
+        }
+
+        localStorage.setItem("mitig8_analyzed_report", JSON.stringify(updatedProfile))
+        window.dispatchEvent(new Event("mitig8_report_updated"))
+      }
+    }
+  }
+
+  const handleAlternativeRecommend = () => {
+    if (!selectedFood || !selectedFood.alternative) return
+    const altFoodName = selectedFood.alternative
+    const altFoodItem = INDIAN_FOODS.find(f => f.name.toLowerCase().includes(altFoodName.toLowerCase()) || altFoodName.toLowerCase().includes(f.name.toLowerCase()))
+    
+    if (altFoodItem) {
+      setSelectedFood(altFoodItem)
+      setScanState("success")
+      logMealDirectly(altFoodItem)
+    } else {
+      setScanState("idle")
+      setSelectedFood(null)
+    }
+  }
+
   return (
-    <div className="max-w-2xl mx-auto">
-      <motion.div
-        variants={fadeUp}
-        initial="hidden"
-        animate="visible"
-        custom={0}
-        className="relative overflow-hidden bg-white/70 backdrop-blur-xl border border-white/60 rounded-3xl shadow-sm"
-      >
-        <div className="absolute top-0 left-0 right-0 h-48 bg-gradient-to-b from-orange-50/80 to-transparent" />
-        <motion.div
-          className="absolute top-10 right-10 w-32 h-32 rounded-full bg-orange-500/5 blur-2xl"
-          animate={{ scale: [1, 1.3, 1], opacity: [0.3, 0.6, 0.3] }}
-          transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-        />
-
-        <div className="relative z-10 p-8 sm:p-10 text-center">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ type: "spring", stiffness: 100, damping: 15, delay: 0.1 }}
-            className="relative w-32 h-32 mx-auto mb-8"
-          >
-            <motion.div
-              className="absolute inset-0 rounded-3xl border-2 border-dashed border-orange-200"
-              animate={{ rotate: 360 }}
-              transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-            />
-            <div className="absolute inset-2 rounded-2xl bg-gradient-to-br from-orange-50 to-orange-100 flex items-center justify-center">
-              <Camera className="w-12 h-12 text-orange-400" />
-            </div>
-            <motion.div
-              className="absolute left-3 right-3 h-0.5 bg-gradient-to-r from-transparent via-orange-400 to-transparent rounded-full"
-              animate={{ top: ["15%", "85%", "15%"] }}
-              transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
-            />
-            <div className="absolute top-0 left-0 w-5 h-5 border-t-2 border-l-2 border-orange-400 rounded-tl-lg" />
-            <div className="absolute top-0 right-0 w-5 h-5 border-t-2 border-r-2 border-orange-400 rounded-tr-lg" />
-            <div className="absolute bottom-0 left-0 w-5 h-5 border-b-2 border-l-2 border-orange-400 rounded-bl-lg" />
-            <div className="absolute bottom-0 right-0 w-5 h-5 border-b-2 border-r-2 border-orange-400 rounded-br-lg" />
-
-            <motion.div
-              className="absolute -top-2 -right-2 w-7 h-7 rounded-full bg-orange-500 flex items-center justify-center shadow-lg shadow-orange-500/30"
-              animate={{ scale: [1, 1.15, 1] }}
-              transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-            >
-              <Sparkles className="w-3.5 h-3.5 text-white" />
-            </motion.div>
-          </motion.div>
-
-          <motion.div
-            variants={fadeUp}
-            initial="hidden"
-            animate="visible"
-            custom={1}
-          >
-            <h3 className="text-2xl font-bold text-[#0F172A] mb-2">
-              AI Meal Scanner
-            </h3>
-            <p className="text-sm text-slate-500 max-w-sm mx-auto leading-relaxed mb-1">
-              Snap a photo of your meal and our AI will instantly analyze calories, macros, and diabetes impact.
-            </p>
-          </motion.div>
-
-          <motion.div
-            variants={fadeUp}
-            initial="hidden"
-            animate="visible"
-            custom={2}
-            className="flex flex-wrap justify-center gap-2 my-6"
-          >
-            {[
-              { icon: ScanLine, label: "Instant Analysis" },
-              { icon: Sparkles, label: "AI Powered" },
-              { icon: Apple, label: "Nutrition Data" },
-            ].map((feature) => (
-              <div
-                key={feature.label}
-                className="flex items-center gap-1.5 bg-orange-50 border border-orange-100 text-orange-600 text-[11px] font-semibold px-3 py-1.5 rounded-full"
+    <div className="max-w-4xl mx-auto space-y-6">
+      <div className="grid grid-cols-1 md:grid-cols-[1.2fr_1fr] gap-6">
+        {/* Scanner Panel */}
+        <div className="bg-white/70 backdrop-blur-xl border border-orange-100/50 rounded-3xl p-6 flex flex-col justify-between relative overflow-hidden min-h-[400px]">
+          <div className="absolute top-0 left-0 right-0 h-48 bg-gradient-to-b from-orange-50/40 to-transparent" />
+          
+          <AnimatePresence mode="wait">
+            {scanState === "idle" && (
+              <motion.div
+                key="idle"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                className="flex-1 flex flex-col items-center justify-center text-center p-6 space-y-5"
               >
-                <feature.icon className="w-3 h-3" />
-                {feature.label}
-              </div>
-            ))}
-          </motion.div>
-
-          <motion.div
-            variants={fadeUp}
-            initial="hidden"
-            animate="visible"
-            custom={3}
-            className="bg-gradient-to-br from-[#0F172A] to-[#1a2744] rounded-2xl p-6 mt-4"
-          >
-            <div className="flex items-center justify-center gap-2 mb-3">
-              <Smartphone className="w-5 h-5 text-orange-400" />
-              <span className="text-white font-bold text-sm">Download Our App</span>
-            </div>
-            <p className="text-white/50 text-xs mb-5 max-w-xs mx-auto">
-              The AI Meal Scanner feature is available exclusively on our mobile app. Download now to get started!
-            </p>
-
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-              <motion.button
-                whileHover={{ scale: 1.03, y: -2 }}
-                whileTap={{ scale: 0.97 }}
-                className="flex items-center gap-3 bg-white/10 hover:bg-white/15 backdrop-blur-sm border border-white/10 rounded-xl px-5 py-3 transition-all"
-              >
-                <svg className="w-7 h-7 text-white" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z" />
-                </svg>
-                <div className="text-left">
-                  <p className="text-white/50 text-[9px] leading-none">Download on the</p>
-                  <p className="text-white font-bold text-sm leading-tight">App Store</p>
+                <div className="relative w-28 h-28 flex items-center justify-center bg-orange-50 rounded-2xl border border-orange-100">
+                  <Camera className="w-12 h-12 text-orange-500 animate-pulse" />
+                  <div className="absolute inset-0 rounded-2xl border-2 border-orange-500/20 animate-ping" style={{ animationDuration: '3s' }} />
                 </div>
-              </motion.button>
-
-              <motion.button
-                whileHover={{ scale: 1.03, y: -2 }}
-                whileTap={{ scale: 0.97 }}
-                className="flex items-center gap-3 bg-white/10 hover:bg-white/15 backdrop-blur-sm border border-white/10 rounded-xl px-5 py-3 transition-all"
-              >
-                <svg className="w-6 h-6 text-white" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M3.609 1.814L13.792 12 3.61 22.186a.996.996 0 01-.61-.92V2.734a1 1 0 01.609-.92zm10.89 10.893l2.302 2.302-10.937 6.333 8.635-8.635zm3.199-3.199l2.302 2.302-2.302 2.302-2.725-2.302 2.725-2.302zM5.864 2.658L16.8 8.99l-2.302 2.302-8.634-8.634z" />
-                </svg>
-                <div className="text-left">
-                  <p className="text-white/50 text-[9px] leading-none">Get it on</p>
-                  <p className="text-white font-bold text-sm leading-tight">Google Play</p>
+                <div className="space-y-2">
+                  <h3 className="text-lg font-bold text-[#0F172A]">Food Scanner Simulation</h3>
+                  <p className="text-xs text-slate-500 max-w-xs leading-relaxed">
+                    Select an Indian food from the list to simulate scanning. The scanner will run real-time metabolic checks matching your dynamic risk profile.
+                  </p>
                 </div>
-              </motion.button>
-            </div>
-          </motion.div>
+              </motion.div>
+            )}
+
+            {scanState === "scanning" && (
+              <motion.div
+                key="scanning"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="flex-1 flex flex-col items-center justify-center p-6 text-center space-y-6"
+              >
+                <div className="relative w-32 h-32 rounded-2xl overflow-hidden border border-orange-200 bg-orange-50/50 flex items-center justify-center">
+                  <ScanLine className="w-16 h-16 text-orange-500 animate-bounce" />
+                  <motion.div 
+                    className="absolute left-0 right-0 h-1 bg-gradient-to-r from-transparent via-orange-500 to-transparent"
+                    animate={{ top: ["10%", "90%", "10%"] }}
+                    transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                  />
+                </div>
+                <div className="w-full max-w-xs space-y-2">
+                  <div className="flex justify-between text-xs font-bold text-slate-500">
+                    <span>Scanning {selectedFood?.name}...</span>
+                    <span>{scanProgress}%</span>
+                  </div>
+                  <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+                    <motion.div 
+                      className="h-full bg-orange-500"
+                      initial={{ width: 0 }}
+                      animate={{ width: `${scanProgress}%` }}
+                      transition={{ duration: 0.1 }}
+                    />
+                  </div>
+                  <p className="text-[10px] text-slate-400">Analyzing glycemic loads and insulin targets...</p>
+                </div>
+              </motion.div>
+            )}
+
+            {scanState === "alert" && selectedFood && (
+              <motion.div
+                key="alert"
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0 }}
+                className="flex-1 flex flex-col items-center justify-center p-6 text-center space-y-6"
+              >
+                <div className="w-14 h-14 bg-rose-50 border border-rose-200 rounded-2xl flex items-center justify-center shadow-lg shadow-rose-500/10">
+                  <AlertTriangle className="w-7 h-7 text-rose-500 animate-bounce" />
+                </div>
+                <div className="space-y-2 max-w-sm">
+                  <span className="text-[10px] font-black text-rose-600 bg-rose-50 px-2 py-0.5 rounded-full uppercase border border-rose-100">
+                    High Glycemic Spike Warning
+                  </span>
+                  <h3 className="text-base font-extrabold text-[#0F172A] mt-2">
+                    Spike Caution for {selectedFood.name}
+                  </h3>
+                  <p className="text-xs text-slate-600 leading-relaxed">
+                    You have an active <span className="font-bold text-orange-600">{userRiskProfile?.riskClass || "Moderate Risk"}</span> classification. Eating <span className="font-semibold">{selectedFood.name}</span> (Glycemic Index: **{selectedFood.giValue}**) is highly likely to trigger sugar peaks.
+                  </p>
+                </div>
+
+                <div className="flex flex-col sm:flex-row gap-2.5 w-full max-w-xs">
+                  {selectedFood.alternative && (
+                    <button
+                      onClick={handleAlternativeRecommend}
+                      className="flex-1 bg-gradient-to-r from-orange-500 to-orange-600 hover:shadow-lg text-white font-bold text-xs py-2.5 rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                    >
+                      <RefreshCw className="w-3.5 h-3.5" />
+                      Swap with {selectedFood.alternative}
+                    </button>
+                  )}
+                  <button
+                    onClick={() => {
+                      setScanState("success")
+                      logMealDirectly(selectedFood)
+                    }}
+                    className="flex-1 bg-slate-100 hover:bg-slate-200 text-[#0F172A] border border-slate-200 font-bold text-xs py-2.5 rounded-xl transition-all cursor-pointer"
+                  >
+                    Log Anyway
+                  </button>
+                </div>
+              </motion.div>
+            )}
+
+            {scanState === "success" && selectedFood && (
+              <motion.div
+                key="success"
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0 }}
+                className="flex-1 flex flex-col items-center justify-center p-6 text-center space-y-6"
+              >
+                <div className="w-14 h-14 bg-emerald-50 border border-emerald-200 rounded-2xl flex items-center justify-center shadow-lg shadow-emerald-500/10">
+                  <CheckCircle className="w-7 h-7 text-emerald-500" />
+                </div>
+                <div className="space-y-1">
+                  <span className="text-[10px] font-black text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full uppercase border border-emerald-100">
+                    Meal Logged Successfully
+                  </span>
+                  <h3 className="text-base font-bold text-[#0F172A] mt-2">
+                    {selectedFood.name} Logged
+                  </h3>
+                  <p className="text-xs text-slate-500 leading-relaxed mt-1">
+                    Your daily calories and dynamic metabolic risk stats have been updated in your profile dashboard!
+                  </p>
+                </div>
+
+                <div className="w-full max-w-xs border border-orange-50 rounded-2xl p-4 bg-orange-50/20 text-left space-y-2">
+                  <div className="flex justify-between text-xs border-b border-orange-100/30 pb-1">
+                    <span className="text-slate-400">Calories Added:</span>
+                    <span className="font-bold text-[#0F172A]">{selectedFood.calories} kcal</span>
+                  </div>
+                  <div className="flex justify-between text-xs border-b border-orange-100/30 pb-1">
+                    <span className="text-slate-400">Glycemic Load:</span>
+                    <span className={`font-bold ${
+                      selectedFood.glycemicIndex === "High" ? "text-rose-500" :
+                      selectedFood.glycemicIndex === "Medium" ? "text-amber-500" :
+                      "text-emerald-500"
+                    }`}>{selectedFood.glycemicIndex} ({selectedFood.giValue})</span>
+                  </div>
+                  <div className="flex justify-between text-xs">
+                    <span className="text-slate-400">Carbs / Protein / Fat:</span>
+                    <span className="font-bold text-slate-600">{selectedFood.carbs} / {selectedFood.protein} / {selectedFood.fat}</span>
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => {
+                    setScanState("idle")
+                    setSelectedFood(null)
+                  }}
+                  className="bg-gradient-to-r from-orange-500 to-orange-600 text-white font-bold text-xs px-5 py-2 rounded-xl transition-all cursor-pointer"
+                >
+                  Scan Another Meal
+                </button>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
-      </motion.div>
+
+        {/* Indian Food List */}
+        <div className="bg-white/70 backdrop-blur-xl border border-white/60 rounded-3xl p-5 shadow-sm space-y-4">
+          <div>
+            <h3 className="text-sm font-bold text-[#0F172A]">Simulate Meal Database</h3>
+            <p className="text-xs text-slate-400 mt-0.5">Select a typical item to run scanning calculations.</p>
+          </div>
+
+          <div className="grid grid-cols-1 gap-2.5 max-h-[350px] overflow-y-auto pr-1">
+            {INDIAN_FOODS.map((food) => {
+              const isHigh = food.glycemicIndex === "High"
+              const isMed = food.glycemicIndex === "Medium"
+
+              return (
+                <button
+                  key={food.id}
+                  onClick={() => startScan(food)}
+                  disabled={scanState === "scanning"}
+                  className="flex items-center justify-between p-3 rounded-xl border border-slate-100 bg-slate-50/50 hover:bg-orange-50/20 hover:border-orange-200 transition-all text-left disabled:opacity-50"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-orange-50 flex items-center justify-center">
+                      <Apple className="w-4.5 h-4.5 text-orange-400" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold text-[#0F172A]">{food.name}</p>
+                      <p className="text-[10px] text-slate-400 mt-0.5">Calories: {food.calories} kcal • Protein: {food.protein}</p>
+                    </div>
+                  </div>
+
+                  <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full ${
+                    isHigh ? "bg-rose-50 text-rose-600 border border-rose-100" :
+                    isMed ? "bg-amber-50 text-amber-600 border border-amber-100" :
+                    "bg-emerald-50 text-emerald-600 border border-emerald-100"
+                  }`}>
+                    {food.glycemicIndex} GI
+                  </span>
+                </button>
+              )
+            })}
+          </div>
+        </div>
+      </div>
     </div>
   )
 }
