@@ -11,6 +11,9 @@ import {
   MicOff,
   Globe,
   Check,
+  Copy,
+  Square,
+  Loader2,
 } from "lucide-react"
 
 interface Message {
@@ -118,6 +121,66 @@ interface DashboardChatProps {
 
 export function DashboardChat({ onOpenSidebar }: DashboardChatProps) {
   const [messages, setMessages] = useState<Message[]>([])
+  const [copiedId, setCopiedId] = useState<string | null>(null)
+  const abortControllerRef = useRef<AbortController | null>(null)
+
+  const handleCopy = (id: string, text: string) => {
+    navigator.clipboard.writeText(text)
+    setCopiedId(id)
+    setTimeout(() => setCopiedId(null), 2000)
+  }
+
+  const handleStopResponse = () => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort()
+      abortControllerRef.current = null
+      setIsTyping(false)
+    }
+  }
+
+  const getLoaderText = () => {
+    if (isAssessmentMode) {
+      const textsList: Record<string, string[]> = {
+        "en-IN": [
+          "Mitig8 AI is analyzing your details...",
+          "Mitig8 AI is updating your age metrics...",
+          "Mitig8 AI is processing your gender details...",
+          "Mitig8 AI is recording your weight profile...",
+          "Mitig8 AI is calculating your BMI...",
+          "Mitig8 AI is analyzing blood pressure...",
+          "Mitig8 AI is processing cholesterol levels...",
+          "Mitig8 AI is analyzing fasting glucose...",
+          "Mitig8 AI is analyzing HbA1c value...",
+          "Mitig8 AI is evaluating family history...",
+          "Mitig8 AI is recording activity levels...",
+          "Mitig8 AI is evaluating diet details...",
+          "Mitig8 AI is analyzing lifestyle details...",
+          "Mitig8 AI is processing alcohol details..."
+        ],
+        "hi-IN": [
+          "Mitig8 AI आपके विवरण का विश्लेषण कर रहा है...",
+          "Mitig8 AI आपकी आयु का विवरण अपडेट कर रहा है...",
+          "Mitig8 AI आपके लिंग का विवरण प्रोसेस कर रहा है...",
+          "Mitig8 AI आपका वजन रिकॉर्ड कर रहा है...",
+          "Mitig8 AI आपका बीएमआई (BMI) कैलकुलेट कर रहा है...",
+          "Mitig8 AI आपके रक्तचाप का विश्लेषण कर रहा है...",
+          "Mitig8 AI कोलेस्ट्रॉल के स्तर को प्रोसेस कर रहा है...",
+          "Mitig8 AI फास्टिंग ग्लूकोज का विश्लेषण कर रहा है...",
+          "Mitig8 AI HbA1c स्तर का विश्लेषण कर रहा है...",
+          "Mitig8 AI पारिवारिक इतिहास का मूल्यांकन कर रहा है...",
+          "Mitig8 AI शारीरिक गतिविधि को रिकॉर्ड कर रहा है...",
+          "Mitig8 AI आहार के विवरण को रिकॉर्ड कर रहा है...",
+          "Mitig8 AI धूम्रपान की आदतों का विश्लेषण कर रहा है...",
+          "Mitig8 AI शराब के सेवन के विवरण को प्रोसेस कर रहा है..."
+        ]
+      }
+      const list = textsList[selectedLang] || textsList["en-IN"]
+      return list[questionIndex - 1] || "Mitig8 AI is processing your clinical answers..."
+    }
+    return selectedLang === "hi-IN" 
+      ? "Mitig8 AI आपके लिए व्यक्तिगत स्वास्थ्य सलाह तैयार कर रहा है..." 
+      : "Mitig8 AI is formulating your personalized guidance..."
+  }
   const [input, setInput] = useState("")
   const [isTyping, setIsTyping] = useState(false)
   const [questionIndex, setQuestionIndex] = useState(0)
@@ -213,25 +276,33 @@ export function DashboardChat({ onOpenSidebar }: DashboardChatProps) {
     scrollToBottom()
   }, [messages, isTyping])
 
-  const startConversation = () => {
+  const startConversation = (startAssessment = true) => {
     setConversationStarted(true)
-    setIsAssessmentMode(true)
-    setAnswers([])
-    setIsTyping(true)
-    setTimeout(() => {
-      const questionsList = LOCALIZED_QUESTIONS[selectedLang] || LOCALIZED_QUESTIONS["en-IN"]
-      setMessages([
-        {
-          id: "ai-0",
-          role: "ai",
-          text: questionsList[0],
-          timestamp: new Date(),
-        },
-      ])
-      setIsTyping(false)
-      setQuestionIndex(1)
-      inputRef.current?.focus()
-    }, 800)
+    if (startAssessment) {
+      setIsAssessmentMode(true)
+      setAnswers([])
+      setIsTyping(true)
+      setTimeout(() => {
+        const questionsList = LOCALIZED_QUESTIONS[selectedLang] || LOCALIZED_QUESTIONS["en-IN"]
+        setMessages([
+          {
+            id: "ai-0",
+            role: "ai",
+            text: questionsList[0],
+            timestamp: new Date(),
+          },
+        ])
+        setIsTyping(false)
+        setQuestionIndex(1)
+        inputRef.current?.focus()
+      }, 800)
+    } else {
+      setIsAssessmentMode(false)
+      setMessages([])
+      setTimeout(() => {
+        inputRef.current?.focus()
+      }, 100)
+    }
   }
 
   const MAX_CHARS = 800
@@ -290,7 +361,7 @@ export function DashboardChat({ onOpenSidebar }: DashboardChatProps) {
     return { clean, blocked: false }
   }
 
-  const handleSendMessage = async (text: string) => {
+  const handleSendMessage = async (text: string, forceNormalChat = false) => {
     if (!text.trim()) return
 
     if (isRateLimited()) {
@@ -333,101 +404,168 @@ export function DashboardChat({ onOpenSidebar }: DashboardChatProps) {
     setMessages((prev) => [...prev, userMsg])
     setInput("")
 
-    if (isAssessmentMode) {
+    const controller = new AbortController()
+    abortControllerRef.current = controller
+
+    const checkAssessment = isAssessmentMode && !forceNormalChat
+
+    if (checkAssessment) {
       setIsTyping(true)
-      const updatedAnswers = [...answers, clean]
-      setAnswers(updatedAnswers)
+      
+      let riskProfile = null
+      let dailyMetrics = null
 
-      const questionsList = LOCALIZED_QUESTIONS[selectedLang] || LOCALIZED_QUESTIONS["en-IN"]
-
-      if (questionIndex < questionsList.length) {
-        setTimeout(() => {
-          setMessages((prev) => [
-            ...prev,
-            {
-              id: `ai-${Date.now()}`,
-              role: "ai",
-              text: questionsList[questionIndex],
-              timestamp: new Date(),
-            },
-          ])
-          setQuestionIndex((prev) => prev + 1)
-          setIsTyping(false)
-        }, 800)
-      } else {
-        // Compute and calculate risk score via LightGBM backend API
+      if (typeof window !== "undefined") {
         try {
-          const age = parseFloat(updatedAnswers[0]) || 30
-          const gender = updatedAnswers[1]
-          const weight = parseFloat(updatedAnswers[2]) || 70
-          const height = parseFloat(updatedAnswers[3]) || 170
-          const bmi = weight / ((height / 100) * (height / 100))
-          const bp = updatedAnswers[4]
-          const chol = parseFloat(updatedAnswers[5]) || 180
-          const fbg = parseFloat(updatedAnswers[6]) || 90
-          const hba1c = parseFloat(updatedAnswers[7]) || 5.2
-          const family = updatedAnswers[8]
-          const activity = updatedAnswers[9]
-          const diet = updatedAnswers[10]
-          const smoke = updatedAnswers[11]
-          const alcohol = updatedAnswers[12]
+          const savedReport = localStorage.getItem("mitig8_analyzed_report")
+          if (savedReport) riskProfile = JSON.parse(savedReport)
 
-          const predictRes = await fetch("/api/model/predict", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              Age: age,
-              Gender: gender,
-              State: "Urban",
-              BMI: bmi,
-              Blood_Pre: bp,
-              Cholestero: chol,
-              Fasting_Bl: fbg,
-              Glucose_2: 120,
-              Serum_Ins: 15,
-              HbA1c_percent: hba1c,
-              Family_His: family,
-              Physical_A: activity,
-              Diet_Type: diet,
-              Smoking: smoke,
-              Alcohol: alcohol,
-              Weight_Lo: "No"
-            })
-          })
+          const water = Number(localStorage.getItem("mitig8_water_intake")) || 0
+          const cals = Number(localStorage.getItem("mitig8_calories")) || 0
+          const act = Number(localStorage.getItem("mitig8_activity")) || 0
 
-          if (!predictRes.ok) throw new Error("Predict request failed")
-          const data = await predictRes.json()
-
-          if (typeof window !== "undefined") {
-            localStorage.setItem("mitig8_analyzed_report", JSON.stringify(data))
-            window.dispatchEvent(new Event("mitig8_report_updated"))
+          dailyMetrics = {
+            waterIntake: water,
+            caloriesConsumed: cals,
+            exerciseMinutes: act
           }
-
-          setMessages((prev) => [
-            ...prev,
-            {
-              id: `ai-${Date.now()}`,
-              role: "ai",
-              text: `Thank you! Based on your responses, your computed Metabolic Diabetes Risk Score is **${data.riskScore}/100** (${data.riskClass}).\n\n${data.summary}\n\nYou can view your detailed recommendation analysis and personalized targets on the Home and Diet sections!`,
-              timestamp: new Date(),
-            },
-          ])
-          setIsAssessmentMode(false)
-        } catch (err) {
-          console.error("Predict fetch error:", err)
-          setMessages((prev) => [
-            ...prev,
-            {
-              id: `ai-${Date.now()}`,
-              role: "ai",
-              text: "Thank you for completing the assessment! Your health profile and risk parameters have been updated.",
-              timestamp: new Date(),
-            },
-          ])
-          setIsAssessmentMode(false)
-        } finally {
-          setIsTyping(false)
+        } catch (e) {
+          // silent catch
         }
+      }
+
+      const historyForApi = messages.slice(-10).map((m) => ({
+        role: m.role === "ai" ? "assistant" : "user",
+        content: m.text,
+      }))
+
+      try {
+        const res = await fetch("/api/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          signal: controller.signal,
+          body: JSON.stringify({
+            message: clean,
+            language: selectedLang,
+            conversationHistory: historyForApi,
+            riskProfile,
+            dailyMetrics,
+            isAssessmentMode: true,
+            questionIndex: questionIndex,
+            answers: answers,
+          }),
+        })
+
+        if (!res.ok) throw new Error(`API error ${res.status}`)
+        const data = await res.json()
+        const replyText = data.reply || "I'm having trouble responding right now. Please try again."
+        const assessmentStatus = data.assessmentStatus || "answered"
+        const extractedValue = data.extractedValue || clean
+
+        const aiMsg: Message = {
+          id: `ai-${Date.now()}`,
+          role: "ai",
+          text: replyText,
+          timestamp: new Date(),
+        }
+        setMessages((prev) => [...prev, aiMsg])
+
+        if (assessmentStatus === "answered") {
+          const updatedAnswers = [...answers, extractedValue]
+          setAnswers(updatedAnswers)
+
+          const questionsList = LOCALIZED_QUESTIONS[selectedLang] || LOCALIZED_QUESTIONS["en-IN"]
+
+          if (questionIndex < questionsList.length) {
+            setQuestionIndex((prev) => prev + 1)
+          } else {
+            // Compute and calculate risk score via LightGBM backend API
+            try {
+              const age = parseFloat(updatedAnswers[0]) || 30
+              const gender = updatedAnswers[1]
+              const weight = parseFloat(updatedAnswers[2]) || 70
+              const height = parseFloat(updatedAnswers[3]) || 170
+              const bmi = weight / ((height / 100) * (height / 100))
+              const bp = updatedAnswers[4]
+              const chol = parseFloat(updatedAnswers[5]) || 180
+              const fbg = parseFloat(updatedAnswers[6]) || 90
+              const hba1c = parseFloat(updatedAnswers[7]) || 5.2
+              const family = updatedAnswers[8]
+              const activity = updatedAnswers[9]
+              const diet = updatedAnswers[10]
+              const smoke = updatedAnswers[11]
+              const alcohol = updatedAnswers[12]
+
+              const predictRes = await fetch("/api/model/predict", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  Age: age,
+                  Gender: gender,
+                  State: "Urban",
+                  BMI: bmi,
+                  Blood_Pre: bp,
+                  Cholestero: chol,
+                  Fasting_Bl: fbg,
+                  Glucose_2: 120,
+                  Serum_Ins: 15,
+                  HbA1c_percent: hba1c,
+                  Family_His: family,
+                  Physical_A: activity,
+                  Diet_Type: diet,
+                  Smoking: smoke,
+                  Alcohol: alcohol,
+                  Weight_Lo: "No"
+                })
+              })
+
+              if (!predictRes.ok) throw new Error("Predict request failed")
+              const predictData = await predictRes.json()
+
+              if (typeof window !== "undefined") {
+                localStorage.setItem("mitig8_analyzed_report", JSON.stringify(predictData))
+                window.dispatchEvent(new Event("mitig8_report_updated"))
+              }
+
+              setMessages((prev) => [
+                ...prev,
+                {
+                  id: `ai-${Date.now()}`,
+                  role: "ai",
+                  text: `Thank you! Based on your responses, your computed Metabolic Diabetes Risk Score is **${predictData.riskScore}/100** (${predictData.riskClass}).\n\n${predictData.summary}\n\nYou can view your detailed recommendation analysis and personalized targets on the Home and Diet sections!`,
+                  timestamp: new Date(),
+                },
+              ])
+              setIsAssessmentMode(false)
+            } catch (err) {
+              console.error("Predict fetch error:", err)
+              setMessages((prev) => [
+                ...prev,
+                {
+                  id: `ai-${Date.now()}`,
+                  role: "ai",
+                  text: "Thank you for completing the assessment! Your health profile and risk parameters have been updated.",
+                  timestamp: new Date(),
+                },
+              ])
+              setIsAssessmentMode(false)
+            }
+          }
+        }
+      } catch (err: any) {
+        if (err.name === "AbortError") return
+        console.error("Assessment fetch error:", err)
+        setMessages((prev) => [
+          ...prev,
+          { 
+            id: `ai-${Date.now()}`, 
+            role: "ai", 
+            text: "I am having difficulty connecting to my AI core right now. Let's continue with the health assessment.", 
+            timestamp: new Date() 
+          },
+        ])
+      } finally {
+        setIsTyping(false)
       }
       return
     }
@@ -465,6 +603,7 @@ export function DashboardChat({ onOpenSidebar }: DashboardChatProps) {
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        signal: controller.signal,
         body: JSON.stringify({
           message: clean,
           language: selectedLang,
@@ -486,7 +625,8 @@ export function DashboardChat({ onOpenSidebar }: DashboardChatProps) {
         timestamp: new Date(),
       }
       setMessages((prev) => [...prev, aiMsg])
-    } catch (err) {
+    } catch (err: any) {
+      if (err.name === "AbortError") return
       setMessages((prev) => [
         ...prev,
         { 
@@ -502,7 +642,10 @@ export function DashboardChat({ onOpenSidebar }: DashboardChatProps) {
   }
 
   const handleSuggestionClick = (suggestion: string) => {
-    handleSendMessage(suggestion)
+    if (isAssessmentMode) {
+      setIsAssessmentMode(false)
+    }
+    handleSendMessage(suggestion, true)
   }
 
   const activeSuggestions = LOCALIZED_SUGGESTIONS[selectedLang] || LOCALIZED_SUGGESTIONS["en-IN"]
@@ -600,13 +743,13 @@ export function DashboardChat({ onOpenSidebar }: DashboardChatProps) {
             </motion.p>
 
             <motion.button
-              onClick={startConversation}
+              onClick={() => startConversation(true)}
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.35 }}
               whileHover={{ scale: 1.03, boxShadow: "0 8px 30px rgba(255,87,34,0.3)" }}
               whileTap={{ scale: 0.97 }}
-              className="bg-gradient-to-r from-orange-600 to-orange-500 text-white px-7 py-3 rounded-xl font-bold text-sm shadow-xl shadow-orange-500/25 flex items-center gap-2 cursor-pointer"
+              className="bg-gradient-to-r from-orange-600 to-orange-500 text-white px-7 py-3 rounded-xl font-bold text-sm shadow-xl shadow-orange-500/25 flex items-center justify-center gap-2 cursor-pointer"
             >
               {getTranslation("startBtn", selectedLang)}
               <ArrowRight className="w-4 h-4" />
@@ -625,8 +768,8 @@ export function DashboardChat({ onOpenSidebar }: DashboardChatProps) {
                 <button
                   key={chip}
                   onClick={() => {
-                    startConversation()
-                    setTimeout(() => handleSuggestionClick(chip), 1500)
+                    startConversation(false)
+                    setTimeout(() => handleSuggestionClick(chip), 200)
                   }}
                   className="text-[11px] font-medium text-slate-500 bg-slate-50 hover:bg-orange-50 hover:text-orange-600 border border-slate-200 hover:border-orange-200 px-3 py-1.5 rounded-full transition-all cursor-pointer"
                 >
@@ -647,23 +790,38 @@ export function DashboardChat({ onOpenSidebar }: DashboardChatProps) {
                   className={`flex gap-3 ${msg.role === "user" ? "justify-end" : "justify-start"}`}
                 >
                   <div
-                    className={`max-w-[80%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${
+                    className={`max-w-[80%] rounded-2xl px-4 py-3 text-sm leading-relaxed relative group ${
                       msg.role === "user"
                         ? "bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-br-md shadow-md shadow-orange-500/15"
                         : "bg-white border border-slate-100 text-slate-700 rounded-bl-md shadow-sm"
                     }`}
                   >
                     <p className="whitespace-pre-line">{msg.text}</p>
-                    <p
-                      className={`text-[10px] mt-1.5 ${
-                        msg.role === "user" ? "text-white/50" : "text-slate-300"
-                      }`}
-                    >
-                      {msg.timestamp.toLocaleTimeString([], {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
-                    </p>
+                    <div className="flex items-center justify-between gap-4 mt-1.5">
+                      <p
+                        className={`text-[10px] ${
+                          msg.role === "user" ? "text-white/50" : "text-slate-300"
+                        }`}
+                      >
+                        {msg.timestamp.toLocaleTimeString([], {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </p>
+                      {msg.role === "ai" && (
+                        <button
+                          onClick={() => handleCopy(msg.id, msg.text)}
+                          className="opacity-45 hover:opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity p-0.5 rounded hover:bg-slate-50 text-slate-400 hover:text-slate-600 cursor-pointer flex items-center justify-center"
+                          title="Copy response"
+                        >
+                          {copiedId === msg.id ? (
+                            <Check className="w-3 h-3 text-emerald-500" />
+                          ) : (
+                            <Copy className="w-3 h-3" />
+                          )}
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </motion.div>
               ))}
@@ -675,22 +833,9 @@ export function DashboardChat({ onOpenSidebar }: DashboardChatProps) {
                 animate={{ opacity: 1, y: 0 }}
                 className="flex gap-3 items-start justify-start"
               >
-                <div className="bg-white border border-slate-100 rounded-2xl rounded-bl-md px-4 py-3 shadow-sm">
-                  <div className="flex gap-1.5">
-                    {[0, 1, 2].map((i) => (
-                      <motion.div
-                        key={i}
-                        className="w-2 h-2 bg-slate-300 rounded-full"
-                        animate={{ y: [0, -6, 0] }}
-                        transition={{
-                          duration: 0.6,
-                          repeat: Infinity,
-                          delay: i * 0.15,
-                          ease: "easeInOut",
-                        }}
-                      />
-                    ))}
-                  </div>
+                <div className="bg-white border border-slate-100 rounded-2xl rounded-bl-md px-4 py-2.5 shadow-sm flex items-center gap-2 text-xs font-semibold text-slate-500 bg-slate-50/50">
+                  <Loader2 className="w-3.5 h-3.5 text-orange-500 animate-spin" />
+                  <span>{getLoaderText()}</span>
                 </div>
               </motion.div>
             )}
@@ -858,15 +1003,27 @@ export function DashboardChat({ onOpenSidebar }: DashboardChatProps) {
                 )}
               </div>
 
-              <motion.button
-                onClick={() => handleSendMessage(input)}
-                disabled={!input.trim() || isTyping}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="w-10 h-10 rounded-xl bg-gradient-to-r from-orange-500 to-orange-600 flex items-center justify-center text-white shadow-md shadow-orange-500/20 disabled:opacity-40 disabled:shadow-none transition-all"
-              >
-                <Send className="w-4 h-4" />
-              </motion.button>
+              {isTyping ? (
+                <motion.button
+                  onClick={handleStopResponse}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  className="w-10 h-10 rounded-xl bg-slate-900 flex items-center justify-center text-white shadow-md shadow-slate-900/20 cursor-pointer"
+                  title="Stop generating"
+                >
+                  <Square className="w-3.5 h-3.5 animate-pulse" />
+                </motion.button>
+              ) : (
+                <motion.button
+                  onClick={() => handleSendMessage(input)}
+                  disabled={!input.trim()}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  className="w-10 h-10 rounded-xl bg-gradient-to-r from-orange-500 to-orange-600 flex items-center justify-center text-white shadow-md shadow-orange-500/20 disabled:opacity-40 disabled:shadow-none transition-all cursor-pointer"
+                >
+                  <Send className="w-4 h-4" />
+                </motion.button>
+              )}
             </div>
           </div>
         )}

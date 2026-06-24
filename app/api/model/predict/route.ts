@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import fs from "fs"
 import path from "path"
+import { getRealIP, redis } from "@/lib/rateLimitOtp"
 
 // Simple LightGBM Decision Tree Interpreter
 // It traverses trees formatted like LightGBM JSON dump_model().
@@ -112,6 +113,19 @@ function predictFallback(features: Record<string, number>): number {
 
 export async function POST(req: NextRequest) {
   try {
+    const ip = getRealIP(req)
+    const limitKey = `rate:predict:ip:${ip}`
+    const count = await redis.incr(limitKey)
+    if (count === 1) {
+      await redis.expire(limitKey, 60)
+    }
+    if (count > 20) {
+      return NextResponse.json(
+        { error: "Too many prediction requests. Please wait a minute and try again." },
+        { status: 429 }
+      )
+    }
+
     const body = await req.json()
     const {
       Age,

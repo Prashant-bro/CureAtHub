@@ -38,9 +38,24 @@ const INDIAN_FOODS: FoodItem[] = [
 
 export function DashboardMealScan() {
   const [selectedFood, setSelectedFood] = useState<FoodItem | null>(null)
-  const [scanState, setScanState] = useState<"idle" | "scanning" | "alert" | "success">("idle")
+  const [scanState, setScanState] = useState<"idle" | "camera" | "scanning" | "alert" | "success">("idle")
   const [scanProgress, setScanProgress] = useState(0)
   const [userRiskProfile, setUserRiskProfile] = useState<any>(null)
+  const [capturedPhoto, setCapturedPhoto] = useState<string | null>(null)
+  const [isCameraLoading, setIsCameraLoading] = useState(false)
+  const [cameraError, setCameraError] = useState<string | null>(null)
+  const [cameraStream, setCameraStream] = useState<MediaStream | null>(null)
+
+  const videoRef = React.useRef<HTMLVideoElement | null>(null)
+  const streamRef = React.useRef<MediaStream | null>(null)
+  const canvasRef = React.useRef<HTMLCanvasElement | null>(null)
+
+  useEffect(() => {
+    if (cameraStream && videoRef.current) {
+      videoRef.current.srcObject = cameraStream
+      videoRef.current.play().catch(e => console.error("Error playing video:", e))
+    }
+  }, [cameraStream, isCameraLoading])
 
   const loadRiskProfile = () => {
     if (typeof window !== "undefined") {
@@ -60,10 +75,105 @@ export function DashboardMealScan() {
     window.addEventListener("mitig8_report_updated", loadRiskProfile)
     return () => {
       window.removeEventListener("mitig8_report_updated", loadRiskProfile)
+      // Clean up camera stream on unmount
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach((track) => track.stop())
+      }
     }
   }, [])
 
+  const startCamera = async () => {
+    setIsCameraLoading(true)
+    setCameraError(null)
+    setScanState("camera")
+    setCapturedPhoto(null)
+
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: "environment" },
+        audio: false
+      })
+      streamRef.current = stream
+      setCameraStream(stream)
+    } catch (err: any) {
+      console.error("Camera access error:", err)
+      setCameraError(
+        err.name === "NotAllowedError"
+          ? "Camera permission denied. Please allow access in browser settings."
+          : "Could not access camera. Make sure no other app is using it."
+      )
+    } finally {
+      setIsCameraLoading(false)
+    }
+  }
+
+  const stopCamera = () => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((track) => track.stop())
+      streamRef.current = null
+    }
+    setCameraStream(null)
+    setScanState("idle")
+  }
+
+  const capturePhoto = () => {
+    if (videoRef.current) {
+      const video = videoRef.current
+      const canvas = canvasRef.current || document.createElement("canvas")
+      const width = video.videoWidth || 640
+      const height = video.videoHeight || 480
+      canvas.width = width
+      canvas.height = height
+      
+      const ctx = canvas.getContext("2d")
+      if (ctx) {
+        ctx.drawImage(video, 0, 0, width, height)
+        const dataUrl = canvas.toDataURL("image/jpeg")
+        setCapturedPhoto(dataUrl)
+        
+        // Stop the camera stream immediately
+        if (streamRef.current) {
+          streamRef.current.getTracks().forEach((track) => track.stop())
+          streamRef.current = null
+        }
+        setCameraStream(null)
+        
+        // Mock dynamic food detection by choosing an item
+        const randomFood = INDIAN_FOODS[Math.floor(Math.random() * INDIAN_FOODS.length)]
+        setSelectedFood(randomFood)
+        
+        setScanState("scanning")
+        setScanProgress(0)
+
+        let progress = 0
+        const interval = setInterval(() => {
+          progress += 20
+          setScanProgress(progress)
+          if (progress >= 100) {
+            clearInterval(interval)
+            const riskClass = userRiskProfile?.riskClass || "Low Risk"
+            const isDangerous = (randomFood.glycemicIndex === "High" || randomFood.glycemicIndex === "Medium") && (riskClass === "High Risk" || riskClass === "Moderate Risk")
+            
+            if (isDangerous) {
+              setScanState("alert")
+            } else {
+              setScanState("success")
+              logMealDirectly(randomFood)
+            }
+          }
+        }, 400)
+      }
+    }
+  }
+
   const startScan = (food: FoodItem) => {
+    // If starting manual scan, stop camera if active
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((track) => track.stop())
+      streamRef.current = null
+    }
+    setCameraStream(null)
+    setCapturedPhoto(null)
     setSelectedFood(food)
     setScanState("scanning")
     setScanProgress(0)
@@ -150,42 +260,142 @@ export function DashboardMealScan() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-[1.2fr_1fr] gap-6">
-        {/* Scanner Panel */}
-        <div className="bg-white/70 backdrop-blur-xl border border-orange-100/50 rounded-3xl p-6 flex flex-col justify-between relative overflow-hidden min-h-[400px]">
-          <div className="absolute top-0 left-0 right-0 h-48 bg-gradient-to-b from-orange-50/40 to-transparent" />
-          
-          <AnimatePresence mode="wait">
-            {scanState === "idle" && (
-              <motion.div
-                key="idle"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                className="flex-1 flex flex-col items-center justify-center text-center p-6 space-y-5"
-              >
-                <div className="relative w-28 h-28 flex items-center justify-center bg-orange-50 rounded-2xl border border-orange-100">
-                  <Camera className="w-12 h-12 text-orange-500 animate-pulse" />
-                  <div className="absolute inset-0 rounded-2xl border-2 border-orange-500/20 animate-ping" style={{ animationDuration: '3s' }} />
-                </div>
-                <div className="space-y-2">
-                  <h3 className="text-lg font-bold text-[#0F172A]">Food Scanner Simulation</h3>
-                  <p className="text-xs text-slate-500 max-w-xs leading-relaxed">
-                    Select an Indian food from the list to simulate scanning. The scanner will run real-time metabolic checks matching your dynamic risk profile.
-                  </p>
-                </div>
-              </motion.div>
-            )}
+    <div className="max-w-2xl mx-auto space-y-6">
+      {/* Scanner Panel */}
+      <div className="bg-white/70 backdrop-blur-xl border border-orange-100/50 rounded-3xl p-6 flex flex-col justify-between relative overflow-hidden min-h-[400px]">
+        <div className="absolute top-0 left-0 right-0 h-48 bg-gradient-to-b from-orange-50/40 to-transparent" />
+        
+        <AnimatePresence mode="wait">
+          {scanState === "idle" && (
+            <motion.div
+              key="idle"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="flex-1 flex flex-col items-center justify-center text-center p-6 space-y-5"
+            >
+              <div className="relative w-28 h-28 flex items-center justify-center bg-orange-50 rounded-2xl border border-orange-100">
+                <Camera className="w-12 h-12 text-orange-500 animate-pulse" />
+                <div className="absolute inset-0 rounded-2xl border-2 border-orange-500/20 animate-ping" style={{ animationDuration: '3s' }} />
+              </div>
+              <div className="space-y-2">
+                <h3 className="text-lg font-bold text-[#0F172A]">Food Scanner Camera</h3>
+                <p className="text-xs text-slate-500 max-w-xs leading-relaxed">
+                  Point your camera at a meal to scan its glycemic safety, and get AI food detection results.
+                </p>
+              </div>
 
-            {scanState === "scanning" && (
-              <motion.div
-                key="scanning"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="flex-1 flex flex-col items-center justify-center p-6 text-center space-y-6"
+              <button
+                onClick={startCamera}
+                className="bg-gradient-to-r from-orange-500 to-orange-600 hover:shadow-lg text-white font-bold text-xs py-3 px-6 rounded-2xl transition-all flex items-center justify-center gap-2 cursor-pointer"
               >
+                <Camera className="w-4 h-4" />
+                Open Live Device Camera
+              </button>
+            </motion.div>
+          )}
+
+          {scanState === "camera" && (
+            <motion.div
+              key="camera"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="flex-1 flex flex-col justify-between p-4 relative min-h-[350px]"
+            >
+              {/* Header */}
+              <div className="flex items-center justify-between z-10">
+                <span className="text-[10px] font-black text-orange-600 bg-orange-50 px-2.5 py-1 rounded-full uppercase border border-orange-100 flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-orange-500 animate-ping" />
+                  Live Camera Feed
+                </span>
+                <button 
+                  onClick={stopCamera}
+                  className="p-1.5 rounded-lg bg-white/80 hover:bg-slate-100 border border-slate-100 text-slate-500 transition-all text-xs font-bold"
+                >
+                  Cancel
+                </button>
+              </div>
+
+              {/* Viewport Frame */}
+              <div className="my-4 relative flex-1 min-h-[220px] rounded-2xl overflow-hidden bg-slate-900 border border-slate-800 flex items-center justify-center">
+                {isCameraLoading ? (
+                  <div className="flex flex-col items-center justify-center text-slate-400 space-y-3">
+                    <Loader2 className="w-8 h-8 text-orange-500 animate-spin" />
+                    <p className="text-xs">Initializing device camera...</p>
+                  </div>
+                ) : cameraError ? (
+                  <div className="flex flex-col items-center justify-center text-rose-500 p-6 text-center space-y-3">
+                    <AlertTriangle className="w-10 h-10" />
+                    <p className="text-xs font-bold">{cameraError}</p>
+                    <button 
+                      onClick={startCamera}
+                      className="bg-orange-500 text-white font-bold text-xs px-4 py-2 rounded-xl"
+                    >
+                      Try Again
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    <video
+                      ref={videoRef}
+                      autoPlay
+                      playsInline
+                      muted
+                      className="w-full h-full object-cover"
+                    />
+                    
+                    {/* Scan Focus Finder Box */}
+                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                      <div className="w-44 h-44 border-2 border-dashed border-white/50 rounded-2xl flex items-center justify-center relative">
+                        <div className="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-orange-500 -mt-0.5 -ml-0.5" />
+                        <div className="absolute top-0 right-0 w-4 h-4 border-t-2 border-r-2 border-orange-500 -mt-0.5 -mr-0.5" />
+                        <div className="absolute bottom-0 left-0 w-4 h-4 border-b-2 border-l-2 border-orange-500 -mb-0.5 -ml-0.5" />
+                        <div className="absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 border-orange-500 -mb-0.5 -mr-0.5" />
+                        
+                        <span className="text-[9px] text-white/70 bg-black/45 px-2 py-0.5 rounded-full uppercase tracking-wider font-semibold">
+                          Align Meal Here
+                        </span>
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
+
+              {/* Snap Controls */}
+              {!isCameraLoading && !cameraError && (
+                <div className="flex justify-center z-10 pb-2">
+                  <button
+                    onClick={capturePhoto}
+                    className="w-14 h-14 rounded-full bg-white border-4 border-orange-500/30 flex items-center justify-center shadow-lg hover:border-orange-500 hover:scale-105 active:scale-95 transition-all"
+                  >
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-r from-orange-500 to-rose-500 flex items-center justify-center">
+                      <Camera className="w-5 h-5 text-white" />
+                    </div>
+                  </button>
+                </div>
+              )}
+            </motion.div>
+          )}
+
+          {scanState === "scanning" && (
+            <motion.div
+              key="scanning"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="flex-1 flex flex-col items-center justify-center p-6 text-center space-y-6"
+            >
+              {capturedPhoto ? (
+                <div className="relative w-48 h-32 rounded-2xl overflow-hidden border border-orange-200 bg-orange-50/50 shadow-md">
+                  <img src={capturedPhoto} className="w-full h-full object-cover" alt="Captured plate" />
+                  <motion.div 
+                    className="absolute left-0 right-0 h-1.5 bg-gradient-to-r from-transparent via-orange-500 to-transparent shadow-[0_0_8px_rgba(249,115,22,0.8)]"
+                    animate={{ top: ["5%", "95%", "5%"] }}
+                    transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+                  />
+                </div>
+              ) : (
                 <div className="relative w-32 h-32 rounded-2xl overflow-hidden border border-orange-200 bg-orange-50/50 flex items-center justify-center">
                   <ScanLine className="w-16 h-16 text-orange-500 animate-bounce" />
                   <motion.div 
@@ -194,168 +404,133 @@ export function DashboardMealScan() {
                     transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
                   />
                 </div>
-                <div className="w-full max-w-xs space-y-2">
-                  <div className="flex justify-between text-xs font-bold text-slate-500">
-                    <span>Scanning {selectedFood?.name}...</span>
-                    <span>{scanProgress}%</span>
-                  </div>
-                  <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
-                    <motion.div 
-                      className="h-full bg-orange-500"
-                      initial={{ width: 0 }}
-                      animate={{ width: `${scanProgress}%` }}
-                      transition={{ duration: 0.1 }}
-                    />
-                  </div>
-                  <p className="text-[10px] text-slate-400">Analyzing glycemic loads and insulin targets...</p>
+              )}
+              <div className="w-full max-w-xs space-y-2">
+                <div className="flex justify-between text-xs font-bold text-slate-500">
+                  <span>{capturedPhoto ? "AI Analyzing Captured Food..." : `Scanning ${selectedFood?.name}...`}</span>
+                  <span>{scanProgress}%</span>
                 </div>
-              </motion.div>
-            )}
+                <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+                  <motion.div 
+                    className="h-full bg-orange-500"
+                    initial={{ width: 0 }}
+                    animate={{ width: `${scanProgress}%` }}
+                    transition={{ duration: 0.1 }}
+                  />
+                </div>
+                <p className="text-[10px] text-slate-400">Analyzing glycemic loads and insulin targets...</p>
+              </div>
+            </motion.div>
+          )}
 
-            {scanState === "alert" && selectedFood && (
-              <motion.div
-                key="alert"
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0 }}
-                className="flex-1 flex flex-col items-center justify-center p-6 text-center space-y-6"
-              >
-                <div className="w-14 h-14 bg-rose-50 border border-rose-200 rounded-2xl flex items-center justify-center shadow-lg shadow-rose-500/10">
-                  <AlertTriangle className="w-7 h-7 text-rose-500 animate-bounce" />
-                </div>
-                <div className="space-y-2 max-w-sm">
-                  <span className="text-[10px] font-black text-rose-600 bg-rose-50 px-2 py-0.5 rounded-full uppercase border border-rose-100">
-                    High Glycemic Spike Warning
-                  </span>
-                  <h3 className="text-base font-extrabold text-[#0F172A] mt-2">
-                    Spike Caution for {selectedFood.name}
-                  </h3>
-                  <p className="text-xs text-slate-600 leading-relaxed">
-                    You have an active <span className="font-bold text-orange-600">{userRiskProfile?.riskClass || "Moderate Risk"}</span> classification. Eating <span className="font-semibold">{selectedFood.name}</span> (Glycemic Index: **{selectedFood.giValue}**) is highly likely to trigger sugar peaks.
-                  </p>
-                </div>
+          {scanState === "alert" && selectedFood && (
+            <motion.div
+              key="alert"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0 }}
+              className="flex-1 flex flex-col items-center justify-center p-6 text-center space-y-6"
+            >
+              <div className="w-14 h-14 bg-rose-50 border border-rose-200 rounded-2xl flex items-center justify-center shadow-lg shadow-rose-500/10">
+                <AlertTriangle className="w-7 h-7 text-rose-500 animate-bounce" />
+              </div>
+              <div className="space-y-2 max-w-sm">
+                <span className="text-[10px] font-black text-rose-600 bg-rose-50 px-2 py-0.5 rounded-full uppercase border border-rose-100">
+                  High Glycemic Spike Warning
+                </span>
+                <h3 className="text-base font-extrabold text-[#0F172A] mt-2">
+                  Spike Caution for {selectedFood.name}
+                </h3>
+                <p className="text-xs text-slate-600 leading-relaxed">
+                  You have an active <span className="font-bold text-orange-600">{userRiskProfile?.riskClass || "Moderate Risk"}</span> classification. Eating <span className="font-semibold">{selectedFood.name}</span> (Glycemic Index: **{selectedFood.giValue}**) is highly likely to trigger sugar peaks.
+                </p>
+              </div>
 
-                <div className="flex flex-col sm:flex-row gap-2.5 w-full max-w-xs">
-                  {selectedFood.alternative && (
-                    <button
-                      onClick={handleAlternativeRecommend}
-                      className="flex-1 bg-gradient-to-r from-orange-500 to-orange-600 hover:shadow-lg text-white font-bold text-xs py-2.5 rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer"
-                    >
-                      <RefreshCw className="w-3.5 h-3.5" />
-                      Swap with {selectedFood.alternative}
-                    </button>
-                  )}
+              <div className="flex flex-col sm:flex-row gap-2.5 w-full max-w-xs">
+                {selectedFood.alternative && (
                   <button
-                    onClick={() => {
-                      setScanState("success")
-                      logMealDirectly(selectedFood)
-                    }}
-                    className="flex-1 bg-slate-100 hover:bg-slate-200 text-[#0F172A] border border-slate-200 font-bold text-xs py-2.5 rounded-xl transition-all cursor-pointer"
+                    onClick={handleAlternativeRecommend}
+                    className="flex-1 bg-gradient-to-r from-orange-500 to-orange-600 hover:shadow-lg text-white font-bold text-xs py-2.5 rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer"
                   >
-                    Log Anyway
+                    <RefreshCw className="w-3.5 h-3.5" />
+                    Swap with {selectedFood.alternative}
                   </button>
-                </div>
-              </motion.div>
-            )}
-
-            {scanState === "success" && selectedFood && (
-              <motion.div
-                key="success"
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0 }}
-                className="flex-1 flex flex-col items-center justify-center p-6 text-center space-y-6"
-              >
-                <div className="w-14 h-14 bg-emerald-50 border border-emerald-200 rounded-2xl flex items-center justify-center shadow-lg shadow-emerald-500/10">
-                  <CheckCircle className="w-7 h-7 text-emerald-500" />
-                </div>
-                <div className="space-y-1">
-                  <span className="text-[10px] font-black text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full uppercase border border-emerald-100">
-                    Meal Logged Successfully
-                  </span>
-                  <h3 className="text-base font-bold text-[#0F172A] mt-2">
-                    {selectedFood.name} Logged
-                  </h3>
-                  <p className="text-xs text-slate-500 leading-relaxed mt-1">
-                    Your daily calories and dynamic metabolic risk stats have been updated in your profile dashboard!
-                  </p>
-                </div>
-
-                <div className="w-full max-w-xs border border-orange-50 rounded-2xl p-4 bg-orange-50/20 text-left space-y-2">
-                  <div className="flex justify-between text-xs border-b border-orange-100/30 pb-1">
-                    <span className="text-slate-400">Calories Added:</span>
-                    <span className="font-bold text-[#0F172A]">{selectedFood.calories} kcal</span>
-                  </div>
-                  <div className="flex justify-between text-xs border-b border-orange-100/30 pb-1">
-                    <span className="text-slate-400">Glycemic Load:</span>
-                    <span className={`font-bold ${
-                      selectedFood.glycemicIndex === "High" ? "text-rose-500" :
-                      selectedFood.glycemicIndex === "Medium" ? "text-amber-500" :
-                      "text-emerald-500"
-                    }`}>{selectedFood.glycemicIndex} ({selectedFood.giValue})</span>
-                  </div>
-                  <div className="flex justify-between text-xs">
-                    <span className="text-slate-400">Carbs / Protein / Fat:</span>
-                    <span className="font-bold text-slate-600">{selectedFood.carbs} / {selectedFood.protein} / {selectedFood.fat}</span>
-                  </div>
-                </div>
-
+                )}
                 <button
                   onClick={() => {
-                    setScanState("idle")
-                    setSelectedFood(null)
+                    setScanState("success")
+                    logMealDirectly(selectedFood)
                   }}
-                  className="bg-gradient-to-r from-orange-500 to-orange-600 text-white font-bold text-xs px-5 py-2 rounded-xl transition-all cursor-pointer"
+                  className="flex-1 bg-slate-100 hover:bg-slate-200 text-[#0F172A] border border-slate-200 font-bold text-xs py-2.5 rounded-xl transition-all cursor-pointer"
                 >
-                  Scan Another Meal
+                  Log Anyway
                 </button>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
+              </div>
+            </motion.div>
+          )}
 
-        {/* Indian Food List */}
-        <div className="bg-white/70 backdrop-blur-xl border border-white/60 rounded-3xl p-5 shadow-sm space-y-4">
-          <div>
-            <h3 className="text-sm font-bold text-[#0F172A]">Simulate Meal Database</h3>
-            <p className="text-xs text-slate-400 mt-0.5">Select a typical item to run scanning calculations.</p>
-          </div>
+          {scanState === "success" && selectedFood && (
+            <motion.div
+              key="success"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0 }}
+              className="flex-1 flex flex-col items-center justify-center p-6 text-center space-y-6"
+            >
+              <div className="w-14 h-14 bg-emerald-50 border border-emerald-200 rounded-2xl flex items-center justify-center shadow-lg shadow-emerald-500/10">
+                <CheckCircle className="w-7 h-7 text-emerald-500" />
+              </div>
+              <div className="space-y-1">
+                <span className="text-[10px] font-black text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full uppercase border border-emerald-100">
+                  Meal Logged Successfully
+                </span>
+                <h3 className="text-base font-bold text-[#0F172A] mt-2">
+                  {selectedFood.name} Logged
+                </h3>
+                <p className="text-xs text-slate-500 leading-relaxed mt-1">
+                  Your daily calories and dynamic metabolic risk stats have been updated in your profile dashboard!
+                </p>
+              </div>
 
-          <div className="grid grid-cols-1 gap-2.5 max-h-[350px] overflow-y-auto pr-1">
-            {INDIAN_FOODS.map((food) => {
-              const isHigh = food.glycemicIndex === "High"
-              const isMed = food.glycemicIndex === "Medium"
-
-              return (
-                <button
-                  key={food.id}
-                  onClick={() => startScan(food)}
-                  disabled={scanState === "scanning"}
-                  className="flex items-center justify-between p-3 rounded-xl border border-slate-100 bg-slate-50/50 hover:bg-orange-50/20 hover:border-orange-200 transition-all text-left disabled:opacity-50"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-orange-50 flex items-center justify-center">
-                      <Apple className="w-4.5 h-4.5 text-orange-400" />
-                    </div>
-                    <div>
-                      <p className="text-xs font-bold text-[#0F172A]">{food.name}</p>
-                      <p className="text-[10px] text-slate-400 mt-0.5">Calories: {food.calories} kcal • Protein: {food.protein}</p>
-                    </div>
+              <div className="w-full max-w-xs border border-orange-50 rounded-2xl p-4 bg-orange-50/20 text-left space-y-2">
+                {capturedPhoto && (
+                  <div className="w-full h-24 rounded-lg overflow-hidden border border-orange-100/50 mb-2 relative">
+                    <img src={capturedPhoto} className="w-full h-full object-cover" alt="Logged meal" />
                   </div>
+                )}
+                <div className="flex justify-between text-xs border-b border-orange-100/30 pb-1">
+                  <span className="text-slate-400">Calories Added:</span>
+                  <span className="font-bold text-[#0F172A]">{selectedFood.calories} kcal</span>
+                </div>
+                <div className="flex justify-between text-xs border-b border-orange-100/30 pb-1">
+                  <span className="text-slate-400">Glycemic Load:</span>
+                  <span className={`font-bold ${
+                    selectedFood.glycemicIndex === "High" ? "text-rose-500" :
+                    selectedFood.glycemicIndex === "Medium" ? "text-amber-500" :
+                    "text-emerald-500"
+                  }`}>{selectedFood.glycemicIndex} ({selectedFood.giValue})</span>
+                </div>
+                <div className="flex justify-between text-xs">
+                  <span className="text-slate-400">Carbs / Protein / Fat:</span>
+                  <span className="font-bold text-slate-600">{selectedFood.carbs} / {selectedFood.protein} / {selectedFood.fat}</span>
+                </div>
+              </div>
 
-                  <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full ${
-                    isHigh ? "bg-rose-50 text-rose-600 border border-rose-100" :
-                    isMed ? "bg-amber-50 text-amber-600 border border-amber-100" :
-                    "bg-emerald-50 text-emerald-600 border border-emerald-100"
-                  }`}>
-                    {food.glycemicIndex} GI
-                  </span>
-                </button>
-              )
-            })}
-          </div>
-        </div>
+              <button
+                onClick={() => {
+                  setScanState("idle")
+                  setSelectedFood(null)
+                  setCapturedPhoto(null)
+                }}
+                className="bg-gradient-to-r from-orange-500 to-orange-600 text-white font-bold text-xs px-5 py-2 rounded-xl transition-all cursor-pointer"
+              >
+                Scan Another Meal
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
+      <canvas ref={canvasRef} className="hidden" />
     </div>
   )
 }

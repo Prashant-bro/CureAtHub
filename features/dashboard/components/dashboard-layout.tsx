@@ -59,6 +59,11 @@ export function DashboardLayout() {
   const [activeSection, setActiveSection] = useState<ActiveSection>("home")
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [profileOpen, setProfileOpen] = useState(false)
+  const [feedbackOpen, setFeedbackOpen] = useState(false)
+  const [feedbackText, setFeedbackText] = useState("")
+  const [feedbackRating, setFeedbackRating] = useState<number>(0)
+  const [feedbackSubmitting, setFeedbackSubmitting] = useState(false)
+  const [feedbackSubmitted, setFeedbackSubmitted] = useState(false)
   const [profileImage, setProfileImage] = useState<string | null>(null)
   const [latestReport, setLatestReport] = useState<any>(null)
   const [subscriptionState, setSubscriptionState] = useState<"trial" | "expired" | "premium">("trial")
@@ -452,6 +457,16 @@ export function DashboardLayout() {
             {activeSection === "pricing" && <ChevronRight className="w-3.5 h-3.5 ml-auto opacity-50" />}
           </motion.button>
 
+          <motion.button
+            onClick={() => setFeedbackOpen(true)}
+            className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium text-slate-500 hover:text-[#0F172A] hover:bg-slate-50/60 transition-all cursor-pointer"
+            whileHover={{ x: 2 }}
+            whileTap={{ scale: 0.98 }}
+          >
+            <MessageCircle className="w-[18px] h-[18px]" strokeWidth={2} />
+            <span>Give Feedback</span>
+          </motion.button>
+
 
            <button
             onClick={async () => {
@@ -610,6 +625,145 @@ export function DashboardLayout() {
           </AnimatePresence>
         </main>
       </div>
+
+      <AnimatePresence>
+        {feedbackOpen && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => {
+                if (!feedbackSubmitting) {
+                  setFeedbackOpen(false)
+                  setFeedbackSubmitted(false)
+                  setFeedbackText("")
+                  setFeedbackRating(0)
+                }
+              }}
+              className="fixed inset-0 bg-black/35 backdrop-blur-sm z-[80]"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[90%] max-w-md bg-white rounded-3xl p-6 shadow-2xl z-[90] border border-orange-100 flex flex-col space-y-4"
+            >
+              <div className="flex items-center justify-between border-b border-orange-50 pb-3">
+                <h3 className="text-lg font-bold text-[#0F172A] flex items-center gap-2">
+                  <MessageCircle className="w-5 h-5 text-orange-500" />
+                  Give Feedback
+                </h3>
+                <button
+                  disabled={feedbackSubmitting}
+                  onClick={() => {
+                    setFeedbackOpen(false)
+                    setFeedbackSubmitted(false)
+                    setFeedbackText("")
+                    setFeedbackRating(0)
+                  }}
+                  className="p-1.5 rounded-xl hover:bg-orange-50 transition-colors cursor-pointer"
+                >
+                  <X className="w-4 h-4 text-slate-400" />
+                </button>
+              </div>
+
+              {!feedbackSubmitted ? (
+                <div className="space-y-4 pt-1">
+                  <p className="text-xs text-slate-500 leading-relaxed">
+                    We'd love to hear your thoughts! Help us improve Mitig8 by rating your experience and sharing suggestions.
+                  </p>
+
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold text-slate-700 block">Rating</label>
+                    <div className="flex items-center gap-1.5">
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <motion.button
+                          key={star}
+                          type="button"
+                          onClick={() => setFeedbackRating(star)}
+                          whileHover={{ scale: 1.15 }}
+                          whileTap={{ scale: 0.9 }}
+                          className="p-1 cursor-pointer text-2xl outline-none"
+                        >
+                          <span className={star <= feedbackRating ? "text-amber-400" : "text-slate-200"}>
+                            ★
+                          </span>
+                        </motion.button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label htmlFor="feedback-text" className="text-xs font-bold text-slate-700 block">Comment</label>
+                    <textarea
+                      id="feedback-text"
+                      value={feedbackText}
+                      onChange={(e) => setFeedbackText(e.target.value)}
+                      placeholder="Tell us what you liked, or where we can improve..."
+                      rows={4}
+                      className="w-full bg-slate-50 border border-slate-200 focus:border-orange-300 focus:ring-2 focus:ring-orange-100 rounded-xl px-4 py-2.5 text-xs text-slate-700 outline-none transition-all placeholder:text-slate-400 resize-none"
+                    />
+                  </div>
+
+                  <button
+                    onClick={async () => {
+                      if (feedbackRating === 0) {
+                        alert("Please select a star rating.")
+                        return
+                      }
+                      setFeedbackSubmitting(true)
+                      try {
+                        await fetch("/api/feedback", {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({
+                            rating: feedbackRating,
+                            comment: feedbackText,
+                            user: userName || userEmail || "Anonymous",
+                          }),
+                        })
+                        setFeedbackSubmitted(true)
+                      } catch (err) {
+                        setFeedbackSubmitted(true)
+                      } finally {
+                        setFeedbackSubmitting(false)
+                      }
+                    }}
+                    disabled={feedbackRating === 0 || feedbackSubmitting}
+                    className="w-full py-2.5 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white rounded-xl font-bold text-xs shadow-md shadow-orange-500/10 disabled:opacity-40 disabled:shadow-none transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                  >
+                    {feedbackSubmitting ? "Submitting..." : "Submit Feedback"}
+                  </button>
+                </div>
+              ) : (
+                <div className="py-6 flex flex-col items-center justify-center text-center space-y-4">
+                  <div className="w-12 h-12 bg-emerald-50 border border-emerald-100 rounded-2xl flex items-center justify-center text-emerald-500">
+                    <Sparkles className="w-6 h-6 animate-pulse" />
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-sm font-bold text-[#0F172A]">Thank You for Your Feedback!</p>
+                    <p className="text-xs text-slate-500 max-w-xs mx-auto leading-relaxed">
+                      Your ratings and comments have been successfully recorded. We will use them to fine-tune our algorithms and AI suggestions!
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => {
+                      setFeedbackOpen(false)
+                      setFeedbackSubmitted(false)
+                      setFeedbackText("")
+                      setFeedbackRating(0)
+                    }}
+                    className="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl font-bold text-xs transition-colors cursor-pointer"
+                  >
+                    Close
+                  </button>
+                </div>
+              )}
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </div>
   )
 }
