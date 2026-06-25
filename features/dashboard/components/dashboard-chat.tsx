@@ -44,7 +44,7 @@ const LOCALIZED_SUGGESTIONS: Record<string, string[]> = {
 
 const LOCALIZED_QUESTIONS: Record<string, string[]> = {
   "en-IN": [
-    "Welcome to Mitig8 AI! I'm here to help assess your diabetes risk. Let me ask you a few quick questions. First, could you tell me your age?",
+    "Welcome to CureAtHub AI! I'm here to help assess your diabetes risk. Let me ask you a few quick questions. First, could you tell me your age?",
     "Thank you! And what is your gender? (Male/Female/Other)",
     "Could you help me with your current weight in kg?",
     "Great! And what is your height in cm?",
@@ -59,7 +59,7 @@ const LOCALIZED_QUESTIONS: Record<string, string[]> = {
     "Do you consume alcohol? (Yes / No / Occasionally)",
   ],
   "hi-IN": [
-    "Mitig8 AI में आपका स्वागत है! मैं आपके मधुमेह (diabetes) के जोखिम का आकलन करने में मदद के लिए यहाँ हूँ। मुझे आपसे कुछ त्वरित प्रश्न पूछने दें। सबसे पहले, क्या आप मुझे अपनी उम्र बता सकते हैं?",
+    "CureAtHub AI में आपका स्वागत है! मैं आपके मधुमेह (diabetes) के जोखिम का आकलन करने में मदद के लिए यहाँ हूँ। मुझे आपसे कुछ त्वरित प्रश्न पूछने दें। सबसे पहले, क्या आप मुझे अपनी उम्र बता सकते हैं?",
     "धन्यवाद! और आपका लिंग (gender) क्या है? (पुरुष/महिला/अन्य)",
     "क्या आप किलोग्राम (kg) में अपना वर्तमान वजन बता सकते हैं?",
     "बहुत बढ़िया! और सेंटीमीटर (cm) में आपकी ऊंचाई क्या है?",
@@ -121,6 +121,7 @@ interface DashboardChatProps {
 
 export function DashboardChat({ onOpenSidebar }: DashboardChatProps) {
   const [messages, setMessages] = useState<Message[]>([])
+  const [isLoadingHistory, setIsLoadingHistory] = useState(true)
   const [copiedId, setCopiedId] = useState<string | null>(null)
   const abortControllerRef = useRef<AbortController | null>(null)
 
@@ -142,44 +143,44 @@ export function DashboardChat({ onOpenSidebar }: DashboardChatProps) {
     if (isAssessmentMode) {
       const textsList: Record<string, string[]> = {
         "en-IN": [
-          "Mitig8 AI is analyzing your details...",
-          "Mitig8 AI is updating your age metrics...",
-          "Mitig8 AI is processing your gender details...",
-          "Mitig8 AI is recording your weight profile...",
-          "Mitig8 AI is calculating your BMI...",
-          "Mitig8 AI is analyzing blood pressure...",
-          "Mitig8 AI is processing cholesterol levels...",
-          "Mitig8 AI is analyzing fasting glucose...",
-          "Mitig8 AI is analyzing HbA1c value...",
-          "Mitig8 AI is evaluating family history...",
-          "Mitig8 AI is recording activity levels...",
-          "Mitig8 AI is evaluating diet details...",
-          "Mitig8 AI is analyzing lifestyle details...",
-          "Mitig8 AI is processing alcohol details..."
+          "CureAtHub AI is analyzing your details...",
+          "CureAtHub AI is updating your age metrics...",
+          "CureAtHub AI is processing your gender details...",
+          "CureAtHub AI is recording your weight profile...",
+          "CureAtHub AI is calculating your BMI...",
+          "CureAtHub AI is analyzing blood pressure...",
+          "CureAtHub AI is processing cholesterol levels...",
+          "CureAtHub AI is analyzing fasting glucose...",
+          "CureAtHub AI is analyzing HbA1c value...",
+          "CureAtHub AI is evaluating family history...",
+          "CureAtHub AI is recording activity levels...",
+          "CureAtHub AI is evaluating diet details...",
+          "CureAtHub AI is analyzing lifestyle details...",
+          "CureAtHub AI is processing alcohol details..."
         ],
         "hi-IN": [
-          "Mitig8 AI आपके विवरण का विश्लेषण कर रहा है...",
-          "Mitig8 AI आपकी आयु का विवरण अपडेट कर रहा है...",
-          "Mitig8 AI आपके लिंग का विवरण प्रोसेस कर रहा है...",
-          "Mitig8 AI आपका वजन रिकॉर्ड कर रहा है...",
-          "Mitig8 AI आपका बीएमआई (BMI) कैलकुलेट कर रहा है...",
-          "Mitig8 AI आपके रक्तचाप का विश्लेषण कर रहा है...",
-          "Mitig8 AI कोलेस्ट्रॉल के स्तर को प्रोसेस कर रहा है...",
-          "Mitig8 AI फास्टिंग ग्लूकोज का विश्लेषण कर रहा है...",
-          "Mitig8 AI HbA1c स्तर का विश्लेषण कर रहा है...",
-          "Mitig8 AI पारिवारिक इतिहास का मूल्यांकन कर रहा है...",
-          "Mitig8 AI शारीरिक गतिविधि को रिकॉर्ड कर रहा है...",
-          "Mitig8 AI आहार के विवरण को रिकॉर्ड कर रहा है...",
-          "Mitig8 AI धूम्रपान की आदतों का विश्लेषण कर रहा है...",
-          "Mitig8 AI शराब के सेवन के विवरण को प्रोसेस कर रहा है..."
+          "CureAtHub AI आपके विवरण का विश्लेषण कर रहा है...",
+          "CureAtHub AI आपकी आयु का विवरण अपडेट कर रहा है...",
+          "CureAtHub AI आपके लिंग का विवरण प्रोसेस कर रहा है...",
+          "CureAtHub AI आपका वजन रिकॉर्ड कर रहा है...",
+          "CureAtHub AI आपका बीएमआई (BMI) कैलकुलेट कर रहा है...",
+          "CureAtHub AI आपके रक्तचाप का विश्लेषण कर रहा है...",
+          "CureAtHub AI कोलेस्ट्रॉल के स्तर को प्रोसेस कर रहा है...",
+          "CureAtHub AI फास्टिंग ग्लूकोज का विश्लेषण कर रहा है...",
+          "CureAtHub AI HbA1c स्तर का विश्लेषण कर रहा है...",
+          "CureAtHub AI पारिवारिक इतिहास का मूल्यांकन कर रहा है...",
+          "CureAtHub AI शारीरिक गतिविधि को रिकॉर्ड कर रहा है...",
+          "CureAtHub AI आहार के विवरण को रिकॉर्ड कर रहा है...",
+          "CureAtHub AI धूम्रपान की आदतों का विश्लेषण कर रहा है...",
+          "CureAtHub AI शराब के सेवन के विवरण को प्रोसेस कर रहा है..."
         ]
       }
       const list = textsList[selectedLang] || textsList["en-IN"]
-      return list[questionIndex - 1] || "Mitig8 AI is processing your clinical answers..."
+      return list[questionIndex - 1] || "CureAtHub AI is processing your clinical answers..."
     }
     return selectedLang === "hi-IN" 
-      ? "Mitig8 AI आपके लिए व्यक्तिगत स्वास्थ्य सलाह तैयार कर रहा है..." 
-      : "Mitig8 AI is formulating your personalized guidance..."
+      ? "CureAtHub AI आपके लिए व्यक्तिगत स्वास्थ्य सलाह तैयार कर रहा है..." 
+      : "CureAtHub AI is formulating your personalized guidance..."
   }
   const [input, setInput] = useState("")
   const [isTyping, setIsTyping] = useState(false)
@@ -276,6 +277,58 @@ export function DashboardChat({ onOpenSidebar }: DashboardChatProps) {
     scrollToBottom()
   }, [messages, isTyping])
 
+  const saveMessageToMongo = async (msg: Message) => {
+    try {
+      await fetch("/api/chat/history", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: msg.id,
+          role: msg.role,
+          text: msg.text,
+          timestamp: msg.timestamp.toISOString(),
+        }),
+      })
+    } catch (err) {
+      console.error("Failed to save message to MongoDB:", err)
+    }
+  }
+
+  useEffect(() => {
+    async function loadChatHistory() {
+      try {
+        const res = await fetch("/api/chat/history")
+        if (res.ok) {
+          const data = await res.json()
+          if (data && Array.isArray(data) && data.length > 0) {
+            const seenIds = new Set<string>()
+            const formatted = data.map((m: any, index: number) => {
+              let msgId = m.id || `msg-${index}-${Date.now()}`
+              if (seenIds.has(msgId)) {
+                msgId = `${msgId}-${index}`
+              }
+              seenIds.add(msgId)
+              return {
+                id: msgId,
+                role: m.role,
+                text: m.text,
+                timestamp: new Date(m.timestamp),
+              }
+            })
+            setMessages(formatted)
+            setConversationStarted(true)
+          }
+        }
+      } catch (err) {
+        console.error("Failed to load chat history:", err)
+      } finally {
+        setIsLoadingHistory(false)
+      }
+    }
+    loadChatHistory()
+  }, [])
+
+
   const startConversation = (startAssessment = true) => {
     setConversationStarted(true)
     if (startAssessment) {
@@ -284,14 +337,14 @@ export function DashboardChat({ onOpenSidebar }: DashboardChatProps) {
       setIsTyping(true)
       setTimeout(() => {
         const questionsList = LOCALIZED_QUESTIONS[selectedLang] || LOCALIZED_QUESTIONS["en-IN"]
-        setMessages([
-          {
-            id: "ai-0",
-            role: "ai",
-            text: questionsList[0],
-            timestamp: new Date(),
-          },
-        ])
+        const welcomeMsg: Message = {
+          id: `ai-welcome-${Date.now()}`,
+          role: "ai",
+          text: questionsList[0],
+          timestamp: new Date(),
+        }
+        setMessages([welcomeMsg])
+        saveMessageToMongo(welcomeMsg)
         setIsTyping(false)
         setQuestionIndex(1)
         inputRef.current?.focus()
@@ -327,7 +380,7 @@ export function DashboardChat({ onOpenSidebar }: DashboardChatProps) {
     /[;&|`$(){}[\]\\]/g,
     /ignore\s+(all\s+)?(previous|prior|above|system)\s+(instructions?|prompts?|rules?)/gi,
     /forget\s+(all\s+)?(previous|prior|above|system)\s+(instructions?|prompts?|rules?)/gi,
-    /you\s+are\s+now\s+(a|an|the)?\s+(?!mitig8)/gi,
+    /you\s+are\s+now\s+(a|an|the)?\s+(?!cureathub)/gi,
     /act\s+as\s+(a|an|the)?\s+(?!health|diabetes|wellness|assistant)/gi,
     /pretend\s+(you\s+are|to\s+be)/gi,
     /new\s+(persona|role|identity|character)/gi,
@@ -402,6 +455,7 @@ export function DashboardChat({ onOpenSidebar }: DashboardChatProps) {
     }
 
     setMessages((prev) => [...prev, userMsg])
+    saveMessageToMongo(userMsg)
     setInput("")
 
     const controller = new AbortController()
@@ -469,6 +523,7 @@ export function DashboardChat({ onOpenSidebar }: DashboardChatProps) {
           timestamp: new Date(),
         }
         setMessages((prev) => [...prev, aiMsg])
+        saveMessageToMongo(aiMsg)
 
         if (assessmentStatus === "answered") {
           const updatedAnswers = [...answers, extractedValue]
@@ -527,27 +582,25 @@ export function DashboardChat({ onOpenSidebar }: DashboardChatProps) {
                 window.dispatchEvent(new Event("mitig8_report_updated"))
               }
 
-              setMessages((prev) => [
-                ...prev,
-                {
-                  id: `ai-${Date.now()}`,
-                  role: "ai",
-                  text: `Thank you! Based on your responses, your computed Metabolic Diabetes Risk Score is **${predictData.riskScore}/100** (${predictData.riskClass}).\n\n${predictData.summary}\n\nYou can view your detailed recommendation analysis and personalized targets on the Home and Diet sections!`,
-                  timestamp: new Date(),
-                },
-              ])
+              const finalScoreMsg: Message = {
+                id: `ai-${Date.now()}`,
+                role: "ai",
+                text: `Thank you! Based on your responses, your computed Metabolic Diabetes Risk Score is **${predictData.riskScore}/100** (${predictData.riskClass}).\n\n${predictData.summary}\n\nYou can view your detailed recommendation analysis and personalized targets on the Home and Diet sections!`,
+                timestamp: new Date(),
+              }
+              setMessages((prev) => [...prev, finalScoreMsg])
+              saveMessageToMongo(finalScoreMsg)
               setIsAssessmentMode(false)
             } catch (err) {
               console.error("Predict fetch error:", err)
-              setMessages((prev) => [
-                ...prev,
-                {
-                  id: `ai-${Date.now()}`,
-                  role: "ai",
-                  text: "Thank you for completing the assessment! Your health profile and risk parameters have been updated.",
-                  timestamp: new Date(),
-                },
-              ])
+              const fallbackScoreMsg: Message = {
+                id: `ai-${Date.now()}`,
+                role: "ai",
+                text: "Thank you for completing the assessment! Your health profile and risk parameters have been updated.",
+                timestamp: new Date(),
+              }
+              setMessages((prev) => [...prev, fallbackScoreMsg])
+              saveMessageToMongo(fallbackScoreMsg)
               setIsAssessmentMode(false)
             }
           }
@@ -555,15 +608,14 @@ export function DashboardChat({ onOpenSidebar }: DashboardChatProps) {
       } catch (err: any) {
         if (err.name === "AbortError") return
         console.error("Assessment fetch error:", err)
-        setMessages((prev) => [
-          ...prev,
-          { 
-            id: `ai-${Date.now()}`, 
-            role: "ai", 
-            text: "I am having difficulty connecting to my AI core right now. Let's continue with the health assessment.", 
-            timestamp: new Date() 
-          },
-        ])
+        const errorAssessmentMsg: Message = {
+          id: `ai-${Date.now()}`,
+          role: "ai",
+          text: "I am having difficulty connecting to my AI core right now. Let's continue with the health assessment.",
+          timestamp: new Date(),
+        }
+        setMessages((prev) => [...prev, errorAssessmentMsg])
+        saveMessageToMongo(errorAssessmentMsg)
       } finally {
         setIsTyping(false)
       }
@@ -625,17 +677,17 @@ export function DashboardChat({ onOpenSidebar }: DashboardChatProps) {
         timestamp: new Date(),
       }
       setMessages((prev) => [...prev, aiMsg])
+      saveMessageToMongo(aiMsg)
     } catch (err: any) {
       if (err.name === "AbortError") return
-      setMessages((prev) => [
-        ...prev,
-        { 
-          id: `ai-${Date.now()}`, 
-          role: "ai", 
-          text: "I am having difficulty connecting to my AI core right now. However, I'm here to support you! Please continue logging your food and exercise so we can optimize your diabetes risk profile.", 
-          timestamp: new Date() 
-        },
-      ])
+      const errorMsg: Message = { 
+        id: `ai-${Date.now()}`, 
+        role: "ai", 
+        text: "I am having difficulty connecting to my AI core right now. However, I'm here to support you! Please continue logging your food and exercise so we can optimize your diabetes risk profile.", 
+        timestamp: new Date() 
+      }
+      setMessages((prev) => [...prev, errorMsg])
+      saveMessageToMongo(errorMsg)
     } finally {
       setIsTyping(false)
     }
@@ -715,7 +767,14 @@ export function DashboardChat({ onOpenSidebar }: DashboardChatProps) {
       </div>
 
       <div className="flex-1 min-h-0 bg-white/60 backdrop-blur-xl flex flex-col">
-        {!conversationStarted ? (
+        {isLoadingHistory ? (
+          <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
+            <Loader2 className="w-8 h-8 text-orange-500 animate-spin mb-4" />
+            <p className="text-sm font-semibold text-slate-500 animate-pulse">
+              Restoring your chat history...
+            </p>
+          </div>
+        ) : !conversationStarted ? (
           <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
             <motion.div
               initial={{ opacity: 0, scale: 0.8 }}
@@ -829,13 +888,34 @@ export function DashboardChat({ onOpenSidebar }: DashboardChatProps) {
 
             {isTyping && (
               <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
+                initial={{ opacity: 0, y: 10, scale: 0.97 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 10, scale: 0.97 }}
                 className="flex gap-3 items-start justify-start"
               >
-                <div className="bg-white border border-slate-100 rounded-2xl rounded-bl-md px-4 py-2.5 shadow-sm flex items-center gap-2 text-xs font-semibold text-slate-500 bg-slate-50/50">
-                  <Loader2 className="w-3.5 h-3.5 text-orange-500 animate-spin" />
-                  <span>{getLoaderText()}</span>
+                <div className="bg-white border border-slate-100 rounded-2xl rounded-bl-md px-4 py-3 shadow-md shadow-slate-100/50 flex items-center gap-3.5 bg-gradient-to-r from-white to-orange-50/20 relative overflow-hidden group">
+                  <div className="w-6 h-6 rounded-xl bg-gradient-to-br from-orange-100 to-orange-200/50 flex items-center justify-center text-orange-500 shrink-0 shadow-sm border border-orange-200/20">
+                    <Sparkles className="w-3.5 h-3.5 animate-pulse text-orange-600" />
+                  </div>
+                  <div className="flex items-center gap-1.5 h-5 px-1">
+                    {[0, 1, 2].map((i) => (
+                      <motion.span
+                        key={i}
+                        className="w-2 h-2 bg-gradient-to-br from-orange-500 to-orange-600 rounded-full"
+                        animate={{ 
+                          y: [0, -5, 0],
+                          scale: [1, 1.1, 1],
+                          opacity: [0.6, 1, 0.6]
+                        }}
+                        transition={{ 
+                          duration: 0.8, 
+                          repeat: Infinity, 
+                          delay: i * 0.16, 
+                          ease: "easeInOut" 
+                        }}
+                      />
+                    ))}
+                  </div>
                 </div>
               </motion.div>
             )}

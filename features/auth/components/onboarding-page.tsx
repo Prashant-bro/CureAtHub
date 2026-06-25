@@ -411,7 +411,7 @@ export function OnboardingPage() {
                       ★ Exclusive Offer ★
                     </span>
                     <h1 className="text-2xl sm:text-3xl font-black text-[#0F172A] tracking-tight">
-                      Mitig8 Premium Plan
+                      CureAtHub Premium Plan
                     </h1>
                     <p className="text-sm text-slate-500 mt-1.5 leading-relaxed">
                       Unlock full AI capabilities to predict, monitor, and reverse diabetes risk.

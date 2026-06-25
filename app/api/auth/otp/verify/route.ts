@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
 import jwt from "jsonwebtoken"
+import crypto from "crypto"
 import {
   getRealIP,
   checkIPRateLimit,
@@ -68,7 +69,7 @@ async function findOrCreateUser(phone: string): Promise<string> {
 /**
  * Creates custom JWT tokens mimicking Supabase session credentials.
  */
-function createSession(userId: string, phone: string) {
+function createSession(userId: string, phone: string, sessionId: string) {
   const secret = process.env.SUPABASE_JWT_SECRET || ""
   if (!secret) {
     throw new Error("SUPABASE_JWT_SECRET environment variable is missing.")
@@ -88,6 +89,7 @@ function createSession(userId: string, phone: string) {
     phone: phone,
     email: "",
     is_anonymous: false,
+    session_id: sessionId,
     app_metadata: {
       provider: "phone",
       providers: ["phone"],
@@ -228,8 +230,14 @@ export async function POST(request: Request) {
     // Find or create the user in Supabase
     const userId = await findOrCreateUser(formattedPhone)
 
+    // Generate a new session ID for single-device restriction
+    const sessionId = crypto.randomUUID()
+
     // Create customized JWT session credentials
-    const session = createSession(userId, formattedPhone)
+    const session = createSession(userId, formattedPhone, sessionId)
+
+    // Register this session in Redis (TTL: 7 days to match refresh token expiration)
+    await redis.set(`active_session:${userId}`, sessionId, { ex: 60 * 60 * 24 * 7 })
 
     return NextResponse.json({
       success: true,

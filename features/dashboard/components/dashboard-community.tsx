@@ -86,7 +86,7 @@ const initialBadges: Badge[] = [
   {
     id: "badge-storyteller",
     title: "Storyteller",
-    description: "Shared your success story with the Mitig8 community.",
+    description: "Shared your success story with the CureAtHub community.",
     icon: "✍️",
     unlocked: false,
     unlockCriteria: "Publish a success story",
@@ -490,7 +490,7 @@ export function DashboardCommunity({ userName = "", userInitials = "U" }: Dashbo
                   rows={4}
                   value={newContent}
                   onChange={e => setNewContent(e.target.value)}
-                  placeholder="Share details on how you did it, what features of Mitig8 helped you (e.g. AI Chat recommendations, Meal Scan diagnostics) so other community members can learn from you!"
+                  placeholder="Share details on how you did it, what features of CureAtHub helped you (e.g. AI Chat recommendations, Meal Scan diagnostics) so other community members can learn from you!"
                   className="w-full bg-slate-50/50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs text-[#0F172A] focus:outline-none focus:border-orange-400 resize-none"
                 />
               </div>

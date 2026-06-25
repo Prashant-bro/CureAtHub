@@ -255,7 +255,7 @@ export function HeroSection() {
               >
                 <Image
                   src="/images/hero-dashboard.png"
-                  alt="Mitig8 AI Health Dashboard"
+                  alt="CureAtHub AI Health Dashboard"
                   width={520}
                   height={520}
                   className="relative z-10 drop-shadow-xl rounded-2xl"

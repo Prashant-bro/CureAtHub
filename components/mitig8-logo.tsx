@@ -31,7 +31,7 @@ export function Mitig8Logo({
   const { img, textClass } = sizeMap[size]
 
   const textColors = {
-    dark: { main: "text-[#0F172A]", accent: "text-primary" },
+    dark: { main: "text-[#0F172A]", accent: "text-orange-500" },
     light: { main: "text-white", accent: "text-orange-300" },
     footer: { main: "text-white", accent: "text-teal-400" },
   }
@@ -54,13 +54,12 @@ export function Mitig8Logo({
       {/* Logo image — plain img to avoid Next.js restrictions */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
-        src="/mitig8-logo.png"
-        alt="Mitig8"
+        src="/cureathub-logo.jpg"
+        alt="CureAtHub"
         style={{
           width: img,
           height: img,
-          objectFit: "contain",
-          mixBlendMode: theme === "dark" ? "multiply" : "normal",
+          objectFit: "cover",
           borderRadius: 8,
           flexShrink: 0,
           display: "block",
@@ -70,8 +69,8 @@ export function Mitig8Logo({
       {/* Brand text */}
       {!hideText && (
         <span className={`${textClass} font-bold tracking-tight`}>
-          <span className={colors.main}>Mitig</span>
-          <span className={colors.accent}>8</span>
+          <span className={colors.main}>CureAt</span>
+          <span className={colors.accent}>Hub</span>
         </span>
       )}
     </Wrapper>

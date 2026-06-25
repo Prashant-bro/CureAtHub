@@ -63,6 +63,31 @@ export function DashboardMealScan() {
         const saved = localStorage.getItem("mitig8_analyzed_report")
         if (saved) {
           setUserRiskProfile(JSON.parse(saved))
+        } else {
+          // Fetch from Supabase via API
+          fetch("/api/assessments")
+            .then((res) => {
+              if (res.ok) return res.json()
+              throw new Error("Failed to fetch assessment")
+            })
+            .then((data) => {
+              if (data && data.assessment) {
+                const report = {
+                  riskScore: data.assessment.risk_score,
+                  riskClass: data.assessment.risk_class,
+                  riskColor: data.assessment.risk_color,
+                  summary: data.assessment.summary,
+                  biomarkers: data.assessment.biomarkers || [],
+                  dietAdvice: data.assessment.features?.dietAdvice || [],
+                  exerciseAdvice: data.assessment.features?.exerciseAdvice || [],
+                }
+                setUserRiskProfile(report)
+                localStorage.setItem("mitig8_analyzed_report", JSON.stringify(report))
+              }
+            })
+            .catch((err) => {
+              console.error("Failed to load assessment from API in meal scan:", err)
+            })
         }
       } catch (e) {
         // silent catch
@@ -81,6 +106,7 @@ export function DashboardMealScan() {
       }
     }
   }, [])
+
 
   const startCamera = async () => {
     setIsCameraLoading(true)
@@ -204,6 +230,23 @@ export function DashboardMealScan() {
       const currentCalories = Number(localStorage.getItem("mitig8_calories")) || 0
       localStorage.setItem("mitig8_calories", String(currentCalories + food.calories))
 
+      // Post meal to Supabase
+      fetch("/api/meals", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          food_name: food.name,
+          calories: food.calories,
+          protein: parseFloat(food.protein) || 0,
+          carbs: parseFloat(food.carbs) || 0,
+          fat: parseFloat(food.fat) || 0,
+          fiber: 0,
+          diabetes_friendly: food.glycemicIndex === "Low",
+        }),
+      }).catch((err) => {
+        console.error("Failed to post meal log to API:", err)
+      })
+
       // 2. Adjust Risk Score based on glycemic index of eaten food
       if (userRiskProfile) {
         let scoreChange = 0
@@ -240,9 +283,26 @@ export function DashboardMealScan() {
 
         localStorage.setItem("mitig8_analyzed_report", JSON.stringify(updatedProfile))
         window.dispatchEvent(new Event("mitig8_report_updated"))
+
+        // Save adjusted assessment to Supabase
+        fetch("/api/assessments", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            riskScore: newScore,
+            riskClass: newClass,
+            riskColor: newColor,
+            summary: newSummary,
+            features: updatedProfile.features || null,
+            biomarkers: updatedProfile.biomarkers || null,
+          }),
+        }).catch((err) => {
+          console.error("Failed to save adjusted risk assessment to API:", err)
+        })
       }
     }
   }
+
 
   const handleAlternativeRecommend = () => {
     if (!selectedFood || !selectedFood.alternative) return

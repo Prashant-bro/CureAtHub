@@ -117,7 +117,7 @@ export function AuthPage() {
     setSuccessMessage(null)
 
     try {
-      const formattedPhone = `+91${phone}`
+      const formattedPhone = `91${phone}`
       const res = await fetch("/api/auth/otp/send", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -162,7 +162,7 @@ export function AuthPage() {
     setSuccessMessage(null)
 
     try {
-      const formattedPhone = `+91${phone}`
+      const formattedPhone = `91${phone}`
       const res = await fetch("/api/auth/otp/verify", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -269,13 +269,21 @@ export function AuthPage() {
       if (activeTab === "signin") {
         const { error } = await supabase.auth.signInWithPassword({ email, password })
         if (error) throw error
+
+        // Register active session in Redis for single-device login constraint
+        try {
+          await fetch("/api/auth/session/register", { method: "POST" })
+        } catch (err) {
+          console.error("Failed to register session:", err)
+        }
+
         router.push("/auth/onboarding")
       } else {
         // Sign Up — enforce password strength
         if (strength.score < 3) {
           throw new Error("Please use a stronger password before signing up.")
         }
-        const { error } = await supabase.auth.signUp({
+        const { data, error } = await supabase.auth.signUp({
           email,
           password,
           options: {
@@ -284,9 +292,20 @@ export function AuthPage() {
           },
         })
         if (error) throw error
-        setSuccessMessage(
-          "Account created! Check your email for a confirmation link before signing in."
-        )
+
+        // If sign up automatically signs the user in (returns session), register session
+        if (data?.session) {
+          try {
+            await fetch("/api/auth/session/register", { method: "POST" })
+          } catch (err) {
+            console.error("Failed to register session:", err)
+          }
+          router.push("/auth/onboarding")
+        } else {
+          setSuccessMessage(
+            "Account created! Check your email for a confirmation link before signing in."
+          )
+        }
       }
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "An unexpected error occurred."

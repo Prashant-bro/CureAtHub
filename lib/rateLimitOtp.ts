@@ -81,7 +81,10 @@ export function getRealIP(request: Request): string {
   const cfConnectingIP = headers.get("cf-connecting-ip")
   if (cfConnectingIP) return cfConnectingIP.trim()
   
-  return "0.0.0.0"
+  // Fallback: hash User-Agent to avoid all unknown clients sharing one rate limit bucket
+  const ua = headers.get("user-agent") || "unknown"
+  const hash = crypto.createHash("sha256").update(ua).digest("hex").slice(0, 16)
+  return `unknown-${hash}`
 }
 
 /**

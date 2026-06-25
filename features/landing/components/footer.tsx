@@ -164,7 +164,7 @@ export function Footer() {
           </Link>
 
           <p className="text-white/40 text-sm">
-            © {new Date().getFullYear()} Mitig8. All rights reserved.
+            © {new Date().getFullYear()} CureAtHub. All rights reserved.
           </p>
 
           <p className="text-white/25 text-xs">
@@ -184,7 +184,7 @@ export function Footer() {
             <div className="bg-white/[0.04] rounded-xl p-4 border border-white/[0.06]">
               <p className="text-white/70 text-[11px] font-bold mb-1.5 uppercase tracking-wide">⚕️ Medical Disclaimer</p>
               <p className="text-white/35 text-[10px] leading-relaxed">
-                Mitig8 is not a medical device and does not provide medical advice, diagnoses, or treatment recommendations.
+                CureAtHub is not a medical device and does not provide medical advice, diagnoses, or treatment recommendations.
                 Content is for informational and educational purposes only. Always consult a qualified physician or healthcare
                 provider before making any health decisions. Do not disregard professional medical advice based on information
                 from this app.
@@ -194,7 +194,7 @@ export function Footer() {
               <p className="text-white/70 text-[11px] font-bold mb-1.5 uppercase tracking-wide">🔒 Data & Privacy</p>
               <p className="text-white/35 text-[10px] leading-relaxed">
                 Your health data is encrypted end-to-end and stored securely. We follow industry-standard data protection
-                practices. We do not sell your personal health information to third parties. By using Mitig8, you consent
+                practices. We do not sell your personal health information to third parties. By using CureAtHub, you consent
                 to our data collection practices as described in our Privacy Policy.
               </p>
             </div>
@@ -202,15 +202,15 @@ export function Footer() {
               <p className="text-white/70 text-[11px] font-bold mb-1.5 uppercase tracking-wide">📊 Results Disclaimer</p>
               <p className="text-white/35 text-[10px] leading-relaxed">
                 AI predictions and health insights are based on statistical models and may not apply to every individual.
-                Individual results may vary. Mitig8 does not guarantee specific health outcomes. The app is intended to
+                Individual results may vary. CureAtHub does not guarantee specific health outcomes. The app is intended to
                 complement, not replace, professional medical care.
               </p>
             </div>
           </div>
           <p className="text-white/20 text-[10px] text-center leading-relaxed">
-            Mitig8 is not affiliated with any hospital, government health body, or medical institution.
+            CureAtHub is not affiliated with any hospital, government health body, or medical institution.
             FDA / CDSCO clearance not applicable — this is a wellness information platform, not a medical device.
-            © {new Date().getFullYear()} Mitig8 Technologies Pvt. Ltd. All rights reserved.
+            © {new Date().getFullYear()} CureAtHub Technologies Pvt. Ltd. All rights reserved.
             Use of this platform constitutes acceptance of our{" "}
             <Link href="/terms" className="text-white/40 hover:text-white/60 underline underline-offset-2 transition-colors">Terms of Service</Link>
             {" "}and{" "}
@@ -226,7 +226,7 @@ export function Footer() {
         viewport={{ once: true }}
         transition={{ duration: 1, ease: "easeOut" }}
       >
-        MITIG8
+        CUREATHUB
       </motion.div>
     </footer>
   )

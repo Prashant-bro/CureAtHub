@@ -21,11 +21,11 @@ const playfair = Playfair_Display({
 export const metadata: Metadata = {
   metadataBase: new URL(
     process.env.NEXT_PUBLIC_SITE_URL || 
-    (process.env.NODE_ENV === 'development' ? 'http://localhost:3000' : 'https://mitig8.com') // Replace with your actual domain when deploying
+    (process.env.NODE_ENV === 'development' ? 'http://localhost:3000' : 'https://cureathub.com') // Replace with your actual domain when deploying
   ),
-  title: "Mitig8 — AI-Powered Diabetes Prevention & Management",
+  title: "CureAtHub — AI-Powered Diabetes Prevention & Management",
   description:
-    "Upload lab reports, scan meals, chat with AI — all in one platform. Mitig8 combines AI analytics, vernacular language support, and personalized lifestyle guidance to help you prevent and manage diabetes effectively.",
+    "Upload lab reports, scan meals, chat with AI — all in one platform. CureAtHub combines AI analytics, vernacular language support, and personalized lifestyle guidance to help you prevent and manage diabetes effectively.",
   keywords: [
     "diabetes prevention",
     "AI health",
@@ -44,15 +44,15 @@ export const metadata: Metadata = {
     apple: "/apple-icon.png",
   },
   openGraph: {
-    title: "Mitig8 — AI-Powered Diabetes Prevention & Management",
+    title: "CureAtHub — AI-Powered Diabetes Prevention & Management",
     description:
-      "Upload lab reports, scan meals, chat with AI — all in one platform. Mitig8 combines AI analytics, vernacular language support, and personalized lifestyle guidance to help you prevent and manage diabetes effectively.",
-    images: [{ url: "/favicon.png", width: 512, height: 512, alt: "Mitig8 Logo" }],
+      "Upload lab reports, scan meals, chat with AI — all in one platform. CureAtHub combines AI analytics, vernacular language support, and personalized lifestyle guidance to help you prevent and manage diabetes effectively.",
+    images: [{ url: "/favicon.png", width: 512, height: 512, alt: "CureAtHub Logo" }],
     type: "website",
   },
   twitter: {
     card: "summary",
-    title: "Mitig8 — AI-Powered Diabetes Prevention & Management",
+    title: "CureAtHub — AI-Powered Diabetes Prevention & Management",
     description:
       "Upload lab reports, scan meals, chat with AI — all in one platform.",
     images: ["/favicon.png"],

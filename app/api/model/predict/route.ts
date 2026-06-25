@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import fs from "fs"
 import path from "path"
 import { getRealIP, redis } from "@/lib/rateLimitOtp"
+import { createClient } from "@/lib/supabase/server"
 
 // Simple LightGBM Decision Tree Interpreter
 // It traverses trees formatted like LightGBM JSON dump_model().
@@ -113,6 +114,16 @@ function predictFallback(features: Record<string, number>): number {
 
 export async function POST(req: NextRequest) {
   try {
+    // ── Auth check ──────────────────────────────────────────
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      return NextResponse.json(
+        { error: "Please sign in to use this feature." },
+        { status: 401 }
+      )
+    }
+
     const ip = getRealIP(req)
     const limitKey = `rate:predict:ip:${ip}`
     const count = await redis.incr(limitKey)
@@ -230,6 +241,42 @@ export async function POST(req: NextRequest) {
       summary = "Your biomarkers indicate borderline pre-diabetic ranges. Targeted nutritional habits can effectively reverse this risk profile."
     }
 
+    // Save to Supabase risk_assessments
+    try {
+      const { error: dbError } = await supabase
+        .from("risk_assessments")
+        .insert({
+          user_id: user.id,
+          risk_score: riskScore,
+          risk_class: riskClass,
+          risk_color: riskColor,
+          summary: summary,
+          features: processedFeatures,
+          biomarkers: {
+            Age,
+            Gender,
+            BMI,
+            Blood_Pre,
+            Cholestero,
+            Fasting_Bl,
+            Glucose_2,
+            Serum_Ins,
+            HbA1c_percent,
+            Family_His,
+            Physical_A,
+            Diet_Type,
+            Smoking,
+            Alcohol,
+            Weight_Lo
+          }
+        })
+      if (dbError) {
+        console.error("Failed to save assessment to Supabase:", dbError)
+      }
+    } catch (dbErr) {
+      console.error("Database save exception in predict route:", dbErr)
+    }
+
     return NextResponse.json({
       riskScore,
       riskClass,
@@ -239,6 +286,7 @@ export async function POST(req: NextRequest) {
     })
   } catch (err: any) {
     console.error("Predict API error:", err)
-    return NextResponse.json({ error: err.message }, { status: 500 })
+    return NextResponse.json({ error: "Something went wrong. Please try again." }, { status: 500 })
   }
 }
+

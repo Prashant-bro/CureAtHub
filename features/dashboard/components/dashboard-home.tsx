@@ -67,7 +67,33 @@ export function DashboardHome({ onNavigateToChat, onNavigateToDiet, onNavigateTo
               // silent catch
             }
           } else {
-            setAnalyzedReport(null)
+            // Fetch latest assessment from Supabase via API
+            fetch("/api/assessments")
+              .then((res) => {
+                if (res.ok) return res.json()
+                throw new Error("Failed to fetch assessment")
+              })
+              .then((data) => {
+                if (data && data.assessment) {
+                  const report = {
+                    riskScore: data.assessment.risk_score,
+                    riskClass: data.assessment.risk_class,
+                    riskColor: data.assessment.risk_color,
+                    summary: data.assessment.summary,
+                    biomarkers: data.assessment.biomarkers || [],
+                    dietAdvice: data.assessment.features?.dietAdvice || [],
+                    exerciseAdvice: data.assessment.features?.exerciseAdvice || [],
+                  }
+                  setAnalyzedReport(report)
+                  localStorage.setItem("mitig8_analyzed_report", JSON.stringify(report))
+                } else {
+                  setAnalyzedReport(null)
+                }
+              })
+              .catch((err) => {
+                console.error("Failed to load assessment from API:", err)
+                setAnalyzedReport(null)
+              })
           }
         }
 
@@ -83,6 +109,7 @@ export function DashboardHome({ onNavigateToChat, onNavigateToDiet, onNavigateTo
       window.removeEventListener("mitig8_report_updated", loadReport)
     }
   }, [latestReport])
+
 
   const riskScore = analyzedReport ? analyzedReport.riskScore : null
   const riskClass = analyzedReport ? analyzedReport.riskClass : "No Report"
@@ -150,7 +177,7 @@ export function DashboardHome({ onNavigateToChat, onNavigateToDiet, onNavigateTo
               </div>
               <div>
                 <h3 className="text-white font-bold text-base">Health Risk Card</h3>
-                <p className="text-white/40 text-xs">Powered by Mitig8 AI</p>
+                <p className="text-white/40 text-xs">Powered by CureAtHub AI</p>
               </div>
             </div>
             <div className="flex items-center gap-2">
@@ -166,7 +193,7 @@ export function DashboardHome({ onNavigateToChat, onNavigateToDiet, onNavigateTo
               </motion.button>
               <div className="flex items-center gap-1.5 bg-white/10 backdrop-blur-sm rounded-full px-3 py-1.5">
                 <Shield className="w-3 h-3 text-orange-400" />
-                <span className="text-[10px] font-bold text-white/70">MITIG8</span>
+                <span className="text-[10px] font-bold text-white/70">CUREATHUB</span>
               </div>
             </div>
           </div>
@@ -420,7 +447,7 @@ export function DashboardHome({ onNavigateToChat, onNavigateToDiet, onNavigateTo
                       <div className="w-6 h-6 rounded-lg bg-orange-500 flex items-center justify-center">
                         <Heart className="w-3.5 h-3.5 text-white" />
                       </div>
-                      <span className="text-[11px] font-black tracking-wider text-orange-400">MITIG8 CARD</span>
+                      <span className="text-[11px] font-black tracking-wider text-orange-400">CUREATHUB CARD</span>
                     </div>
                     <span className="text-[8px] font-bold text-white/50">{userName || "Patient"}</span>
                   </div>
@@ -445,7 +472,7 @@ export function DashboardHome({ onNavigateToChat, onNavigateToDiet, onNavigateTo
 
                   <div className="border-t border-white/5 mt-4 pt-3 flex justify-between items-center text-[7px] text-white/30">
                     <span>Better than 70% of users</span>
-                    <span>Verify at: mitig8.com</span>
+                    <span>Verify at: cureathub.com</span>
                   </div>
                 </div>
 
@@ -488,7 +515,7 @@ export function DashboardHome({ onNavigateToChat, onNavigateToDiet, onNavigateTo
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     onClick={async () => {
-                      const shareText = `Check out my Mitig8 Health Card!\nMy diabetes risk is 32/100 (Low Risk) and better than 70% of platform users. View card at: https://mitig8.com/share/rahul-sharma-risk-32`
+                      const shareText = `Check out my CureAtHub Health Card!\nMy diabetes risk is 32/100 (Low Risk) and better than 70% of platform users. View card at: https://cureathub.com/share/rahul-sharma-risk-32`
                       await navigator.clipboard.writeText(shareText)
                       alert("Share link with full card copied to clipboard!")
                     }}

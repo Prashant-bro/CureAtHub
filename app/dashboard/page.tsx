@@ -5,7 +5,8 @@ import { DashboardLayout } from "@/features/dashboard"
 
 export default async function DashboardPage() {
   const cookieStore = await cookies()
-  const isMockLoggedIn = cookieStore.get("mock-login")?.value === "true"
+  const isMockLoggedIn = process.env.NODE_ENV === 'development'
+    && cookieStore.get("mock-login")?.value === "true"
 
   const supabase = await createClient()
 

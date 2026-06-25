@@ -9,7 +9,7 @@ import { Mitig8Logo } from "@/components/mitig8-logo"
 const sections = [
   {
     title: "1. Introduction",
-    content: `At Mitig8, we believe that your personal and health information belongs to you. This Privacy Policy explains how we collect, use, store, and protect the information you provide when using our platform. We are committed to handling your data with care, transparency, and respect. By using Mitig8, you agree to the practices described in this policy.`,
+    content: `At CureAtHub, we believe that your personal and health information belongs to you. This Privacy Policy explains how we collect, use, store, and protect the information you provide when using our platform. We are committed to handling your data with care, transparency, and respect. By using CureAtHub, you agree to the practices described in this policy.`,
   },
   {
     title: "2. Information We Collect",
@@ -17,11 +17,11 @@ const sections = [
   },
   {
     title: "3. Health Data We Handle",
-    content: `Mitig8 processes sensitive health information including but not limited to glucose readings, activity levels, dietary data, and other metrics you enter into the platform. This data is treated with the highest level of care. We process your health information only for the purpose of providing you with insights and features within the platform. We do not sell, rent, or trade your health data to any third party. Health data is encrypted both in transit and at rest using industry-standard protocols.`,
+    content: `CureAtHub processes sensitive health information including but not limited to glucose readings, activity levels, dietary data, and other metrics you enter into the platform. This data is treated with the highest level of care. We process your health information only for the purpose of providing you with insights and features within the platform. We do not sell, rent, or trade your health data to any third party. Health data is encrypted both in transit and at rest using industry-standard protocols.`,
   },
   {
     title: "4. How We Use Your Information",
-    content: `We use the information we collect to provide, maintain, and improve the Mitig8 service. This includes personalizing your experience, generating health insights, sending you relevant notifications, responding to your support requests, and conducting internal analysis to improve the platform. We may also use your contact information to send you important service-related communications, such as updates to these policies or changes to your account.`,
+    content: `We use the information we collect to provide, maintain, and improve the CureAtHub service. This includes personalizing your experience, generating health insights, sending you relevant notifications, responding to your support requests, and conducting internal analysis to improve the platform. We may also use your contact information to send you important service-related communications, such as updates to these policies or changes to your account.`,
   },
   {
     title: "5. Sharing of Information",
@@ -29,7 +29,7 @@ const sections = [
   },
   {
     title: "6. Cookies and Tracking Technologies",
-    content: `Mitig8 uses cookies and similar technologies to enhance your experience on the platform. Cookies help us remember your preferences, keep you signed in, and understand how you interact with the service. You can control cookie settings through your browser, though disabling certain cookies may affect the functionality of the platform. We do not use cookies to serve third-party advertisements.`,
+    content: `CureAtHub uses cookies and similar technologies to enhance your experience on the platform. Cookies help us remember your preferences, keep you signed in, and understand how you interact with the service. You can control cookie settings through your browser, though disabling certain cookies may affect the functionality of the platform. We do not use cookies to serve third-party advertisements.`,
   },
   {
     title: "7. Data Retention",
@@ -41,15 +41,15 @@ const sections = [
   },
   {
     title: "9. Security of Your Data",
-    content: `We take the security of your information seriously. Mitig8 uses encryption, access controls, regular security audits, and secure data storage practices to protect your personal and health information from unauthorized access, disclosure, alteration, or destruction. While we implement strong security measures, no system can guarantee absolute security. You are responsible for keeping your account credentials confidential and for notifying us immediately if you suspect unauthorized access.`,
+    content: `We take the security of your information seriously. CureAtHub uses encryption, access controls, regular security audits, and secure data storage practices to protect your personal and health information from unauthorized access, disclosure, alteration, or destruction. While we implement strong security measures, no system can guarantee absolute security. You are responsible for keeping your account credentials confidential and for notifying us immediately if you suspect unauthorized access.`,
   },
   {
     title: "10. Children's Privacy",
-    content: `Mitig8 is not intended for use by individuals under the age of 18. We do not knowingly collect personal information from children. If you are a parent or guardian and believe your child has provided us with personal information without your consent, please contact us immediately. We will take steps to remove such information from our systems promptly.`,
+    content: `CureAtHub is not intended for use by individuals under the age of 18. We do not knowingly collect personal information from children. If you are a parent or guardian and believe your child has provided us with personal information without your consent, please contact us immediately. We will take steps to remove such information from our systems promptly.`,
   },
   {
     title: "11. Third-Party Links and Integrations",
-    content: `The Mitig8 platform may contain links to third-party websites or integrations with third-party services. This Privacy Policy applies only to Mitig8 and does not govern the privacy practices of any third-party services you may access through our platform. We encourage you to review the privacy policies of any third-party services before providing them with your personal information.`,
+    content: `The CureAtHub platform may contain links to third-party websites or integrations with third-party services. This Privacy Policy applies only to CureAtHub and does not govern the privacy practices of any third-party services you may access through our platform. We encourage you to review the privacy policies of any third-party services before providing them with your personal information.`,
   },
   {
     title: "12. Changes to This Privacy Policy",
@@ -57,7 +57,7 @@ const sections = [
   },
   {
     title: "13. Contact and Grievances",
-    content: `If you have any questions about this Privacy Policy, wish to exercise your data rights, or have a concern about how your information is handled, please contact our data protection team at privacy@mitig8.com. We are committed to resolving your concerns and will respond to all inquiries within 5 business days. If you are not satisfied with our response, you may have the right to lodge a complaint with the relevant data protection authority in your jurisdiction.`,
+    content: `If you have any questions about this Privacy Policy, wish to exercise your data rights, or have a concern about how your information is handled, please contact our data protection team at privacy@cureathub.com. We are committed to resolving your concerns and will respond to all inquiries within 5 business days. If you are not satisfied with our response, you may have the right to lodge a complaint with the relevant data protection authority in your jurisdiction.`,
   },
 ]
 
@@ -110,7 +110,7 @@ export function PrivacyPage() {
             </p>
             <div className="mt-5 p-4 bg-orange-50 border border-orange-100 rounded-xl">
               <p className="text-sm text-slate-600 leading-relaxed">
-                Your privacy is important to us. This Privacy Policy describes how Mitig8 collects, uses, and
+                Your privacy is important to us. This Privacy Policy describes how CureAtHub collects, uses, and
                 safeguards your personal and health information. We encourage you to read it carefully so you understand
                 how we handle your data and what choices you have.
               </p>

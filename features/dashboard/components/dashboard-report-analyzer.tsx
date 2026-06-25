@@ -207,21 +207,46 @@ export function DashboardReportAnalyzer({ onReportScanned }: DashboardReportAnal
             onReportScanned(profile)
           }
 
-          // Save to Supabase profiles
+          // Save to Supabase profiles and risk assessments
           const supabase = createClient()
           supabase.auth.getUser().then(async ({ data: { user } }) => {
             if (user) {
-              await fetch("/api/auth/profile", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                  user_id: user.id,
-                  latest_report: profile,
-                  medical_report: profile,
-                }),
-              })
+              try {
+                await fetch("/api/auth/profile", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    user_id: user.id,
+                    latest_report: profile,
+                    medical_report: profile,
+                  }),
+                })
+              } catch (e) {
+                console.error("Profile save error:", e)
+              }
+
+              try {
+                await fetch("/api/assessments", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    riskScore: profile.riskScore,
+                    riskClass: profile.riskClass,
+                    riskColor: profile.riskColor,
+                    summary: profile.summary,
+                    features: {
+                      dietAdvice: profile.dietAdvice,
+                      exerciseAdvice: profile.exerciseAdvice,
+                    },
+                    biomarkers: profile.biomarkers,
+                  }),
+                })
+              } catch (e) {
+                console.error("Assessment save error:", e)
+              }
             }
           })
+
         }, SCAN_PHASES[phase].duration)
       }
     }
@@ -535,7 +560,7 @@ export function DashboardReportAnalyzer({ onReportScanned }: DashboardReportAnal
                 </div>
 
                 <div className="pt-4 mt-4 border-t border-slate-100 flex items-center justify-between">
-                  <span className="text-[10px] text-slate-400">Classified using Mitig8 Risk Model v2.4</span>
+                  <span className="text-[10px] text-slate-400">Classified using CureAtHub Risk Model v2.4</span>
                   <div className="flex items-center gap-1.5 text-xs font-bold text-orange-500">
                     <Activity className="w-3.5 h-3.5 animate-pulse" /> Live Analysis Active
                   </div>

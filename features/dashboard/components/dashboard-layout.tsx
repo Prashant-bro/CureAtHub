@@ -261,7 +261,7 @@ export function DashboardLayout() {
               Your 3-Day Free Trial Has Ended
             </h3>
             <p className="text-sm text-slate-500 leading-relaxed">
-              Your trial period has expired and access to Mitig8 features is currently suspended. Please subscribe to a premium plan to continue tracking your blood glucose, scanning meals, and chatting with the AI.
+              Your trial period has expired and access to CureAtHub features is currently suspended. Please subscribe to a premium plan to continue tracking your blood glucose, scanning meals, and chatting with the AI.
             </p>
           </div>
           <button
@@ -671,7 +671,7 @@ export function DashboardLayout() {
               {!feedbackSubmitted ? (
                 <div className="space-y-4 pt-1">
                   <p className="text-xs text-slate-500 leading-relaxed">
-                    We'd love to hear your thoughts! Help us improve Mitig8 by rating your experience and sharing suggestions.
+                    We'd love to hear your thoughts! Help us improve CureAtHub by rating your experience and sharing suggestions.
                   </p>
 
                   <div className="space-y-2">
