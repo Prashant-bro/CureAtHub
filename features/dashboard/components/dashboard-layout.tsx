@@ -105,7 +105,18 @@ export function DashboardLayout() {
 
   useEffect(() => {
     supabase.auth.getUser().then(async ({ data: { user } }) => {
-      if (!user) {
+      let currentUserId = user?.id || null
+      let currentEmail = user?.email || ""
+      let currentPhoneVal = user?.phone || ""
+      let currentFullName = user?.user_metadata?.full_name || user?.user_metadata?.name || ""
+
+      // Fallback for custom OTP logins using cookie / sessionStorage
+      if (!currentUserId && typeof window !== "undefined") {
+        currentUserId = sessionStorage.getItem("auth_user_id")
+        currentPhoneVal = sessionStorage.getItem("auth_phone") || ""
+      }
+
+      if (!currentUserId) {
         // Fallback for mock frontend-only login testing
         const isMockLoggedIn = document.cookie.includes("mock-login=true")
         if (isMockLoggedIn) {
@@ -126,23 +137,29 @@ export function DashboardLayout() {
         }
         return
       }
-      const fullName =
-        user.user_metadata?.full_name ||
-        user.user_metadata?.name ||
-        ""
-      const email = user.email ?? ""
-      setUserName(fullName || email.split("@")[0])
-      setUserEmail(email)
+
+      if (currentFullName) {
+        setUserName(currentFullName)
+      } else if (currentEmail) {
+        setUserName(currentEmail.split("@")[0])
+      } else {
+        setUserName("User")
+      }
+      setUserEmail(currentEmail)
+      if (currentPhoneVal) {
+        setUserPhone(currentPhoneVal)
+      }
 
       try {
         const { data: profile } = await supabase
           .from("profiles")
           .select("*")
-          .eq("id", user.id)
+          .eq("id", currentUserId)
           .maybeSingle()
 
         if (profile) {
           if (profile.full_name) setUserName(profile.full_name)
+          if (profile.email) setUserEmail(profile.email)
           if (profile.phone) setUserPhone(profile.phone)
           if (profile.age) setUserAge(String(profile.age))
           if (profile.date_of_birth) setUserDob(profile.date_of_birth)
@@ -154,22 +171,20 @@ export function DashboardLayout() {
 
           const report = profile.latest_report || profile.medical_report
           if (report) setLatestReport(report)
-        } else {
-          if (user.phone) setUserPhone(user.phone)
         }
       } catch (err) {
-        // safe empty catch or log-less error handling
+        // safe empty catch
       }
 
       // Compute initials from name
-      const nameToUse = fullName || email.split("@")[0]
+      const nameToUse = currentFullName || currentEmail.split("@")[0] || "User"
       const parts = nameToUse.trim().split(" ").filter(Boolean)
       if (parts.length >= 2) {
         setUserInitials((parts[0][0] + parts[parts.length - 1][0]).toUpperCase())
       } else if (parts.length === 1) {
         setUserInitials(parts[0].slice(0, 2).toUpperCase())
       } else {
-        setUserInitials(email.slice(0, 2).toUpperCase())
+        setUserInitials("US")
       }
     })
   }, [])
@@ -472,6 +487,7 @@ export function DashboardLayout() {
             onClick={async () => {
               document.cookie = "mock-login=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;"
               document.cookie = "mock-login-provider=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;"
+              document.cookie = "otp-user-id=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;"
               await supabase.auth.signOut()
               router.push("/")
               router.refresh()
@@ -587,7 +603,10 @@ export function DashboardLayout() {
                   {profileImage ? (
                     <img src={profileImage} className="w-full h-full object-cover" alt="Avatar" />
                   ) : (
-                    userInitials
+                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full bg-slate-100">
+                      <path d="M12 11C14.2091 11 16 9.20914 16 7C16 4.79086 14.2091 3 12 3C9.79086 3 8 4.79086 8 7C8 9.20914 9.79086 11 12 11Z" fill="#CBD5E1"/>
+                      <path d="M12 13C8.24434 13 5.06456 15.6599 4.24648 19.3243C4.12061 19.8881 4.54921 20.4 5.12741 20.4H18.8726C19.4508 20.4 19.8794 19.8881 19.7535 19.3243C18.9354 15.6599 15.7557 13 12 13Z" fill="#CBD5E1"/>
+                    </svg>
                   )}
                 </motion.button>
               </div>

@@ -1,6 +1,6 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
-import { redis } from '@/lib/rateLimitOtp'
+import { redis, verifyUserId } from '@/lib/rateLimitOtp'
 import jwt from 'jsonwebtoken'
 
 /**
@@ -77,6 +77,7 @@ export async function updateSession(request: NextRequest) {
                   sameSite: cookie.sameSite,
                 })
               })
+              apiResponse.cookies.set('otp-user-id', '', { maxAge: -1 })
               return apiResponse
             } else if (pathname !== '/auth') {
               const url = request.nextUrl.clone()
@@ -95,6 +96,7 @@ export async function updateSession(request: NextRequest) {
                   sameSite: cookie.sameSite,
                 })
               })
+              redirectResponse.cookies.set('otp-user-id', '', { maxAge: -1 })
               return redirectResponse
             }
           }
@@ -111,14 +113,18 @@ export async function updateSession(request: NextRequest) {
     pathname.startsWith(route)
   )
 
-  if (isProtected && !user && !isMockLoggedIn) {
+  const otpCookieValue = request.cookies.get('otp-user-id')?.value
+  const hasVerifiedOtp = otpCookieValue ? !!verifyUserId(otpCookieValue) : false
+  const isAuthenticated = !!user || isMockLoggedIn || hasVerifiedOtp
+
+  if (isProtected && !isAuthenticated) {
     const url = request.nextUrl.clone()
     url.pathname = '/auth'
     return NextResponse.redirect(url)
   }
 
   // Authenticated users trying to access /auth → redirect to /dashboard
-  if (pathname === '/auth' && (user || isMockLoggedIn)) {
+  if (pathname === '/auth' && isAuthenticated) {
     const url = request.nextUrl.clone()
     url.pathname = '/dashboard'
     return NextResponse.redirect(url)

@@ -359,7 +359,10 @@ export function DashboardProfile({
               {profileImage ? (
                 <img src={profileImage} className="w-full h-full object-cover" alt="Profile" />
               ) : (
-                userInitials
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full bg-slate-100">
+                  <path d="M12 11C14.2091 11 16 9.20914 16 7C16 4.79086 14.2091 3 12 3C9.79086 3 8 4.79086 8 7C8 9.20914 9.79086 11 12 11Z" fill="#CBD5E1"/>
+                  <path d="M12 13C8.24434 13 5.06456 15.6599 4.24648 19.3243C4.12061 19.8881 5.12741 20.4 5.12741 20.4H18.8726C19.4508 20.4 19.8794 19.8881 19.7535 19.3243C18.9354 15.6599 15.7557 13 12 13Z" fill="#CBD5E1"/>
+                </svg>
               )}
             </div>
             <input

@@ -169,3 +169,34 @@ export function timingSafeCompare(a: string, b: string): boolean {
   const bHash = crypto.createHash("sha256").update(b).digest()
   return crypto.timingSafeEqual(aHash, bHash)
 }
+
+/**
+ * Signs a userId with HMAC-SHA256 using the JWT secret to prevent cookie tampering.
+ */
+export function signUserId(userId: string): string {
+  const secret = process.env.SUPABASE_JWT_SECRET || "fallback-temp-secret"
+  const signature = crypto.createHmac("sha256", secret).update(userId).digest("hex")
+  return `${userId}.${signature}`
+}
+
+/**
+ * Verifies a signed userId and returns the userId if authentic, or null otherwise.
+ */
+export function verifyUserId(signedValue: string): string | null {
+  const secret = process.env.SUPABASE_JWT_SECRET || "fallback-temp-secret"
+  const parts = signedValue.split(".")
+  if (parts.length !== 2) return null
+
+  const [userId, signature] = parts
+  const expectedSignature = crypto.createHmac("sha256", secret).update(userId).digest("hex")
+
+  try {
+    const isSignatureValid = crypto.timingSafeEqual(
+      Buffer.from(signature, "hex"),
+      Buffer.from(expectedSignature, "hex")
+    )
+    return isSignatureValid ? userId : null
+  } catch {
+    return null
+  }
+}

@@ -8,6 +8,7 @@ import {
   timingSafeCompare,
   RateLimitLayer,
   redis,
+  signUserId,
 } from "@/lib/rateLimitOtp"
 
 // Initialize Supabase Admin Client
@@ -239,11 +240,23 @@ export async function POST(request: Request) {
     // Register this session in Redis (TTL: 7 days to match refresh token expiration)
     await redis.set(`active_session:${userId}`, sessionId, { ex: 60 * 60 * 24 * 7 })
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       success: true,
       user: { id: userId },
       session,
     })
+
+    // Set signed cookie for middleware authentication bypass (expires in 7 days)
+    const signedCookieValue = signUserId(userId)
+    response.cookies.set("otp-user-id", signedCookieValue, {
+      path: "/",
+      maxAge: 60 * 60 * 24 * 7,
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+    })
+
+    return response
   } catch (error: unknown) {
     console.error("Verify OTP Endpoint Error:", error)
     return NextResponse.json(

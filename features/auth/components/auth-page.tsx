@@ -183,7 +183,7 @@ export function AuthPage() {
         })
       }
 
-      setSuccessMessage("Redirecting")
+      setSuccessMessage("OTP verified successfully! Redirecting...")
 
       // Store phone for onboarding
       if (typeof window !== "undefined") {
@@ -197,7 +197,7 @@ export function AuthPage() {
 
       setTimeout(() => {
         window.location.href = "/auth/onboarding"
-      }, 800)
+      }, 500)
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "OTP verification failed."
       setAuthError(message)

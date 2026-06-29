@@ -225,43 +225,19 @@ export function HeroSection() {
 
           <motion.div style={{ y, scale }} className="relative flex justify-center lg:justify-end">
             <motion.div
-              initial={{ opacity: 0, scale: 0.85, y: 30 }}
+              initial={{ opacity: 0, scale: 0.95, y: 15 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              transition={{ type: "spring", stiffness: 80, damping: 20, delay: 0.4 }}
+              transition={{ duration: 0.5, delay: 0.4 }}
               className="relative"
-              onMouseMove={handleMouseMove}
-              onMouseLeave={handleMouseLeave}
-              style={{
-                rotateX: rotateXSpring,
-                rotateY: rotateYSpring,
-                transformStyle: "preserve-3d",
-                perspective: 1000,
-              }}
             >
-              <motion.div
-                className="absolute inset-0 rounded-3xl opacity-40"
-                style={{ background: "radial-gradient(circle at center, rgba(255,87,34,0.15) 0%, transparent 70%)" }}
-                animate={{
-                  scale: [0.9, 1.05, 0.9],
-                  opacity: [0.3, 0.5, 0.3],
-                }}
-                transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
+              <Image
+                src="/images/hero-dashboard.png"
+                alt="CureAtHub AI Health Dashboard"
+                width={520}
+                height={520}
+                className="relative z-10"
+                priority
               />
-
-              <motion.div
-                animate={{ y: [0, -10, 0] }}
-                transition={{ duration: 6, repeat: Infinity, ease: [0.45, 0.05, 0.55, 0.95] }}
-                style={{ willChange: "transform" }}
-              >
-                <Image
-                  src="/images/hero-dashboard.png"
-                  alt="CureAtHub AI Health Dashboard"
-                  width={520}
-                  height={520}
-                  className="relative z-10 drop-shadow-xl rounded-2xl"
-                  priority
-                />
-              </motion.div>
             </motion.div>
           </motion.div>
         </div>
