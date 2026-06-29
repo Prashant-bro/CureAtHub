@@ -90,36 +90,42 @@ export function OnboardingPage() {
       let currentUserId: string | null = null
       let currentPhone: string | null = null
 
+      // Check sessionStorage first for OTP flow variables
+      let storedUserId: string | null = null
+      let storedPhone: string | null = null
+      if (typeof window !== "undefined") {
+        storedUserId = sessionStorage.getItem("auth_user_id")
+        storedPhone = sessionStorage.getItem("auth_phone")
+      }
+
       if (user) {
         currentUserId = user.id
         setUserId(user.id)
 
-        // Check if user signed in via phone or email/Google
-        if (user.phone) {
+        // Check if user signed in via phone or email/Google, merging with sessionStorage
+        if (user.phone || storedPhone) {
           setProvider("phone")
-          setAuthPhone(user.phone)
-          currentPhone = user.phone
+          const phoneToUse = user.phone || storedPhone
+          setAuthPhone(phoneToUse)
+          currentPhone = phoneToUse
         } else if (user.email) {
           setProvider("google_email")
           setName(user.user_metadata?.full_name || user.user_metadata?.name || "")
           setEmail(user.email)
         }
       } else {
-        // Fallback to sessionStorage for phone OTP flow
+        // Fallback to sessionStorage for phone OTP flow when user is null
+        if (storedUserId) {
+          currentUserId = storedUserId
+          setUserId(storedUserId)
+        }
+        if (storedPhone) {
+          setAuthPhone(storedPhone)
+          currentPhone = storedPhone
+          setProvider("phone")
+        }
+
         if (typeof window !== "undefined") {
-          const storedUserId = sessionStorage.getItem("auth_user_id")
-          const storedPhone = sessionStorage.getItem("auth_phone")
-
-          if (storedUserId) {
-            currentUserId = storedUserId
-            setUserId(storedUserId)
-          }
-          if (storedPhone) {
-            setAuthPhone(storedPhone)
-            currentPhone = storedPhone
-            setProvider("phone")
-          }
-
           // Check cookie for provider info
           const match = document.cookie.match(/(?:^|; )mock-login-provider=([^;]*)/)
           const savedProvider = match ? match[1] : null
@@ -148,22 +154,12 @@ export function OnboardingPage() {
               profile.gender &&
               profile.blood_group
             ) {
-              const isSubscribed = document.cookie.includes("mock-subscribed=true")
-              if (isSubscribed) {
-                router.push("/dashboard")
-                return
-              } else {
-                // Populate states and show pricing screen immediately
-                setName(profile.full_name)
-                setEmail(profile.email)
-                setAge(String(profile.age))
-                setDob(profile.date_of_birth)
-                setGender(profile.gender)
-                setBloodGroup(profile.blood_group)
-                setShowPricing(true)
-                setIsLoading(false)
-                return
+              // Ensure they have the mock-subscribed cookie so they aren't blocked
+              if (!document.cookie.includes("mock-subscribed=true")) {
+                document.cookie = "mock-subscribed=true; path=/; max-age=259200"
               }
+              router.replace("/dashboard")
+              return
             }
 
             // Pre-populate fields we have
@@ -486,7 +482,7 @@ export function OnboardingPage() {
                     whileTap={{ scale: 0.98 }}
                     onClick={() => {
                       document.cookie = "mock-subscribed=true; path=/; max-age=259200"
-                      router.push("/dashboard")
+                      router.replace("/dashboard")
                     }}
                     className="w-full bg-gradient-to-r from-orange-600 to-orange-500 hover:from-orange-500 hover:to-orange-400 text-white py-3.5 px-4 rounded-xl font-bold text-sm shadow-xl shadow-orange-500/25 transition-all flex items-center justify-center gap-2 cursor-pointer animate-fade-in"
                   >

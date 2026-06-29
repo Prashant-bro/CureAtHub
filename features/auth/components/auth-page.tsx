@@ -196,7 +196,7 @@ export function AuthPage() {
       router.refresh()
 
       setTimeout(() => {
-        window.location.href = "/auth/onboarding"
+        window.location.replace("/auth/onboarding")
       }, 500)
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "OTP verification failed."
@@ -279,7 +279,7 @@ export function AuthPage() {
           console.error("Failed to register session:", err)
         }
 
-        router.push("/auth/onboarding")
+        router.replace("/auth/onboarding")
       } else {
         // Sign Up — enforce password strength
         if (strength.score < 3) {
@@ -302,7 +302,7 @@ export function AuthPage() {
           } catch (err) {
             console.error("Failed to register session:", err)
           }
-          router.push("/auth/onboarding")
+          router.replace("/auth/onboarding")
         } else {
           setSuccessMessage(
             "Account created! Check your email for a confirmation link before signing in."

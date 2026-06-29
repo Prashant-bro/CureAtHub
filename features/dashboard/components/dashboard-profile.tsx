@@ -30,6 +30,19 @@ interface DashboardProfileProps {
   userAge?: string
   userGender?: string
   userBloodGroup?: string
+  onUpdatePhone?: (phone: string) => Promise<void>
+}
+
+function formatPhoneNumber(phone: string) {
+  if (!phone) return ""
+  let cleaned = phone.trim()
+  if (cleaned.startsWith("91") && cleaned.length === 12) {
+    return `+91 ${cleaned.slice(2, 7)} ${cleaned.slice(7)}`
+  }
+  if (cleaned.startsWith("+91") && cleaned.length === 13) {
+    return `+91 ${cleaned.slice(3, 8)} ${cleaned.slice(8)}`
+  }
+  return cleaned
 }
 
 const languages = [
@@ -57,6 +70,7 @@ export function DashboardProfile({
   userAge = "",
   userGender = "",
   userBloodGroup = "",
+  onUpdatePhone,
 }: DashboardProfileProps) {
   const [selectedLanguage, setSelectedLanguage] = useState("en")
   const [langModalOpen, setLangModalOpen] = useState(false)
@@ -64,6 +78,31 @@ export function DashboardProfile({
   const [isCameraActive, setIsCameraActive] = useState(false)
   const [cameraLoading, setCameraLoading] = useState(false)
   const [cameraError, setCameraError] = useState<string | null>(null)
+  const [phoneInput, setPhoneInput] = useState("")
+  const [phoneError, setPhoneError] = useState("")
+  const [isSavingPhone, setIsSavingPhone] = useState(false)
+
+  const handleSavePhone = async () => {
+    if (!/^\d{10}$/.test(phoneInput)) {
+      setPhoneError("Enter a valid 10-digit number")
+      return
+    }
+    if (!/^[6-9]\d{9}$/.test(phoneInput)) {
+      setPhoneError("Must start with 6, 7, 8, or 9")
+      return
+    }
+    setPhoneError("")
+    setIsSavingPhone(true)
+    try {
+      if (onUpdatePhone) {
+        await onUpdatePhone(`+91${phoneInput}`)
+      }
+    } catch (err) {
+      setPhoneError("Failed to save phone number")
+    } finally {
+      setIsSavingPhone(false)
+    }
+  }
 
   const [cameraStream, setCameraStream] = useState<MediaStream | null>(null)
 
@@ -431,14 +470,52 @@ export function DashboardProfile({
             </div>
           </div>
 
-          <div className="bg-white/80 border border-slate-100 rounded-xl p-4 flex items-center gap-3">
-            <div className="w-9 h-9 rounded-lg bg-emerald-50 flex items-center justify-center shrink-0">
-              <Phone className="w-4 h-4 text-emerald-500" />
+          <div className="bg-white/80 border border-slate-100 rounded-xl p-4 flex flex-col gap-2">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-lg bg-emerald-50 flex items-center justify-center shrink-0">
+                <Phone className="w-4 h-4 text-emerald-500" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Phone</p>
+                {userPhone && userPhone !== "Not Provided" ? (
+                  <p className="text-sm font-semibold text-[#0F172A]">{formatPhoneNumber(userPhone)}</p>
+                ) : (
+                  <p className="text-xs font-semibold text-amber-600">Not Provided</p>
+                )}
+              </div>
             </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Phone</p>
-              <p className="text-sm font-semibold text-[#0F172A]">{userPhone || "Not Provided"}</p>
-            </div>
+
+            {(!userPhone || userPhone === "Not Provided") && (
+              <div className="mt-2 pt-2 border-t border-slate-100/50 space-y-2">
+                <p className="text-[10px] font-bold text-slate-500">Please provide your phone number:</p>
+                <div className="flex gap-2">
+                  <div className="flex items-center bg-slate-50 border border-slate-200 rounded-xl px-2.5 text-xs text-slate-600 font-semibold shrink-0 font-mono">
+                    +91
+                  </div>
+                  <input
+                    type="tel"
+                    maxLength={10}
+                    value={phoneInput}
+                    onChange={(e) => {
+                      setPhoneInput(e.target.value.replace(/\D/g, ""))
+                      setPhoneError("")
+                    }}
+                    placeholder="Enter 10-digit number"
+                    className="flex-1 bg-slate-50 border border-slate-200 focus:border-orange-300 focus:ring-1 focus:ring-orange-100 rounded-xl px-3 py-1.5 text-xs text-slate-700 outline-none transition-all placeholder:text-slate-400"
+                  />
+                  <button
+                    onClick={handleSavePhone}
+                    disabled={phoneInput.length < 10 || isSavingPhone}
+                    className="bg-orange-500 hover:bg-orange-600 disabled:bg-slate-200 text-white font-bold text-[11px] px-3.5 py-1.5 rounded-xl transition-all cursor-pointer flex items-center justify-center shrink-0 disabled:text-slate-400"
+                  >
+                    {isSavingPhone ? "Saving..." : "Save"}
+                  </button>
+                </div>
+                {phoneError && (
+                  <p className="text-[10px] text-rose-500 font-semibold">{phoneError}</p>
+                )}
+              </div>
+            )}
           </div>
 
           {(userAge || userGender || userBloodGroup) && (

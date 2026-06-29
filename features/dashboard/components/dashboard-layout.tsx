@@ -103,6 +103,25 @@ export function DashboardLayout() {
     }
   }
 
+  const handleUpdatePhone = async (phoneStr: string) => {
+    setUserPhone(phoneStr)
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        await fetch("/api/auth/profile", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            user_id: user.id,
+            phone: phoneStr,
+          }),
+        })
+      }
+    } catch (err) {
+      // safe silent error handling
+    }
+  }
+
   useEffect(() => {
     supabase.auth.getUser().then(async ({ data: { user } }) => {
       let currentUserId = user?.id || null
@@ -390,6 +409,7 @@ export function DashboardLayout() {
                 userAge={userAge}
                 userGender={userGender}
                 userBloodGroup={userBloodGroup}
+                onUpdatePhone={handleUpdatePhone}
               />
             </div>
           </motion.div>
